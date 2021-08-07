@@ -186,9 +186,21 @@
 /proc/trim(text)
 	return trim_left(trim_right(text))
 
-//Returns a string with the first element of the string capitalized.
-/proc/capitalize(var/t as text)
-	return uppertext(copytext(t, 1, 2)) + copytext(t, 2)
+////Returns a string with the first element of the string capitalized.
+///proc/capitalize(var/t as text)
+//	return uppertext(copytext(t, 1, 2)) + copytext(t, 2)
+
+// Returns a string with the first element of the string capitalized, ignoring html-tags
+/proc/capitalize(t as text)
+	var/i = 1
+	while(copytext_char(t, i, i + 1) == "<")
+		i = findtext_char(t, ">", i + 1)
+		if(i)
+			i++
+		else
+			i = 2
+			break
+	return copytext_char(t, 1, i) + uppertext(copytext_char(t, i, i + 1)) + copytext_char(t, i + 1)
 
 /proc/stringpercent(var/text,character = "*")
 //This proc returns the number of chars of the string that is the character
