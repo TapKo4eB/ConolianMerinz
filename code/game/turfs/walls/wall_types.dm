@@ -242,10 +242,11 @@
 //	icon_state = "title_holiday"
 	layer = FLY_LAYER
 	special_icon = 1
+	icon = 'icons/splash.dmi'
 
 /turf/closed/wall/indestructible/splashscreen/Initialize()
 	. = ..()
-	icon = get_icon_from_source(CONFIG_GET(string/lobby_art))
+	//icon = get_icon_from_source(CONFIG_GET(string/lobby_art))
 	tag = "LOBBYART"
 
 /proc/force_lobby_art(art_id)
@@ -253,6 +254,8 @@
 	var/turf/closed/wall/indestructible/splashscreen/SS = locate("LOBBYART")
 	var/list/lobby_arts = CONFIG_GET(str_list/lobby_art_images)
 	var/list/lobby_authors = CONFIG_GET(str_list/lobby_art_authors)
+	var/list/lobby_music = CONFIG_GET(str_list/lobby_art_music)
+	SSticker.login_music = file(lobby_music[displayed_lobby_art])
 	SS.icon_state = lobby_arts[displayed_lobby_art]
 	SS.desc = "Artwork by [lobby_authors[displayed_lobby_art]]"
 	for(var/client/C in GLOB.clients)
