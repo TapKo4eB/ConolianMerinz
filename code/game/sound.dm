@@ -274,7 +274,7 @@
 			if("male_pain")
 				S = pick('sound/voice/human_male_pain_1.ogg','sound/voice/human_male_pain_2.ogg','sound/voice/human_male_pain_3.ogg',5;'sound/voice/tomscream.ogg',5;'sound/voice/human_bobby_pain.ogg',5;'sound/voice/human_tantrum_scream.ogg', 5;'sound/voice/human_male_pain_rare_1.ogg')
 			if("male_fragout")
-				S = pick('sound/voice/human_male_grenadethrow_1.ogg', 'sound/voice/human_male_grenadethrow_2.ogg', 'sound/voice/human_male_grenadethrow_3.ogg')
+				S = 'sound/voice/sound_voice_granata.ogg'
 			if("male_warcry")
 				S = pick('sound/voice/warcry/male_go.ogg', 'sound/voice/warcry/male_attack.ogg', 'sound/voice/warcry/male_charge.ogg', 'sound/voice/warcry/male_charge2.ogg', 'sound/voice/warcry/warcry_male_1.ogg', 'sound/voice/warcry/warcry_male_2.ogg', 'sound/voice/warcry/warcry_male_3.ogg', 'sound/voice/warcry/warcry_male_4.ogg', 'sound/voice/warcry/warcry_male_5.ogg', 'sound/voice/warcry/warcry_male_6.ogg', 'sound/voice/warcry/warcry_male_7.ogg', 'sound/voice/warcry/warcry_male_8.ogg', 'sound/voice/warcry/warcry_male_9.ogg', 'sound/voice/warcry/warcry_male_10.ogg', 'sound/voice/warcry/warcry_male_11.ogg', 'sound/voice/warcry/warcry_male_12.ogg', 5;'sound/voice/warcry/warcry_male_rare_1.ogg', 5;'sound/voice/warcry/warcry_male_rare_2.ogg', 5;'sound/voice/warcry/warcry_male_rare_3.ogg', 5;'sound/voice/warcry/warcry_male_rare_4.ogg', 5;'sound/voice/warcry/warcry_male_rare_5.ogg')
 			if("female_scream")
@@ -282,7 +282,7 @@
 			if("female_pain")
 				S = pick('sound/voice/human_female_pain_1.ogg','sound/voice/human_female_pain_2.ogg','sound/voice/human_female_pain_3.ogg')
 			if("female_fragout")
-				S = pick("sound/voice/human_female_grenadethrow_1.ogg", 'sound/voice/human_female_grenadethrow_2.ogg', 'sound/voice/human_female_grenadethrow_3.ogg')
+				S = 'sound/voice/sound_voice_granata_f.ogg'
 			if("female_warcry")
 				S = pick('sound/voice/warcry/female_charge.ogg', 'sound/voice/warcry/female_yell1.ogg', 'sound/voice/warcry/warcry_female_1.ogg', 'sound/voice/warcry/warcry_female_2.ogg', 'sound/voice/warcry/warcry_female_3.ogg', 'sound/voice/warcry/warcry_female_4.ogg', 'sound/voice/warcry/warcry_female_5.ogg', 'sound/voice/warcry/warcry_female_6.ogg')
 			if("rtb_handset")
