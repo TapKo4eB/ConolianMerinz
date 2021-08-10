@@ -46,6 +46,15 @@
 /proc/strip_html(var/t,var/limit=MAX_MESSAGE_LEN)
 	return copytext((sanitize(strip_html_simple(t))),1,limit)
 
+/proc/stip_text(var/t,var/limit=MAX_MESSAGE_LEN)
+	return copytext((sanitize(t)),1,limit)
+
+/proc/is_greentext(t)
+	var/green = copytext(t,1,2)
+	if(green == ">")
+		return TRUE
+	return FALSE
+
 //Runs byond's sanitization proc along-side strip_html_simple
 //I believe strip_html_simple() is required to run first to prevent '<' from displaying as '&lt;' that html_encode() would cause
 /proc/adminscrub(var/t,var/limit=MAX_MESSAGE_LEN)

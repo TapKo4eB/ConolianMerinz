@@ -22,7 +22,11 @@
 		to_chat(src, "Guests may not use OOC.")
 		return
 
-	msg = trim(strip_html(msg))
+	var/greentext
+	if(is_greentext(msg))
+		greentext = TRUE
+
+	msg = trim(stip_text(msg))
 	if(!msg)	return
 
 	if(!(prefs.toggles_chat & CHAT_OOC))
@@ -71,7 +75,7 @@
 	for(var/client/C in GLOB.clients)
 		if(C.prefs.toggles_chat & CHAT_OOC)
 			var/display_name = src.key
-			to_chat(C, "<font color='[display_colour]'><span class='ooc'>[src.donator ? "\[D\] " : ""]<span class='prefix'>OOC: [display_name]</span>: <span class='message'>[msg]</span></span></font>")
+			to_chat(C, "<font color='[display_colour]'><span class='ooc'>[src.donator ? "\[D\] " : ""]<span class='prefix'>OOC: [display_name]</span>: <span class='message'>[greentext ? "<font color='#789922'>[msg]</font>" : "[msg]"]</span></span></font>")
 
 	usr.talked = 1
 	addtimer(CALLBACK(usr, .proc/clear_chat_spam_mute, usr.talked), CHAT_OOC_DELAY, TIMER_UNIQUE)
