@@ -236,17 +236,16 @@
 	opacity = 0
 
 /turf/closed/wall/indestructible/splashscreen
-	name = "Lobby Art"
-	desc = "Assorted artworks."
+	name = "Lyrical Deviations."
+	desc = "You probably should propose your own artworks and music."
 	icon_state = ""
 //	icon_state = "title_holiday"
 	layer = FLY_LAYER
 	special_icon = 1
-	icon = 'icons/splash.dmi'
 
 /turf/closed/wall/indestructible/splashscreen/Initialize()
 	. = ..()
-	//icon = get_icon_from_source(CONFIG_GET(string/lobby_art))
+	icon = get_icon_from_source(CONFIG_GET(string/lobby_art))
 	tag = "LOBBYART"
 
 /proc/force_lobby_art(art_id)
