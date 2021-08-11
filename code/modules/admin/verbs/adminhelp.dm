@@ -93,7 +93,7 @@ var/global/list/ahelp_msgs = list()
 	msg = ""
 	var/list/mobs_found = list()
 	for(var/original_word in msglist)
-		var/word = ckey(original_word)
+		var/word = original_word
 		if(word)
 			if(!(word in adminhelp_ignored_words))
 				if(word == "ai")
