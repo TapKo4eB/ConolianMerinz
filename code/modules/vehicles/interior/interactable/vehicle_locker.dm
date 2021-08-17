@@ -168,7 +168,7 @@
 							/obj/item/stack/nanopaste
 							)
 
-	new /obj/item/tool/surgery/scalpel/manager(container)
+	new /obj/item/tool/surgery/scalpel/pict_system(container)
 	new /obj/item/tool/surgery/scalpel(container)
 	new /obj/item/tool/surgery/hemostat(container)
 	new /obj/item/tool/surgery/retractor(container)

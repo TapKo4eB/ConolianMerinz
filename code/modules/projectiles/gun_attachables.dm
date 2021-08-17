@@ -276,6 +276,7 @@ Defined in conflicts.dm of the #defines folder.
 	attack_speed = 9
 	flags_equip_slot = SLOT_FACE
 	flags_armor_protection = SLOT_FACE
+	flags_item = CAN_DIG_SHRAPNEL
 
 	attach_icon = "bayonet_a"
 	melee_mod = 20
@@ -288,20 +289,6 @@ Defined in conflicts.dm of the #defines folder.
 /obj/item/attachable/bayonet/New()
 	..()
 	accuracy_unwielded_mod = -HIT_ACCURACY_MULT_TIER_1
-
-/obj/item/attachable/bayonet/attack(mob/living/target, mob/living/carbon/human/user)
-	if(!dig_out_shrapnel_check(target,user))
-		..()
-
-/obj/item/attachable/bayonet/attack_self(mob/living/carbon/human/user)
-	..()
-
-	if(!ishuman(user))
-		return
-	if(!hasorgans(user))
-		return
-
-	dig_out_shrapnel(user)
 
 /obj/item/attachable/bayonet/upp
 	name = "\improper Type 80 bayonet"
@@ -681,8 +668,8 @@ Defined in conflicts.dm of the #defines folder.
 	movement_onehanded_acc_penalty_mod = MOVEMENT_ACCURACY_PENALTY_MULT_TIER_4
 	accuracy_unwielded_mod = 0
 
-	accuracy_scoped_buff = HIT_ACCURACY_MULT_TIER_7 + HIT_ACCURACY_MULT_TIER_1 //to compensate initial debuff
-	delay_scoped_nerf = FIRE_DELAY_TIER_8 - FIRE_DELAY_TIER_10 //to compensate initial debuff. We want "high_fire_delay"
+	accuracy_scoped_buff = HIT_ACCURACY_MULT_TIER_8 //to compensate initial debuff
+	delay_scoped_nerf = FIRE_DELAY_TIER_9 //to compensate initial debuff. We want "high_fire_delay"
 	damage_falloff_scoped_buff = -0.4 //has to be negative
 
 /obj/item/attachable/scope/proc/apply_scoped_buff(obj/item/weapon/gun/G, mob/living/carbon/user)
@@ -756,6 +743,21 @@ Defined in conflicts.dm of the #defines folder.
 	if(istype(G, /obj/item/weapon/gun/launcher/grenade/m92))
 		G.fire_delay -= FIRE_DELAY_TIER_4
 	..()
+
+/obj/item/attachable/scope/mini/flaregun
+	aim_speed_mod = 0
+	wield_delay_mod = 0
+	dynamic_aim_slowdown = SLOWDOWN_ADS_MINISCOPE_DYNAMIC
+
+/obj/item/attachable/scope/mini/flaregun/New()
+	..()
+	delay_mod = 0
+	accuracy_mod = 0
+	movement_onehanded_acc_penalty_mod = 0
+	accuracy_unwielded_mod = 0
+
+	accuracy_scoped_buff = HIT_ACCURACY_MULT_TIER_8
+	delay_scoped_nerf = FIRE_DELAY_TIER_8
 
 /obj/item/attachable/scope/mini/hunting //can only be attached to the hunting rifle to prevent vending hunting rifles to cannibalize scopes
 	name = "2x hunting mini-scope"
