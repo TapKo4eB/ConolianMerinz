@@ -12,6 +12,8 @@ var/internal_tick_usage = 0
 	hub = "Exadv1.spacestation13"
 
 /world/New()
+	TgsNew()
+	
 	var/debug_server = world.GetConfig("env", "AUXTOOLS_DEBUG_DLL")
 	if (debug_server)
 		call(debug_server, "auxtools_init")()
@@ -105,6 +107,8 @@ var/internal_tick_usage = 0
 		while(!SSticker.initialized)
 			sleep(10)
 
+		TgsInitializationComplete()
+
 		// Start the game ASAP
 		SSticker.request_start()
 	return
@@ -113,6 +117,8 @@ var/world_topic_spam_protect_ip = "0.0.0.0"
 var/world_topic_spam_protect_time = world.timeofday
 
 /world/Topic(T, addr, master, key)
+	TGS_TOPIC
+
 	if (T == "ping")
 		var/x = 1
 		for (var/client/C)
@@ -203,6 +209,7 @@ var/world_topic_spam_protect_time = world.timeofday
 		shutdown()
 		return
 
+	TgsReboot()
 	..(reason)
 
 
