@@ -235,7 +235,7 @@ GLOBAL_LIST_EMPTY_TYPED(transmitters, /obj/structure/transmitter)
 		if(attached_to.loc == src)
 			if(next_ring < world.time)
 				playsound(loc, 'sound/machines/telephone/telephone_ring.ogg', 75)
-				next_ring = world.time + 3 SECONDS
+				next_ring = world.time + 6.2 SECONDS
 
 	else if(calling)
 		var/obj/structure/transmitter/T = get_calling_phone()
@@ -247,7 +247,7 @@ GLOBAL_LIST_EMPTY_TYPED(transmitters, /obj/structure/transmitter)
 
 		if(P && attached_to.loc == src && P.loc == T && next_ring < world.time)
 			playsound(get_turf(attached_to), 'sound/machines/telephone/telephone_ring.ogg', 20, FALSE, 14)
-			next_ring = world.time + 3 SECONDS
+			next_ring = world.time + 6.2 SECONDS
 
 	else
 		STOP_PROCESSING(SSobj, src)
