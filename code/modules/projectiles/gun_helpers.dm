@@ -156,7 +156,7 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 		var/obj/item/attachable/A = attachments[slot]
 		if (!A || !A.light_mod)
 			continue
-		bearer.SetLuminosity(-A.light_mod)
+		bearer.SetLuminosity(0, FALSE, src)
 		SetLuminosity(A.light_mod)
 		return TRUE
 	return FALSE
@@ -169,7 +169,7 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 			var/obj/item/attachable/A = attachments[slot]
 			if (!A || !A.light_mod)
 				continue
-			user.SetLuminosity(A.light_mod)
+			user.SetLuminosity(A.light_mod, FALSE, src)
 			SetLuminosity(0)
 			break
 
@@ -621,17 +621,17 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 				if(holster_unholster_from_suit_storage())
 					return
 
-			if("ctrl", "alt") //control and alt keymods, do common tertiary weapon locations first. order: belt, pockets, uniform, shoes, back, suit.
-				if(holster_unholster_from_belt()) //in case ctrl is awkward for some people but alt is not.
+			if("ctrl", "alt") //control and alt keymods, do common tertiary weapon locations first. order: uniform, belt, pockets, shoes, back, suit.
+				if(holster_unholster_from_uniform()) //in case ctrl is awkward for some people but alt is not.
+					return
+
+				if(holster_unholster_from_belt())
 					return
 
 				if(holster_unholster_from_left_pocket())
 					return
 
 				if(holster_unholster_from_right_pocket())
-					return
-
-				if(holster_unholster_from_uniform())
 					return
 
 				if(holster_unholster_from_shoes())

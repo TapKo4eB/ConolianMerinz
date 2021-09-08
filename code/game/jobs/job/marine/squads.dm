@@ -232,10 +232,10 @@
 		if(JOB_SQUAD_RTO)
 			if(num_rto > 0)
 				assignment = "Assistant [JOB_SQUAD_RTO]"
-				paygrade = "E4"
+				paygrade = "ME4"
 				M.comm_title = "aRTO"
 			else
-				paygrade = "E5"
+				paygrade = "ME5"
 				assignment = JOB_SQUAD_RTO
 				extra_access += ACCESS_MARINE_RTO_DROP
 				M.important_radio_channels += radio_freq
@@ -369,8 +369,8 @@
 				old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_NOVICE)
 
 	if(old_lead.job != JOB_SQUAD_LEADER || !leader_killed)
-		if(istype(old_lead.wear_ear, /obj/item/device/radio/headset/almayer/marine))
-			var/obj/item/device/radio/headset/almayer/marine/R = old_lead.wear_ear
+		var/obj/item/device/radio/headset/almayer/marine/R = old_lead.get_type_in_ears(/obj/item/device/radio/headset/almayer/marine)
+		if(R)
 			for(var/obj/item/device/encryptionkey/squadlead/acting/key in R.keys)
 				R.keys -= key
 				qdel(key)

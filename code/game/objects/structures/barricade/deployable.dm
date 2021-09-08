@@ -4,7 +4,7 @@
 	icon_state = "folding_0"
 	health = 350
 	maxhealth = 350
-	burn_multiplier = 1.5
+	burn_multiplier = 1.15
 	brute_multiplier = 1
 	crusher_resistant = TRUE
 	force_level_absorption = 15
@@ -15,7 +15,7 @@
 	climbable = FALSE
 	unacidable = TRUE
 	anchored = TRUE
-	repair_materials = list("metal" = 0.2, "plasteel" = 0.25)
+	repair_materials = list("metal" = 0.3, "plasteel" = 0.45)
 	var/build_state = BARRICADE_BSTATE_SECURED //Look at __game.dm for barricade defines
 	var/source_type = /obj/item/folding_barricade	//had to add this here, cause mapped in porta cades were unfoldable.
 

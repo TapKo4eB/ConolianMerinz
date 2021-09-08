@@ -426,7 +426,6 @@ updatehealth()
 
 /mob/living/carbon/Xenomorph/proc/handle_luminosity()
 	var/new_luminosity = 0
-	luminosity_total = 0
 	if(caste)
 		new_luminosity += caste.caste_luminosity
 	if(on_fire)
@@ -442,7 +441,7 @@ updatehealth()
 
 /mob/living/carbon/Xenomorph/proc/handle_interference()
 	if(interference)
-		interference -= 2
+		interference = max(interference-2, 0)
 
 	if(observed_xeno && observed_xeno.interference)
 		overwatch(observed_xeno,TRUE)

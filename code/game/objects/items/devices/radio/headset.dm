@@ -21,6 +21,7 @@
 	for (var/key in initial_keys)
 		keys += new key(src)
 	recalculateChannels()
+	ADD_TRAIT(src, TRAIT_ITEM_EAR_EXCLUSIVE, TRAIT_SOURCE_GENERIC)
 
 /obj/item/device/radio/headset/handle_message_mode(mob/living/M as mob, message, channel)
 	if (channel == "special")
@@ -43,7 +44,7 @@
 		return ..(freq, level)
 	if(ishuman(loc))
 		var/mob/living/carbon/human/H = loc
-		if(H.wear_ear == src)
+		if(H.has_item_in_ears(src))
 			return ..(freq, level)
 	return -1
 
@@ -51,7 +52,7 @@
 	if(!ishuman(user) || loc != user)
 		return ..()
 	var/mob/living/carbon/human/H = user
-	if (H.wear_ear != src)
+	if (!H.has_item_in_ears(src))
 		return ..()
 	user.set_interaction(src)
 	interact(user)
@@ -141,7 +142,7 @@
 
 /obj/item/device/radio/headset/equipped(mob/living/carbon/human/user, slot)
 	. = ..()
-	if (slot == WEAR_EAR)
+	if (slot == WEAR_L_EAR || slot == WEAR_R_EAR)
 		RegisterSignal(user, list(
 			COMSIG_LIVING_REJUVENATED,
 			COMSIG_HUMAN_REVIVED,
@@ -201,6 +202,7 @@
 	frequency = PUB_FREQ
 	var/headset_hud_on = 1
 
+/*
 /obj/item/device/radio/headset/almayer/verb/enter_tree()
 	set name = "Enter Techtree"
 	set desc = "Enter the Marine techtree"
@@ -209,9 +211,10 @@
 
 	var/datum/techtree/T = GET_TREE(TREE_MARINE)
 	T.enter_mob(usr)
+*/
 
 /obj/item/device/radio/headset/almayer/equipped(mob/living/carbon/human/user, slot)
-	if(slot == WEAR_EAR)
+	if(slot == WEAR_L_EAR || slot == WEAR_R_EAR)
 		if(headset_hud_on)
 			var/datum/mob_hud/H = huds[MOB_HUD_SQUAD]
 			H.add_hud_to(user)
@@ -224,7 +227,7 @@
 
 /obj/item/device/radio/headset/almayer/dropped(mob/living/carbon/human/user)
 	if(istype(user) && headset_hud_on)
-		if(user.wear_ear == src) //dropped() is called before the inventory reference is update.
+		if(user.has_item_in_ears(src)) //dropped() is called before the inventory reference is update.
 			var/datum/mob_hud/H = huds[MOB_HUD_SQUAD]
 			H.remove_hud_from(user)
 			//squad leader locator is invisible again
@@ -244,7 +247,7 @@
 	headset_hud_on = !headset_hud_on
 	if(ishuman(usr))
 		var/mob/living/carbon/human/user = usr
-		if(src == user.wear_ear) //worn
+		if(user.has_item_in_ears(src)) //worn
 			var/datum/mob_hud/H = huds[MOB_HUD_SQUAD]
 			if(headset_hud_on)
 				H.add_hud_to(usr)
@@ -306,13 +309,13 @@
 
 /obj/item/device/radio/headset/almayer/mmpo
 	name = "marine military police radio headset"
-	desc = "This is used by marine military police members. Channels are as follows: :p - military police, :v - marine command."
+	desc = "This is used by marine military police members. Channels are as follows: :p - military police, :v - marine command. :a - alpha squad, :b - bravo squad, :c - charlie squad, :d - delta squad."
 	icon_state = "sec_headset"
 	initial_keys = list(/obj/item/device/encryptionkey/mmpo)
 
 /obj/item/device/radio/headset/almayer/cmpcom
 	name = "marine chief MP radio headset"
-	desc = "For discussing the purchase of donuts and arresting of hooligans. Channels are as follows: :v - marine command, :p - military police, :m - medbay, :e - engineering, :a - alpha squad, :b - bravo squad, :c - charlie squad, :d - delta squad."
+	desc = "For discussing the purchase of donuts and arresting of hooligans. Channels are as follows: :v - marine command, :p - military police, :e - engineering, :m - medbay, :u - requisitions, :a - alpha squad, :b - bravo squad, :c - charlie squad, :d - delta squad."
 	icon_state = "sec_headset"
 	initial_keys = list(/obj/item/device/encryptionkey/cmpcom)
 	volume = RADIO_VOLUME_CRITICAL

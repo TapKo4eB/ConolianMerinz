@@ -132,11 +132,17 @@
 
 //===========================================================================================
 //Marine helmet only, use for flags_marine_helmet.
-#define HELMET_SQUAD_OVERLAY	1
-#define HELMET_GARB_OVERLAY		2
-#define HELMET_DAMAGE_OVERLAY	4
-#define HELMET_STORE_GARB		8
-#define HELMET_IS_DAMAGED		16
+#define HELMET_SQUAD_OVERLAY (1<<0)
+#define HELMET_GARB_OVERLAY (1<<1)
+#define HELMET_DAMAGE_OVERLAY (1<<2)
+#define HELMET_IS_DAMAGED (1<<3)
+//===========================================================================================
+
+//===========================================================================================
+//Marine caps only, use for flags_marine_hat.
+#define HAT_GARB_OVERLAY (1<<0)
+#define HAT_CAN_FLIP (1<<1)
+#define HAT_FLIPPED (1<<2)
 //===========================================================================================
 
 //ITEM INVENTORY SLOT BITMASKS
@@ -160,7 +166,8 @@
 //slots
 //Text strings so that the slots can be associated when doing inventory lists.
 #define WEAR_ID				"id"
-#define WEAR_EAR			"wear_ear"
+#define WEAR_L_EAR			"wear_l_ear"
+#define WEAR_R_EAR			"wear_r_ear"
 #define WEAR_BODY			"w_uniform"
 #define WEAR_LEGS			"legs"
 #define WEAR_FEET			"shoes"
@@ -206,7 +213,8 @@
 		WEAR_IN_SHOES,\
 		WEAR_FACE,\
 		WEAR_HANDS,\
-		WEAR_EAR,\
+		WEAR_L_EAR,\
+		WEAR_R_EAR,\
 		WEAR_EYES,\
 		WEAR_IN_BELT,\
 		WEAR_IN_SCABBARD,\

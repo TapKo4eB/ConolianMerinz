@@ -345,6 +345,19 @@
 	reagents.add_reagent("blackpepper", 1)
 	bitesize = 1
 
+/obj/item/reagent_container/food/snacks/wy_chips/pepper
+	name = "Weyland-Yutani Pepper Chips"
+	desc = "Premium high quality chips, now with 0% trans fat and added black pepper."
+	icon_state = "wy_chips_pepper"
+	item_state = "wy_chips_pepper"
+	trash = /obj/item/trash/wy_chips_pepper
+	filling_color = "#E8C31E"
+
+/obj/item/reagent_container/food/snacks/wy_chips/pepper/Initialize()
+	. = ..()
+	reagents.add_reagent("bread", 3)
+	reagents.add_reagent("blackpepper", 1)
+	bitesize = 1
 /obj/item/reagent_container/food/snacks/cookie
 	name = "cookie"
 	desc = "COOKIE!!!"
@@ -756,7 +769,7 @@
 	filling_color = "#D63C3C"
 
 /obj/item/reagent_container/food/snacks/human/burger
-	name = "-burger"
+	name = "burger"
 	desc = "A bloody burger."
 	icon_state = "hamburger"
 
@@ -1083,7 +1096,7 @@
 
 
 /obj/item/reagent_container/food/snacks/human/kabob
-	name = "-kabob"
+	name = "kabob"
 	icon_state = "kabob"
 	desc = "A human meat, on a stick."
 	trash = /obj/item/stack/rods
