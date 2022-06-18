@@ -8,7 +8,7 @@
 	armor_bio = CLOTHING_ARMOR_MEDIUM
 	armor_rad = CLOTHING_ARMOR_MEDIUM
 	armor_internaldamage = CLOTHING_ARMOR_LOW
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 	displays_id = 0
 
 //JASON
@@ -88,7 +88,7 @@
 			/obj/item/explosive/grenade,
 			/obj/item/device/binoculars,
 			/obj/item/attachable/bayonet,
-			/obj/item/storage/sparepouch,
+			/obj/item/storage/backpack/general_belt,
 			/obj/item/storage/large_holster/machete)
 
 //ROBOCOP

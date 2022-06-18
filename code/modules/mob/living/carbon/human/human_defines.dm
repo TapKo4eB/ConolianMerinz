@@ -29,7 +29,7 @@
 	var/age = 30		//Player's age (pure fluff)
 	var/b_type = "A+"	//Player's bloodtype
 
-	var/underwear = 1	//Which underwear the player wants
+	var/underwear = "Briefs"	//Which underwear the player wants
 	var/undershirt = 0	//Which undershirt the player wants.
 	var/backbag = 2		//Which backpack type the player has chosen. Satchel or Backpack.
 
@@ -72,6 +72,10 @@
 	var/list/flavor_texts = list()
 	var/recently_nested = FALSE
 
+	// modifier modifiers
+	var/list/brute_mod_override
+	var/list/burn_mod_override
+
 	//Life variables
 	var/oxygen_alert = 0
 	var/fire_alert = 0
@@ -97,11 +101,15 @@
 	var/marksman_aura = 0
 
 	var/FF_hit_evade = 15
+	///used to determine if precise taser will shoot. Security code is so convoluted it's the easiest way, sorry.
+	var/criminal = FALSE
 
 	var/is_important = FALSE
 
 	var/temporary_slowdown = 0 //Stacking slowdown caused from effects, currently used by neurotoxin gas
 	var/shield_slowdown = 0 // Slowdown from readying shields
+
+	var/datum/equipment_preset/assigned_equipment_preset
 
 	var/datum/squad/assigned_squad	//the squad this human is assigned to
 	var/assigned_fireteam = 0		//the fireteam this human is assigned to
@@ -125,13 +133,16 @@
 	var/last_chew = 0
 
 	//taken from human.dm
-	hud_possible = list(HEALTH_HUD,STATUS_HUD, STATUS_HUD_OOC, STATUS_HUD_XENO_INFECTION, STATUS_HUD_XENO_CULTIST, ID_HUD, WANTED_HUD, SQUAD_HUD, ORDER_HUD, XENO_HOSTILE_ACID, XENO_HOSTILE_SLOW, XENO_HOSTILE_TAG, XENO_HOSTILE_FREEZE, HUNTER_CLAN, HUNTER_HUD, FACTION_HUD)
+	hud_possible = list(HEALTH_HUD,STATUS_HUD, STATUS_HUD_OOC, STATUS_HUD_XENO_INFECTION, STATUS_HUD_XENO_CULTIST, ID_HUD, WANTED_HUD, ORDER_HUD, XENO_HOSTILE_ACID, XENO_HOSTILE_SLOW, XENO_HOSTILE_TAG, XENO_HOSTILE_FREEZE, HUNTER_CLAN, HUNTER_HUD, FACTION_HUD)
 	var/embedded_flag	  				//To check if we've need to roll for damage on movement while an item is imbedded in us.
 	var/allow_gun_usage = TRUE
+	var/melee_allowed = TRUE
 	var/has_used_pamphlet = FALSE 		//Has this person used a pamphlet?
 	var/list/embedded_items = list() 	//A list of all the shrapnel currently embedded in the human
 
 	var/list/synthetic_HUD_toggled = list(FALSE,FALSE)
+
+	var/default_lighting_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
 
 	//Taken from update_icons
 	var/list/overlays_standing[TOTAL_LAYERS]

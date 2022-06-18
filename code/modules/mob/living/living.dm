@@ -14,8 +14,6 @@
 
 	fire_reagent = new /datum/reagent/napalm/ut()
 
-	event_movement = new /datum/event()
-
 	attack_icon = image("icon" = 'icons/effects/attacks.dmi',"icon_state" = "", "layer" = 0)
 
 	initialize_incision_depths()
@@ -27,15 +25,13 @@
 	GLOB.living_mob_list -= src
 	pipes_shown = null
 
-	attack_icon = null
-	QDEL_NULL(fire_reagent)
-	QDEL_NULL(event_movement)
-	QDEL_NULL(pain)
-	QDEL_NULL(stamina)
-
 	. = ..()
 
-	QDEL_NULL_LIST(actions)
+	attack_icon = null
+	QDEL_NULL(fire_reagent)
+	QDEL_NULL(pain)
+	QDEL_NULL(stamina)
+	QDEL_NULL(hallucinations)
 
 //This proc is used for mobs which are affected by pressure to calculate the amount of pressure that actually
 //affects them once clothing is factored in. ~Errorage
@@ -202,21 +198,18 @@
 					pulling.Move(NewLoc, direction_to_face)
 					var/mob/living/pmob = pulling
 					if(istype(pmob))
-						pmob.on_movement()
+						SEND_SIGNAL(pmob, COMSIG_MOB_MOVE_OR_LOOK, TRUE, direction_to_face, direction_to_face)
 				else
 					pulling.Move(NewLoc, direct)
-
-			var/mob/living/pmob = pulling
-			if(istype(pmob))
-				pmob.on_movement()
 		else if(get_dist(src, pulling) > 1 || ((pull_dir - 1) & pull_dir)) //puller and pullee more than one tile away or in diagonal position
-			pulling.Move(T, get_dir(pulling, T)) //the pullee tries to reach our previous position
+			var/pulling_dir = get_dir(pulling, T)
+			pulling.Move(T, pulling_dir) //the pullee tries to reach our previous position
 			if(pulling && get_dist(src, pulling) > 1) //the pullee couldn't keep up
 				stop_pulling()
 			else
-				var/mob/living/pmob =  pulling
+				var/mob/living/pmob = pulling
 				if(istype(pmob))
-					pmob.on_movement()
+					SEND_SIGNAL(pmob, COMSIG_MOB_MOVE_OR_LOOK, TRUE, pulling_dir, pulling_dir)
 				if(!(flags_atom & DIRLOCK))
 					setDir(turn(direct, 180)) //face the pullee
 
@@ -297,15 +290,13 @@
 
 //whether we are slowed when dragging things
 /mob/living/proc/get_pull_miltiplier()
-	if(grab_level == GRAB_CARRY)
-		return 0.1
+	if(!HAS_TRAIT(src, TRAIT_DEXTROUS))
+		if(grab_level == GRAB_CARRY)
+			return 0.1
+		else
+			return 1.0
 	else
-		return 1.0
-
-/mob/living/carbon/human/get_pull_miltiplier()
-	if(has_species(src,"Yautja"))
-		return 0//Predators aren't slowed when pulling their prey.
-	return ..()
+		return 0
 
 /mob/living/forceMove(atom/destination)
 	stop_pulling()
@@ -314,7 +305,7 @@
 	if(buckled && destination != buckled.loc)
 		buckled.unbuckle()
 	. = ..()
-	on_movement()
+	SEND_SIGNAL(src, COMSIG_MOB_MOVE_OR_LOOK, TRUE, dir, dir)
 
 	if(.)
 		reset_view(destination)
@@ -407,10 +398,8 @@
 	..()
 
 /mob/living/launch_towards(var/datum/launch_metadata/LM)
-	if(src && event_movement)
-		var/datum/event_args/mob_movement/ev_args = new /datum/event_args/mob_movement()
-		ev_args.moving = TRUE
-		event_movement.fire_event(src, ev_args)
+	if(src)
+		SEND_SIGNAL(src, COMSIG_MOB_MOVE_OR_LOOK, TRUE, dir, dir)
 	if(!istype(LM) || !LM.target || !src || buckled)
 		return
 	if(pulling)
@@ -420,7 +409,7 @@
 	. = ..()
 
 //to make an attack sprite appear on top of the target atom.
-/mob/living/proc/flick_attack_overlay(atom/target, attack_icon_state)
+/mob/living/proc/flick_attack_overlay(atom/target, attack_icon_state, var/duration = 4)
 	set waitfor = 0
 
 	if(!attack_icon)
@@ -433,7 +422,7 @@
 	var/old_icon = attack_icon.icon_state
 	var/old_pix_x = attack_icon.pixel_x
 	var/old_pix_y = attack_icon.pixel_y
-	addtimer(CALLBACK(istype(target, /mob/living) ? target : src, /mob/living/proc/finish_attack_overlay, target, old_icon, old_pix_x, old_pix_y), 4)
+	addtimer(CALLBACK(istype(target, /mob/living) ? target : src, /mob/living/proc/finish_attack_overlay, target, old_icon, old_pix_x, old_pix_y), duration)
 
 /mob/living/proc/finish_attack_overlay(atom/target, old_icon, old_pix_x, old_pix_y)
 	if(!attack_icon || !target)
@@ -465,62 +454,46 @@
 			clear_fullscreen("flash", 20)
 		return 1
 
-/datum/event_args/mob_movement
-	var/continue_movement = 1
-	var/moving = 0
-
-/mob/living/on_movement(moving = 1)
-	var/datum/event_args/mob_movement/ev_args = new /datum/event_args/mob_movement()
-	ev_args.moving = moving
-	if(event_movement)
-		event_movement.fire_event(src, ev_args)
-	return ev_args.continue_movement
-
-/mob/living/proc/add_movement_handler(datum/event_handler/handler)
-	if(isnull(event_movement))
-		event_movement = new /datum/event()
-	event_movement.add_handler(handler)
-
-/mob/living/proc/remove_movement_handler(datum/event_handler/handler)
-	event_movement.remove_handler(handler)
-
-/mob/living/proc/health_scan(mob/living/carbon/human/user, var/ignore_delay = FALSE, var/mode = 1, var/hud_mode = 1)
-	var/dat = ""
-	if((user.getBrainLoss() >= 60) && prob(50))
-		to_chat(user, SPAN_WARNING("You try to analyze the floor's vitals!"))
-		for(var/mob/O in viewers(src, null))
-			O.show_message(SPAN_WARNING("[user] has analyzed the floor's vitals!"), 1)
-		user.show_message(SPAN_NOTICE("Health Analyzer results for The floor:\n\t Overall Status: Healthy"), 1)
-		user.show_message(SPAN_NOTICE("\t Damage Specifics: [0]-[0]-[0]-[0]"), 1)
-		user.show_message(SPAN_NOTICE("Key: Suffocation/Toxin/Burns/Brute"), 1)
-		user.show_message(SPAN_NOTICE("Body Temperature: ???"), 1)
-		return
-	if(!(istype(user, /mob/living/carbon/human) || SSticker) && SSticker.mode.name != "monkey")
-		to_chat(usr, SPAN_WARNING("You don't have the dexterity to do this!"))
-		return
-	if(!ignore_delay && !skillcheck(user, SKILL_MEDICAL, SKILL_MEDICAL_MEDIC))
-		to_chat(user, SPAN_WARNING("You start fumbling around with [src]..."))
-		var/fduration = 60
-		if(skillcheck(user, SKILL_MEDICAL, SKILL_MEDICAL_DEFAULT))
-			fduration = 30
-		if(!do_after(user, fduration, INTERRUPT_NO_NEEDHAND, BUSY_ICON_FRIENDLY) || !user.Adjacent(src))
+/mob/living/proc/health_scan(mob/living/carbon/human/user, var/ignore_delay = FALSE, var/mode = 1, var/hud_mode = 1, var/alien = FALSE, var/do_checks = TRUE)
+	if(do_checks)
+		if((user.getBrainLoss() >= 60) && prob(50))
+			to_chat(user, SPAN_WARNING("You try to analyze the floor's vitals!"))
+			for(var/mob/O in viewers(src, null))
+				O.show_message(SPAN_WARNING("[user] has analyzed the floor's vitals!"), 1)
+			user.show_message(SPAN_NOTICE("Health Analyzer results for The floor:\n\t Overall Status: Healthy"), 1)
+			user.show_message(SPAN_NOTICE("\t Damage Specifics: [0]-[0]-[0]-[0]"), 1)
+			user.show_message(SPAN_NOTICE("Key: Suffocation/Toxin/Burns/Brute"), 1)
+			user.show_message(SPAN_NOTICE("Body Temperature: ???"), 1)
 			return
-	if(isXeno(src))
-		to_chat(user, SPAN_WARNING("[src] can't make sense of this creature."))
-		return
-	to_chat(user, SPAN_NOTICE("[user] has analyzed [src]'s vitals."))
-	playsound(src.loc, 'sound/items/healthanalyzer.ogg', 50)
+		if(HAS_TRAIT(src, TRAIT_FOREIGN_BIO) && !alien)
+			to_chat(user, SPAN_WARNING("ERROR: Unknown biology detected."))
+			return
+		if(!(ishuman(user) || SSticker?.mode.name == "monkey"))
+			to_chat(usr, SPAN_WARNING("You don't have the dexterity to do this!"))
+			return
+		if(!ignore_delay && !skillcheck(user, SKILL_MEDICAL, SKILL_MEDICAL_MEDIC))
+			to_chat(user, SPAN_WARNING("You start fumbling around with [src]..."))
+			var/fduration = 60
+			if(skillcheck(user, SKILL_MEDICAL, SKILL_MEDICAL_DEFAULT))
+				fduration = 30
+			if(!do_after(user, fduration, INTERRUPT_NO_NEEDHAND, BUSY_ICON_FRIENDLY) || !user.Adjacent(src))
+				return
+		if(isXeno(src))
+			to_chat(user, SPAN_WARNING("[src] can't make sense of this creature."))
+			return
+		to_chat(user, SPAN_NOTICE("[user] has analyzed [src]'s vitals."))
+		playsound(src.loc, 'sound/items/healthanalyzer.ogg', 50)
+		// Doesn't work on non-humans
+		if(!istype(src, /mob/living/carbon))
+			user.show_message("\nHealth Analyzer results for ERROR:\n\t Overall Status: ERROR")
+			user.show_message("\tType: [SET_CLASS("Oxygen", INTERFACE_BLUE)]-[SET_CLASS("Toxin", INTERFACE_GREEN)]-[SET_CLASS("Burns", INTERFACE_ORANGE)]-[SET_CLASS("Brute", INTERFACE_RED)]", 1)
+			user.show_message("\tDamage: [SET_CLASS("?", INTERFACE_BLUE)] - [SET_CLASS("?", INTERFACE_GREEN)] - [SET_CLASS("?", INTERFACE_ORANGE)] - [SET_CLASS("?", INTERFACE_RED)]")
+			user.show_message(SPAN_NOTICE("Body Temperature: [src.bodytemperature-T0C]&deg;C ([src.bodytemperature*1.8-459.67]&deg;F)"), 1)
+			user.show_message(SPAN_DANGER("<b>Warning: Blood Level ERROR: --% --cl.Type: ERROR"))
+			user.show_message(SPAN_NOTICE("Subject's pulse: [SET_CLASS("-- bpm", INTERFACE_RED)]"))
+			return
 
-	// Doesn't work on non-humans and synthetics
-	if(!istype(src, /mob/living/carbon))
-		user.show_message("\nHealth Analyzer results for ERROR:\n\t Overall Status: ERROR")
-		user.show_message("\tType: [SET_CLASS("Oxygen", INTERFACE_BLUE)]-[SET_CLASS("Toxin", INTERFACE_GREEN)]-[SET_CLASS("Burns", INTERFACE_ORANGE)]-[SET_CLASS("Brute", INTERFACE_RED)]", 1)
-		user.show_message("\tDamage: [SET_CLASS("?", INTERFACE_BLUE)] - [SET_CLASS("?", INTERFACE_GREEN)] - [SET_CLASS("?", INTERFACE_ORANGE)] - [SET_CLASS("?", INTERFACE_RED)]")
-		user.show_message(SPAN_NOTICE("Body Temperature: [src.bodytemperature-T0C]&deg;C ([src.bodytemperature*1.8-459.67]&deg;F)"), 1)
-		user.show_message(SPAN_DANGER("<b>Warning: Blood Level ERROR: --% --cl.Type: ERROR"))
-		user.show_message(SPAN_NOTICE("Subject's pulse: [SET_CLASS("-- bpm", INTERFACE_RED)]"))
-		return
-
+	var/dat = ""
 	// Calculate damage amounts
 	var/fake_oxy = max(rand(1,40), src.getOxyLoss(), (300 - (src.getToxLoss() + src.getFireLoss() + src.getBruteLoss())))
 	var/OX = src.getOxyLoss() > 50 	? 	"<b>[src.getOxyLoss()]</b>" 		: src.getOxyLoss()
@@ -569,6 +542,8 @@
 					show_limb = TRUE
 				else
 					org_name += " (Cybernetic)"
+			else if(org.status & LIMB_SYNTHSKIN)
+				org_name += " (Synthskin)"
 
 			var/burn_info = org.burn_dam > 0 ? "<span class='scannerburnb'> [round(org.burn_dam)]</span>" : "<span class='scannerburn'>0</span>"
 			burn_info += "[burn_treated ? "" : "{B}"]"
@@ -584,7 +559,7 @@
 				org_bleed = "<span class='scannerb'>(Bleeding)</span>"
 
 			var/org_advice = ""
-			if(!skillcheck(user, SKILL_MEDICAL, SKILL_MEDICAL_MEDIC))
+			if(do_checks && !skillcheck(user, SKILL_MEDICAL, SKILL_MEDICAL_MEDIC))
 				switch(org.name)
 					if("head")
 						fracture_info = ""
@@ -662,7 +637,7 @@
 				var/datum/reagent/R = A
 				reagents_in_body["[R.id]"] = R.volume
 				if(R.flags & REAGENT_SCANNABLE)
-					reagentdata["[R.id]"] = "[R.overdose != 0 && R.volume >= R.overdose && !(R.flags & REAGENT_CANNOT_OVERDOSE) ? SPAN_WARNING("<b>OD: </b>") : ""] <font color='#9773C4'><b>[round(R.volume, 1)]u [R.name]</b></font>"
+					reagentdata["[R.id]"] = "[R.overdose != 0 && R.volume > R.overdose && !(R.flags & REAGENT_CANNOT_OVERDOSE) ? SPAN_WARNING("<b>OD: </b>") : ""] <font color='#9773C4'><b>[round(R.volume, 1)]u [R.name]</b></font>"
 				else
 					unknown++
 			if(reagentdata.len)

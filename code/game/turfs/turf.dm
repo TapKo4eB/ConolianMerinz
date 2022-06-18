@@ -29,10 +29,10 @@
 	icon = 'icons/turf/floors/floors.dmi'
 	var/intact_tile = 1 //used by floors to distinguish floor with/without a floortile(e.g. plating).
 	var/can_bloody = TRUE //Can blood spawn on this turf?
-	var/list/linked_pylons = list()
+	var/list/linked_pylons
 	var/obj/effect/alien/weeds/weeds
 
-	var/list/datum/automata_cell/autocells = list()
+	var/list/datum/automata_cell/autocells
 	/**
 	 * Associative list of cleanable types (strings) mapped to
 	 * cleanable objects
@@ -41,13 +41,16 @@
 	 * on the turf, it can simply be for handling how the
 	 * overlays or placing new cleanables of the same type work
 	 */
-	var/list/cleanables
+	var/list/obj/effect/decal/cleanable/cleanables
 
 	var/list/baseturfs = /turf/baseturf_bottom
 	var/changing_turf = FALSE
 	var/chemexploded = FALSE // Prevents explosion stacking
 
 	var/flags_turf = NO_FLAGS
+
+	/// Whether we've broken through the ceiling yet
+	var/ceiling_debrised = FALSE
 
 /turf/Initialize(mapload)
 	SHOULD_CALL_PARENT(FALSE) // this doesn't parent call for optimisation reasons
@@ -428,8 +431,12 @@
 	return
 
 /turf/proc/ceiling_debris(var/size = 1) //debris falling in response to airstrikes, etc
+	if(ceiling_debrised)
+		return
+
 	var/area/A = get_area(src)
-	if(!A.ceiling) return
+	if(!A.ceiling)
+		return
 
 	var/amount = size
 	var/spread = round(sqrt(size)*1.5)
@@ -468,35 +475,40 @@
 				for(var/i=1, i<=amount, i++)
 					new /obj/item/stack/sheet/metal(pick(turfs))
 					new /obj/item/ore(pick(turfs))
+	ceiling_debrised = TRUE
 
 /turf/proc/ceiling_desc(mob/user)
 
-	if (linked_pylons.len > 0)
+	if(LAZYLEN(linked_pylons))
 		switch(get_pylon_protection_level())
 			if(TURF_PROTECTION_MORTAR)
-				to_chat(user, "The ceiling above is made of light resin.")
+				to_chat(user, "The ceiling above is made of light resin. Doesn't look like it's going to stop much.")
 				return
 			if(TURF_PROTECTION_CAS)
-				to_chat(user, "The ceiling above is made of resin.")
+				to_chat(user, "The ceiling above is made of resin. Seems about as strong as a cavern roof.")
 				return
 			if(TURF_PROTECTION_OB)
-				to_chat(user, "The ceiling above is made of thick resin. Nothing is getting through that")
+				to_chat(user, "The ceiling above is made of thick resin. Nothing is getting through that.")
 				return
 
 	var/area/A = get_area(src)
 	switch(A.ceiling)
 		if(CEILING_GLASS)
-			to_chat(user, "The ceiling above is glass.")
+			to_chat(user, "The ceiling above is glass. That's not going stop anything.")
 		if(CEILING_METAL)
-			to_chat(user, "The ceiling above is metal.")
-		if(CEILING_UNDERGROUND_ALLOW_CAS, CEILING_UNDERGROUND_BLOCK_CAS)
-			to_chat(user, "It is underground. The cavern roof lies above.")
-		if(CEILING_UNDERGROUND_METAL_ALLOW_CAS, CEILING_UNDERGROUND_METAL_BLOCK_CAS)
-			to_chat(user, "It is underground. The ceiling above is metal.")
+			to_chat(user, "The ceiling above is metal. You can't see through it with a camera from above, but that's not going to stop anything.")
+		if(CEILING_UNDERGROUND_ALLOW_CAS)
+			to_chat(user, "It is underground. A thin cavern roof lies above. Doesn't look like it's going to stop much.")
+		if(CEILING_UNDERGROUND_BLOCK_CAS)
+			to_chat(user, "It is underground. The cavern roof lies above. Can probably stop most ordnance.")
+		if(CEILING_UNDERGROUND_METAL_ALLOW_CAS)
+			to_chat(user, "It is underground. The ceiling above is made of thin metal. Doesn't look like it's going to stop much.")
+		if(CEILING_UNDERGROUND_METAL_BLOCK_CAS)
+			to_chat(user, "It is underground. The ceiling above is made of metal.  Can probably stop most ordnance.")
 		if(CEILING_DEEP_UNDERGROUND)
-			to_chat(user, "It is deep underground. The cavern roof lies above.")
+			to_chat(user, "It is deep underground. The cavern roof lies above. Nothing is getting through that.")
 		if(CEILING_DEEP_UNDERGROUND_METAL)
-			to_chat(user, "It is deep underground. The ceiling above is metal.")
+			to_chat(user, "It is deep underground. The ceiling above is made of thick metal. Nothing is getting through that.")
 		if(CEILING_REINFORCED_METAL)
 			to_chat(user, "The ceiling above is heavy reinforced metal. Nothing is getting through that.")
 		else
@@ -634,7 +646,7 @@
 			if(P.protection_level > protection_level)
 				protection_level = P.protection_level
 		else
-			linked_pylons -= pylon
+			LAZYREMOVE(linked_pylons, pylon)
 
 	return protection_level
 
@@ -674,14 +686,12 @@ GLOBAL_LIST_INIT(blacklisted_automated_baseturfs, typecacheof(list(
 			return newT
 		if(!length(baseturfs))
 			baseturfs = list(baseturfs)
-		if(!istype(src, /turf/closed))
-			baseturfs += type
+		insert_self_into_baseturfs()
 		baseturfs += new_baseturfs
 		return ChangeTurf(fake_turf_type, null, flags)
 	if(!length(baseturfs))
 		baseturfs = list(baseturfs)
-	if(!istype(src, /turf/closed))
-		baseturfs += type
+	insert_self_into_baseturfs()
 	var/turf/change_type
 	if(length(new_baseturfs))
 		change_type = new_baseturfs[new_baseturfs.len]
@@ -691,6 +701,9 @@ GLOBAL_LIST_INIT(blacklisted_automated_baseturfs, typecacheof(list(
 	else
 		change_type = new_baseturfs
 	return ChangeTurf(change_type, null, flags)
+
+/turf/proc/insert_self_into_baseturfs()
+	baseturfs += type
 
 /// Remove all atoms except observers, landmarks, docking ports - clearing up the turf contents
 /turf/proc/empty(turf_type=/turf/open/space, baseturf_type, list/ignore_typecache, flags)

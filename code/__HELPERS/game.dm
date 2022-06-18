@@ -23,7 +23,7 @@
 
 	return heard
 
-// more efficient get_dist, doesn't sqrt
+// more efficient get_dist, doesn't sqrt test
 
 /proc/get_dist_sqrd(atom/Loc1 as turf|mob|obj, atom/Loc2 as turf|mob|obj)
 	var/dx = abs(Loc1.x - Loc2.x)
@@ -84,6 +84,17 @@
 		if(isobj(A) || ismob(A))
 			L |= recursive_mob_check(A, L, recursion_limit - 1, client_check, sight_check, include_radio)
 	return L
+
+/// Will attempt to find what's holding this item if it's being contained by something, ie if it's in a satchel held by a human, this'll return the human
+/proc/recursive_holder_check(var/obj/item/held_item, var/recursion_limit = 3)
+	if(recursion_limit <= 0)
+		return held_item
+	if(isturf(held_item.loc))
+		return held_item
+	if(isturf(held_item.loc.loc))
+		return held_item.loc
+	recursion_limit--
+	return recursive_holder_check(held_item.loc, recursion_limit)
 
 // The old system would loop through lists for a total of 5000 per function call, in an empty server.
 // This new system will loop at around 1000 in an empty server.
@@ -228,7 +239,7 @@ proc/isInSight(var/atom/A, var/atom/B)
 	for(var/i in GLOB.observer_list)
 		var/mob/dead/observer/O = i
 		// Jobban check
-		if(!O.client || !O.client.prefs || !(O.client.prefs.be_special & BE_ALIEN_AFTER_DEATH) || jobban_isbanned(O, "Alien"))
+		if(!O.client || !O.client.prefs || !(O.client.prefs.be_special & BE_ALIEN_AFTER_DEATH) || jobban_isbanned(O, JOB_XENOMORPH))
 			continue
 
 		//players that can still be revived are skipped
@@ -279,3 +290,18 @@ proc/isInSight(var/atom/A, var/atom/B)
 		min(list_y),
 		max(list_x),
 		max(list_y))
+
+// makes peoples byond icon flash on the taskbar
+/proc/window_flash(client/C)
+	if(ismob(C))
+		var/mob/M = C
+		if(M.client)
+			C = M.client
+	if(!C)
+		return
+	winset(C, "mainwindow", "flash=5")
+
+/proc/flash_clients()
+	for(var/client/C as anything in GLOB.clients)
+		if(C.prefs?.toggles_flashing & FLASH_ROUNDSTART)
+			window_flash(C)

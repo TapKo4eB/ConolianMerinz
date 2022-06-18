@@ -132,7 +132,7 @@
 					if(!current_mag.chamber_closed) // If the chamber is open, we close it
 						unload(user)
 			else
-				to_chat(user, SPAN_WARNING("That [magazine] doesn't fit!"))
+				to_chat(user, SPAN_WARNING("\The [magazine] doesn't fit!"))
 
 /obj/item/weapon/gun/revolver/unload(mob/user)
 	if(flags_gun_features & GUN_BURST_FIRING) return
@@ -169,12 +169,12 @@
 			unload(null)
 
 /obj/item/weapon/gun/revolver/load_into_chamber(mob/user)
-//		if(active_attachable) active_attachable = null
 	if(ready_in_chamber())
 		return in_chamber
 	rotate_cylinder() //If we fail to return to chamber the round, we just move the firing pin some.
 
 /obj/item/weapon/gun/revolver/reload_into_chamber(mob/user)
+	in_chamber = null
 	if(current_mag)
 		current_mag.chamber_contents[current_mag.chamber_position] = "blank" //We shot the bullet.
 		rotate_cylinder()
@@ -232,7 +232,7 @@
 		if(user.get_inactive_hand())
 			user.visible_message("[user] catches [src] with the same hand!", SPAN_NOTICE("You catch [src] as it spins in to your hand!"), null, 3)
 		else
-			user.visible_message("[user] catches [src] with his other hand!", SPAN_NOTICE("You snatch [src] with your other hand! Awesome!"), null, 3)
+			user.visible_message("[user] catches [src] with \his other hand!", SPAN_NOTICE("You snatch [src] with your other hand! Awesome!"), null, 3)
 			user.temp_drop_inv_item(src)
 			user.put_in_inactive_hand(src)
 			user.swap_hand()
@@ -328,6 +328,9 @@
 		return 0
 	else
 		return ..()
+
+/obj/item/weapon/gun/revolver/m44/mp //No differences (yet) beside spawning with marksman ammo loaded
+	current_mag = /obj/item/ammo_magazine/internal/revolver/m44/marksman
 
 /obj/item/weapon/gun/revolver/m44/custom //accuracy and damage bonus
 	name = "\improper M44 custom combat revolver"

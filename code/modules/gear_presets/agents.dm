@@ -24,7 +24,7 @@
 	utility_under = list(/obj/item/clothing/under/liaison_suit/outing)
 	utility_hat = list()
 	utility_gloves = list()
-	utility_shoes = list(/obj/item/clothing/shoes)
+	utility_shoes = list(/obj/item/clothing/shoes/laceup)
 	utility_extra = list(/obj/item/clothing/under/liaison_suit/suspenders)
 
 	service_under = list(/obj/item/clothing/under/liaison_suit)
@@ -66,7 +66,7 @@
 	)
 	assignment = JOB_UPP_REPRESENTATIVE
 	rank = JOB_UPP_REPRESENTATIVE
-	paygrade = "Representative"
+	paygrade = "CR"
 	role_comm_title = "UPP Rep."
 	skills = /datum/skills/civilian/survivor
 
@@ -99,7 +99,7 @@
 	)
 	assignment = JOB_RESS_REPRESENTATIVE
 	rank = JOB_RESS_REPRESENTATIVE
-	paygrade = "Representative"
+	paygrade = "CR"
 	role_comm_title = "RESS Rep."
 	skills = /datum/skills/civilian/survivor
 

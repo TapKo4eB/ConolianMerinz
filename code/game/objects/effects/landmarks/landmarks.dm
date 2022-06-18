@@ -26,6 +26,19 @@
 	GLOB.newplayer_start -= src
 	return ..()
 
+/obj/effect/landmark/observer_start
+	name = "Observer Landmark"
+	icon = 'icons/mob/mob.dmi'
+	icon_state = "ghost1"
+
+/obj/effect/landmark/observer_start/Initialize()
+	. = ..()
+	GLOB.observer_starts += src
+
+/obj/effect/landmark/observer_start/Destroy()
+	GLOB.observer_starts -= src
+	return ..()
+
 /obj/effect/landmark/ert_spawns/Initialize(mapload, ...)
 	. = ..()
 	LAZYADD(GLOB.ert_spawns[type], src)
@@ -44,7 +57,7 @@
 /obj/effect/landmark/nightmare/Initialize(mapload, ...)
 	. = ..()
 	if(!insert_tag) return
-	if(!replace && GLOB.nightmare_landmarks[insert_tag]) 
+	if(!replace && GLOB.nightmare_landmarks[insert_tag])
 		return
 	GLOB.nightmare_landmarks[insert_tag] = get_turf(src)
 /obj/effect/landmark/nightmare/Destroy()
@@ -218,17 +231,113 @@
 /obj/effect/landmark/start/AISloc
 	name = "AI"
 
-/obj/effect/landmark/start/whiskey
-	icon = 'icons/old_stuff/mark.dmi'
-	icon_state = "spawn_shuttle"
 
-/obj/effect/landmark/start/whiskey/Initialize(mapload, ...)
-	. = ..()
-	GLOB.whiskey_start += src
+//****************************************** MARINE ROLES ************************************************/
+/obj/effect/landmark/start/whiskey //category moment, indeed
 
-/obj/effect/landmark/start/whiskey/Destroy()
-	GLOB.whiskey_start -= src
-	return ..()
+/obj/effect/landmark/start/whiskey/marine
+	icon_state = "marine_spawn"
+	job = /datum/job/marine/standard/whiskey
+
+/obj/effect/landmark/start/whiskey/leader
+	icon_state = "leader_spawn"
+	job = /datum/job/marine/leader/whiskey
+
+/obj/effect/landmark/start/whiskey/rto
+	icon_state = "rto_spawn"
+	job = /datum/job/marine/rto //Need to create a WO variant in the future
+
+/obj/effect/landmark/start/whiskey/spec
+	icon_state = "spec_spawn"
+	job = /datum/job/marine/specialist/whiskey
+
+/obj/effect/landmark/start/whiskey/smartgunner
+	icon_state = "smartgunner_spawn"
+	job = /datum/job/marine/smartgunner/whiskey
+
+/obj/effect/landmark/start/whiskey/medic
+	icon_state = "medic_spawn"
+	job = /datum/job/marine/medic/whiskey
+
+/obj/effect/landmark/start/whiskey/engineer
+	icon_state = "engi_spawn"
+	job = /datum/job/marine/engineer/whiskey
+
+//****************************************** LOGISTICAL ROLES ************************************************/
+
+/obj/effect/landmark/start/whiskey/requisition
+	job = /datum/job/logistics/requisition/whiskey
+
+/obj/effect/landmark/start/whiskey/cargo
+	job = /datum/job/logistics/cargo/whiskey
+
+/obj/effect/landmark/start/whiskey/engineering
+	job = /datum/job/logistics/engineering/whiskey
+
+/obj/effect/landmark/start/whiskey/maint
+	job = /datum/job/logistics/tech/maint/whiskey
+
+/obj/effect/landmark/start/whiskey/tech
+	job = /datum/job/logistics/tech //Need to create a WO variant in the future
+
+//****************************************** MILITARY POLICE- HONOR-GUARD ************************************************/
+/obj/effect/landmark/start/whiskey/warrant
+	job = /datum/job/command/warrant/whiskey
+
+/obj/effect/landmark/start/whiskey/police
+	job = /datum/job/command/police/whiskey
+
+/obj/effect/landmark/start/whiskey/warden
+	job = /datum/job/command/warden //Need to create a WO variant in the future
+
+//****************************************** CIC - COMMAND ************************************************/
+
+/obj/effect/landmark/start/whiskey/commander
+	job = /datum/job/command/commander/whiskey
+
+/obj/effect/landmark/start/whiskey/executive
+	job = /datum/job/command/executive/whiskey
+
+/obj/effect/landmark/start/whiskey/bridge
+	job = /datum/job/command/bridge/whiskey
+
+//****************************************** AUXILIARY - SUPPORT ************************************************/
+/obj/effect/landmark/start/whiskey/synthetic
+	job = /datum/job/civilian/synthetic/whiskey
+
+/obj/effect/landmark/start/whiskey/senior
+	job = /datum/job/command/senior  //Need to create a WO variant in the future
+
+/obj/effect/landmark/start/whiskey/pilot
+	job = /datum/job/command/pilot/whiskey
+
+/obj/effect/landmark/start/whiskey/tank_crew
+	job = /datum/job/command/tank_crew/whiskey
+
+/obj/effect/landmark/start/whiskey/intel
+	job = /datum/job/command/warden //Need to create a WO variant in the future,  IO's dont exist in code anymore?
+
+/obj/effect/landmark/start/whiskey/chef
+	job = /datum/job/civilian/chef //Need to create a WO variant in the future
+
+//****************************************** CIVILLIANS & MEDBAY ************************************************/
+
+/obj/effect/landmark/start/whiskey/liaison
+	job = /datum/job/civilian/liaison/whiskey
+
+/obj/effect/landmark/start/whiskey/cmo
+	job = /datum/job/civilian/professor/whiskey
+
+/obj/effect/landmark/start/whiskey/researcher
+	job = /datum/job/civilian/researcher/whiskey
+
+/obj/effect/landmark/start/whiskey/doctor
+	job = /datum/job/civilian/doctor/whiskey
+
+/obj/effect/landmark/start/whiskey/nurse
+	job = /datum/job/civilian/nurse //Need to create a WO variant in the future
+
+//****************************************** LATE JOIN ************************************************/
 
 /obj/effect/landmark/late_join
 	name = "late join"

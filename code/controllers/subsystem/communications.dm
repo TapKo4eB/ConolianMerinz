@@ -64,41 +64,7 @@
 /*
 Frequency range: 1200 to 1600
 Radiochat range: 1441 to 1489 (most devices refuse to be tune to other frequency, even during mapmaking)
-
-Radio:
-1459 - standard radio chat
-1351 - Science
-1353 - Command
-1355 - Medical
-1357 - Engineering
-1359 - Security
-1341 - death squad
-1443 - Confession Intercom
-1347 - Cargo techs
-
-Devices:
-1451 - tracking implant
-1457 - RSD default
-
-On the map:
-1311 for prison shuttle console (in fact, it is not used)
-1435 for status displays
-1437 for atmospherics/fire alerts
-1438 for engine components
-1439 for air pumps, air scrubbers, atmo control
-1441 for atmospherics - supply tanks
-1443 for atmospherics - distribution loop/mixed air tank
-1445 for bot nav beacons
-1447 for mulebot, secbot and ed209 control
-1449 for airlock controls, electropack, magnets
-1451 for toxin lab access
-1453 for engineering access
-1455 for AI access
 */
-//var/const/COMM_FREQ = 1353
-//var/const/SCI_FREQ = 1351
-//var/const/SUP_FREQ = 1347
-
 
 //Misc channels
 var/const/YAUT_FREQ 	= 1214
@@ -107,9 +73,11 @@ var/const/WY_FREQ 		= 1236
 var/const/DUT_FREQ 		= 1340
 var/const/ERT_FREQ 		= 1342
 var/const/RUS_FREQ		= 1338
+var/const/CLF_FREQ		= 1339
 var/const/DTH_FREQ 		= 1344
 var/const/AI_FREQ 		= 1447
 var/const/HC_FREQ		= 1240
+var/const/CCT_FREQ		= 1350
 
 //Ship department channels
 var/const/COMM_FREQ 	= 1353
@@ -128,13 +96,14 @@ var/const/ALPHA_FREQ 	= 1449
 var/const/BRAVO_FREQ 	= 1451
 var/const/CHARLIE_FREQ 	= 1453
 var/const/DELTA_FREQ 	= 1455
-var/const/ECHO_FREQ 	= 1457
+var/const/ECHO_FREQ 	= 1456
+var/const/CRYO_FREQ		= 1457
+var/const/MARSOC_FREQ	= 1241
 
 var/const/PUB_FREQ 		= 1461
 
 //Civilian channels
-var/const/CIV_GEN_FREQ 	= 1469
-var/const/CIV_COMM_FREQ = 1471
+var/const/COLONY_FREQ	= 1469
 
 var/list/radiochannels = list(
 	"Response Team" = ERT_FREQ,
@@ -143,8 +112,10 @@ var/list/radiochannels = list(
 	"WY PMC" 		= PMC_FREQ,
 	"SpecOps" 		= DTH_FREQ,
 	"UPP" 			= RUS_FREQ,
-	"Colonist"		= DUT_FREQ,
+	"CLF"			= CLF_FREQ,
+	"DD"			= DUT_FREQ,
 	"HighCom"		= HC_FREQ,
+	"CCT"			= CCT_FREQ, // HvH JTAC Equiv
 
 	"Almayer"		= PUB_FREQ,
 	"Command"		= COMM_FREQ,
@@ -155,26 +126,28 @@ var/list/radiochannels = list(
 	"JTAC"			= JTAC_FREQ,
 	"Tactics" 		= TACTICS_FREQ,
 
-	SQUAD_NAME_1	= ALPHA_FREQ,
-	SQUAD_NAME_2	= BRAVO_FREQ,
-	SQUAD_NAME_3	= CHARLIE_FREQ,
-	SQUAD_NAME_4	= DELTA_FREQ,
-	SQUAD_NAME_5	= ECHO_FREQ,
+	SQUAD_MARINE_1	= ALPHA_FREQ,
+	SQUAD_MARINE_2	= BRAVO_FREQ,
+	SQUAD_MARINE_3	= CHARLIE_FREQ,
+	SQUAD_MARINE_4	= DELTA_FREQ,
+	SQUAD_MARINE_5	= ECHO_FREQ,
+	SQUAD_MARINE_CRYO		= CRYO_FREQ,
+	SQUAD_MARSOC	= MARSOC_FREQ,
+
 	"Alamo"			= DS1_FREQ,
 	"Normandy"		= DS2_FREQ,
 
-	"Common"		= CIV_GEN_FREQ,
-	"Civ Command"	= CIV_COMM_FREQ
+	"Colony"		= COLONY_FREQ
 )
 
 // central command channels, i.e deathsquid & response teams
-var/list/CENT_FREQS = list(ERT_FREQ, DTH_FREQ, PMC_FREQ, DUT_FREQ, YAUT_FREQ, HC_FREQ)
+#define CENT_FREQS list(ERT_FREQ, DTH_FREQ, PMC_FREQ, DUT_FREQ, YAUT_FREQ, HC_FREQ, MARSOC_FREQ)
 
 // Antag channels, i.e. Syndicate
-var/list/ANTAG_FREQS = list(RUS_FREQ)
+#define ANTAG_FREQS list()
 
-//Depts - just used for colors in headset.dm
-var/list/DEPT_FREQS = list(MED_FREQ, ENG_FREQ, SEC_FREQ, ERT_FREQ, DTH_FREQ, CIV_GEN_FREQ, CIV_COMM_FREQ, ALPHA_FREQ, BRAVO_FREQ,CHARLIE_FREQ, DELTA_FREQ, SUP_FREQ, JTAC_FREQ, TACTICS_FREQ, WY_FREQ)
+//Depts - used for colors in headset.dm, as well as deciding what the marine comms tower can listen into
+#define DEPT_FREQS list(COMM_FREQ, MED_FREQ, ENG_FREQ, SEC_FREQ, ALPHA_FREQ, BRAVO_FREQ, CHARLIE_FREQ, DELTA_FREQ, ECHO_FREQ, CRYO_FREQ, SUP_FREQ, JTAC_FREQ, TACTICS_FREQ, WY_FREQ)
 
 #define TRANSMISSION_WIRE	0
 #define TRANSMISSION_RADIO	1
@@ -209,6 +182,30 @@ SUBSYSTEM_DEF(radio)
 	//Keeping a list of tcomm machines to see which Z level has comms
 	var/list/tcomm_machines_ground = list()
 	var/list/tcomm_machines_almayer = list()
+
+	var/static/list/freq_to_span = list(
+		"[COMM_FREQ]" = "comradio",
+		"[AI_FREQ]" = "airadio",
+		"[SEC_FREQ]" = "secradio",
+		"[ENG_FREQ]" = "engradio",
+		"[MED_FREQ]" = "medradio",
+		"[SUP_FREQ]" = "supradio",
+		"[JTAC_FREQ]" = "jtacradio",
+		"[TACTICS_FREQ]" = "intelradio",
+		"[WY_FREQ]" = "wyradio",
+		"[RUS_FREQ]" = "syndradio",
+		"[CLF_FREQ]" = "clfradio",
+		"[CCT_FREQ]" = "cctradio",
+		"[ALPHA_FREQ]" = "alpharadio",
+		"[BRAVO_FREQ]" = "bravoradio",
+		"[CHARLIE_FREQ]" = "charlieradio",
+		"[DELTA_FREQ]" = "deltaradio",
+		"[ECHO_FREQ]" = "echoradio",
+		"[CRYO_FREQ]" = "cryoradio",
+		"[MARSOC_FREQ]" = "hcradio",
+		"[HC_FREQ]" = "hcradio",
+		"[COLONY_FREQ]" = "deptradio",
+	)
 
 /datum/controller/subsystem/radio/proc/add_object(obj/device as obj, var/new_frequency as num, var/filter = null as text|null)
 	var/f_text = num2text(new_frequency)
@@ -246,15 +243,21 @@ SUBSYSTEM_DEF(radio)
 
 	return frequency
 
-/datum/controller/subsystem/radio/proc/get_available_tcomm_zs()
+/datum/controller/subsystem/radio/proc/get_available_tcomm_zs(var/frequency)
 	//Returns lists of Z levels that have comms
 	var/list/target_zs = SSmapping.levels_by_trait(ZTRAIT_ADMIN)
-	if(tcomm_machines_ground.len > 0)
-		target_zs += SSmapping.levels_by_trait(ZTRAIT_GROUND)
-	if(tcomm_machines_almayer.len > 0)
-		target_zs += SSmapping.levels_by_trait(ZTRAIT_MARINE_MAIN_SHIP)
-		target_zs += SSmapping.levels_by_trait(ZTRAIT_LOWORBIT)
-
+	var/list/extra_zs = SSmapping.levels_by_trait(ZTRAIT_AWAY)
+	if(length(extra_zs))
+		target_zs += extra_zs
+	for(var/obj/structure/machinery/telecomms/T as anything in tcomm_machines_ground)
+		if(!length(T.freq_listening) || (frequency in T.freq_listening))
+			target_zs += SSmapping.levels_by_trait(ZTRAIT_GROUND)
+			break
+	for(var/obj/structure/machinery/telecomms/T as anything in tcomm_machines_almayer)
+		if(!length(T.freq_listening) || (frequency in T.freq_listening))
+			target_zs += SSmapping.levels_by_trait(ZTRAIT_MARINE_MAIN_SHIP)
+			target_zs += SSmapping.levels_by_trait(ZTRAIT_LOWORBIT)
+			break
 	SEND_SIGNAL(src, COMSIG_SSRADIO_GET_AVAILABLE_TCOMMS_ZS, target_zs)
 	return target_zs
 
@@ -267,6 +270,18 @@ SUBSYSTEM_DEF(radio)
 /datum/controller/subsystem/radio/proc/remove_tcomm_machine(var/obj/machine)
 	tcomm_machines_ground -= machine
 	tcomm_machines_almayer -= machine
+
+/datum/controller/subsystem/radio/proc/get_frequency_span(var/frequency)
+	var/freq_span = freq_to_span["[frequency]"]
+	if(freq_span)
+		return freq_span
+	if(frequency in ANTAG_FREQS)
+		return "syndradio"
+	if(frequency in CENT_FREQS)
+		return "centradio"
+	if(frequency in DEPT_FREQS)
+		return "deptradio"
+	return "radio"
 
 /datum/radio_frequency
 	var/frequency as num

@@ -36,12 +36,12 @@ most of them are tied into map-placed objects. This should be reworked in the fu
 #define ACCESS_MARINE_SEA           29
 #define ACCESS_MARINE_KITCHEN       30
 #define ACCESS_MARINE_CAPTAIN		31
-
 #define ACCESS_MARINE_RTO_PREP 		32
-#define ACCESS_MARINE_RTO_DROP 		33
 
 #define ACCESS_MARINE_MAINT			34
 #define ACCESS_MARINE_OT			35
+
+#define ACCESS_MARINE_SYNTH			36
 
 //Surface access levels
 #define ACCESS_CIVILIAN_PUBLIC 		100
@@ -60,4 +60,5 @@ most of them are tied into map-placed objects. This should be reworked in the fu
 #define ACCESS_WY_PMC_WHITE			184
 #define ACCESS_WY_CORPORATE 		200
 #define ACCESS_ILLEGAL_PIRATE 		201
+#define ACCESS_WY_CORPORATE_DS		202
 //=================================================

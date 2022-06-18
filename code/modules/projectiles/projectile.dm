@@ -141,12 +141,17 @@
 	src.is_shrapnel = is_shrapnel
 	if(!loc)
 		if (!is_shrapnel)
-			forceMove(get_turf(F))
+			var/move_turf = get_turf(F)
+			if(move_turf)
+				forceMove(move_turf)
 		else
-			forceMove(get_turf(S))
+			var/move_turf = get_turf(S)
+			if(move_turf)
+				forceMove(move_turf)
 	starting = get_turf(src)
 	if(starting != loc)
 		forceMove(starting) //Put us on the turf, if we're not.
+
 	target_turf = get_turf(target)
 	if(!target_turf || !starting || target_turf == starting) //This shouldn't happen, but it can.
 		qdel(src)
@@ -440,7 +445,7 @@
 	if(SEND_SIGNAL(src, COMSIG_BULLET_PRE_HANDLE_MOB, L, .) & COMPONENT_BULLET_PASS_THROUGH)
 		return FALSE
 
-	if(L in permutated)
+	if((MODE_HAS_TOGGLEABLE_FLAG(MODE_NO_ATTACK_DEAD) && L.stat == DEAD) || (L in permutated))
 		return FALSE
 	permutated |= L
 
@@ -452,6 +457,8 @@
 
 		if(original != L || hit_roll > hit_chance-base_miss_chance[def_zone]-20)	// If hit roll is high or the firer wasn't aiming at this mob, we still hit but now we might hit the wrong body part
 			def_zone = rand_zone()
+		else
+			SEND_SIGNAL(firer, COMSIG_DIRECT_BULLET_HIT, L)
 		hit_chance -= base_miss_chance[def_zone] // Reduce accuracy based on spot.
 
 		#if DEBUG_HIT_CHANCE
@@ -473,7 +480,7 @@
 				ammo.on_hit_turf(get_turf(src),src)
 				T.bullet_act(src)
 			else if(L && L.loc && (L.bullet_act(src) != -1))
-				ammo.on_hit_mob(L,src)
+				ammo.on_hit_mob(L,src, firer)
 
 				// If we are a xeno shooting something
 				if (istype(ammo, /datum/ammo/xeno) && isXeno(firer) && L.stat != DEAD && ammo.apply_delegate)
@@ -495,6 +502,13 @@
 			if(ammo.sound_miss) playsound_client(L.client, ammo.sound_miss, get_turf(L), 75, TRUE)
 			L.visible_message(SPAN_AVOIDHARM("[src] misses [L]!"),
 				SPAN_AVOIDHARM("[src] narrowly misses you!"), null, 4, CHAT_TYPE_TAKING_HIT)
+			log_attack("[src] narrowly missed [key_name(L)]")
+
+			var/mob/living/carbon/shotby = firer
+			if(istype(shotby))
+				L.attack_log += "[time_stamp()]\] [src], fired by [key_name(firer)], narrowly missed [key_name(L)]"
+				shotby.attack_log += "[time_stamp()]\] [src], fired by [key_name(shotby)], narrowly missed [key_name(L)]"
+
 
 		#if DEBUG_HIT_CHANCE
 		to_world(SPAN_DEBUG("([L]) Missed."))
@@ -762,6 +776,11 @@
 			if(shooter_human.faction == faction && !(ammo_flags & AMMO_ALWAYS_FF))
 				. -= FF_hit_evade
 
+			if(ammo_flags & AMMO_MP)
+				if(criminal)
+					. += FF_hit_evade
+				else
+					return FALSE
 
 /mob/living/carbon/Xenomorph/get_projectile_hit_chance(obj/item/projectile/P)
 	. = ..()
@@ -892,6 +911,17 @@
 		return
 
 	if(damage || (ammo_flags && AMMO_SPECIAL_EMBED))
+
+		var/splatter_dir = get_dir(P.starting, loc)
+		if(isHumanStrict(src))
+			new /obj/effect/temp_visual/dir_setting/bloodsplatter/human(loc, splatter_dir)
+		if(isYautja(src))
+			new /obj/effect/temp_visual/dir_setting/bloodsplatter/yautjasplatter(loc, splatter_dir)
+		if(isXeno(src))
+			new /obj/effect/temp_visual/dir_setting/bloodsplatter/xenosplatter(loc, splatter_dir)
+		if(isSynth(src))
+			new /obj/effect/temp_visual/dir_setting/bloodsplatter/synthsplatter(loc, splatter_dir)
+
 		. = TRUE
 		apply_damage(damage_result, P.ammo.damage_type, P.def_zone, firer = P.firer)
 		P.play_damage_effect(src)
@@ -973,10 +1003,16 @@
 
 	bullet_message(P) //Message us about the bullet, since damage was inflicted.
 
+
+
 	if(SEND_SIGNAL(src, COMSIG_XENO_BULLET_ACT, damage_result, ammo_flags, P) & COMPONENT_CANCEL_BULLET_ACT)
 		return
 
 	if(damage)
+		//only apply the blood splatter if we do damage
+		var/splatter_dir = get_dir(P.starting, loc)//loc is the xeno getting hit, P.starting is the turf of where the projectile got spawned
+		new /obj/effect/temp_visual/dir_setting/bloodsplatter/xenosplatter(loc, splatter_dir)
+
 		apply_damage(damage_result,P.ammo.damage_type, P.def_zone)	//Deal the damage.
 		if(xeno_shields.len)
 			P.play_shielded_damage_effect(src)
@@ -1002,10 +1038,12 @@
 
 	var/list/mobs_list = list() //Let's built a list of mobs on the bullet turf and grab one.
 	for(var/mob/living/L in src)
-		if(L in P.permutated) continue
-		mobs_list += L
+		if(L in P.permutated)
+			continue
+		if(prob(L.get_projectile_hit_chance(P)))
+			mobs_list += L
 
-	if(mobs_list.len)
+	if(length(mobs_list))
 		var/mob/living/picked_mob = pick(mobs_list) //Hit a mob, if there is one.
 		if(istype(picked_mob))
 			picked_mob.bullet_act(P)
@@ -1073,12 +1111,12 @@
 
 
 //This is where the bullet bounces off.
-/atom/proc/bullet_ping(obj/item/projectile/P)
+/atom/proc/bullet_ping(obj/item/projectile/P, var/pixel_x_offset, var/pixel_y_offset)
 	if(!P || !P.ammo.ping)
 		return
 
 	if(P.ammo.sound_bounce) playsound(src, P.ammo.sound_bounce, 50, 1)
-	var/image/I = image('icons/obj/items/weapons/projectiles.dmi',src,P.ammo.ping,10)
+	var/image/I = image('icons/obj/items/weapons/projectiles.dmi',src,P.ammo.ping,10, pixel_x = pixel_x_offset, pixel_y = pixel_y_offset)
 	var/angle = (P.firer && prob(60)) ? round(Get_Angle(P.firer,src)) : round(rand(1,359))
 	I.pixel_x += rand(-6,6)
 	I.pixel_y += rand(-6,6)
@@ -1097,7 +1135,7 @@
 		var/hit_msg = "You've been shot in the [parse_zone(P.def_zone)] by [P.name]!"
 		to_chat(src, isXeno(src) ? SPAN_XENODANGER("[hit_msg]"):SPAN_HIGHDANGER("[hit_msg]"))
 	else
-		visible_message(SPAN_DANGER("[name] is hit by the [P.name] in the [parse_zone(P.def_zone)]!"), \
+		visible_message(SPAN_DANGER("[src] is hit by the [P.name] in the [parse_zone(P.def_zone)]!"), \
 						SPAN_HIGHDANGER("You are hit by the [P.name] in the [parse_zone(P.def_zone)]!"), null, 4, CHAT_TYPE_TAKING_HIT)
 
 	last_damage_data = P.weapon_cause_data
@@ -1105,17 +1143,22 @@
 		var/mob/firingMob = P.firer
 		var/area/A = get_area(src)
 		if(ishuman(firingMob) && ishuman(src) && faction == firingMob.faction && !A?.statistic_exempt) //One human shot another, be worried about it but do everything basically the same //special_role should be null or an empty string if done correctly
-			attack_log += "\[[time_stamp()]\] <b>[key_name(firingMob)]</b> shot <b>[key_name(src)]</b> with \a <b>[P]</b> in [get_area(firingMob)]."
-			firingMob.attack_log += "\[[time_stamp()]\] <b>[key_name(firingMob)]</b> shot <b>[key_name(src)]</b> with \a <b>[P]</b> in [get_area(firingMob)]."
-			round_statistics.total_friendly_fire_instances++
-			msg_admin_ff("[key_name(firingMob)] shot [key_name(src)] with \a [P.name] in [get_area(firingMob)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[firingMob.x];Y=[firingMob.y];Z=[firingMob.z]'>JMP</a>) (<a href='?priv_msg=\ref[firingMob.client]'>PM</a>)")
-			if(ishuman(firingMob) && P.weapon_cause_data)
-				var/mob/living/carbon/human/H = firingMob
-				H.track_friendly_fire(P.weapon_cause_data.cause_name)
+			if(!istype(P.ammo, /datum/ammo/energy/taser))
+				round_statistics.total_friendly_fire_instances++
+				var/ff_msg = "[key_name(firingMob)] shot [key_name(src)] with \a [P.name] in [get_area(firingMob)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[firingMob.x];Y=[firingMob.y];Z=[firingMob.z]'>JMP</a>) ([firingMob.client ? "<a href='?priv_msg=[firingMob.client.ckey]'>PM</a>" : "NO CLIENT"])"
+				var/ff_living = TRUE
+				if(src.stat == DEAD)
+					ff_living = FALSE
+				msg_admin_ff(ff_msg, ff_living)
+				if(ishuman(firingMob) && P.weapon_cause_data)
+					var/mob/living/carbon/human/H = firingMob
+					H.track_friendly_fire(P.weapon_cause_data.cause_name)
+			else
+				msg_admin_attack("[key_name(firingMob)] tased [key_name(src)] in [get_area(firingMob)] ([firingMob.x],[firingMob.y],[firingMob.z]).", firingMob.x, firingMob.y, firingMob.z)
 		else
-			attack_log += "\[[time_stamp()]\] <b>[key_name(firingMob)]</b> shot <b>[key_name(src)]</b> with \a <b>[P]</b> in [get_area(firingMob)]."
-			firingMob.attack_log += "\[[time_stamp()]\] <b>[key_name(firingMob)]</b> shot <b>[key_name(src)]</b> with \a <b>[P]</b> in [get_area(firingMob)]."
 			msg_admin_attack("[key_name(firingMob)] shot [key_name(src)] with \a [P.name] in [get_area(firingMob)] ([firingMob.x],[firingMob.y],[firingMob.z]).", firingMob.x, firingMob.y, firingMob.z)
+		attack_log += "\[[time_stamp()]\] <b>[key_name(firingMob)]</b> shot <b>[key_name(src)]</b> with \a <b>[P]</b> in [get_area(firingMob)]."
+		firingMob.attack_log += "\[[time_stamp()]\] <b>[key_name(firingMob)]</b> shot <b>[key_name(src)]</b> with \a <b>[P]</b> in [get_area(firingMob)]."
 		return
 
 	attack_log += "\[[time_stamp()]\] <b>SOMETHING??</b> shot <b>[key_name(src)]</b> with a <b>[P]</b>"

@@ -75,9 +75,9 @@
 			to_chat(user,SPAN_WARNING("[src] is cracked open! How are you gonna slip something in that?"))
 		else
 			if(!cookiefortune)
-				to_chat(user,SPAN_NOTICE("You slip the paper into the [src]."))
+				to_chat(user, SPAN_NOTICE("You slip the paper into the [src]."))
 				cookiefortune = W
-				user.temp_drop_inv_item(W,FALSE)
+				user.drop_inv_item_to_loc(W, src)
 			else
 				to_chat(user,SPAN_WARNING("[src] already has a fortune inside it!"))
 
@@ -90,7 +90,6 @@
 		update_icon()
 		if(cookiefortune)
 			to_chat(user,SPAN_NOTICE("You break open the fortune cookie, revealing a fortune inside!"))
-			user.swap_hand()
 			user.put_in_hands(cookiefortune)
 			cookiefortune = null
 		else
@@ -107,13 +106,16 @@
 		update_icon()
 		if(cookiefortune)
 			to_chat(user,SPAN_NOTICE("You break open the fortune cookie, revealing a fortune inside!"))
-			user.swap_hand()
 			user.put_in_hands(cookiefortune)
 			cookiefortune = null
 		else
 			to_chat(SPAN_WARNING("You break open the fortune cookie, but there's no fortune inside! Oh no!"))
 	else
 		. = ..()
+
+/obj/item/reagent_container/food/snacks/fortunecookie/on_stored_atom_del(atom/movable/AM)
+	if(AM == cookiefortune)
+		cookiefortune = null
 
 /obj/item/reagent_container/food/snacks/fortunecookie/prefilled/Initialize(mapload, fortune, numbers)
 	. = ..()

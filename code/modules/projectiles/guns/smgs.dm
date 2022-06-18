@@ -68,17 +68,17 @@
 	map_specific_decoration = TRUE
 
 /obj/item/weapon/gun/smg/m39/set_gun_attachment_offsets()
-	attachable_offset = list("muzzle_x" = 30, "muzzle_y" = 20,"rail_x" = 14, "rail_y" = 22, "under_x" = 21, "under_y" = 16, "stock_x" = 24, "stock_y" = 16)
+	attachable_offset = list("muzzle_x" = 30, "muzzle_y" = 20,"rail_x" = 14, "rail_y" = 22, "under_x" = 21, "under_y" = 16, "stock_x" = 24, "stock_y" = 15)
 
 /obj/item/weapon/gun/smg/m39/set_gun_config_values()
 	..()
-	fire_delay = FIRE_DELAY_TIER_10
-	burst_delay = FIRE_DELAY_TIER_10
-	burst_amount = BURST_AMOUNT_TIER_5
+	fire_delay = FIRE_DELAY_TIER_SMG
+	burst_delay = FIRE_DELAY_TIER_SMG
+	burst_amount = BURST_AMOUNT_TIER_3
 	accuracy_mult = BASE_ACCURACY_MULT
 	accuracy_mult_unwielded = BASE_ACCURACY_MULT - HIT_ACCURACY_MULT_TIER_5
 	scatter = SCATTER_AMOUNT_TIER_4
-	burst_scatter_mult = SCATTER_AMOUNT_TIER_2
+	burst_scatter_mult = SCATTER_AMOUNT_TIER_4
 	scatter_unwielded = SCATTER_AMOUNT_TIER_4
 	damage_mult = BASE_BULLET_DAMAGE_MULT
 	recoil_unwielded = RECOIL_AMOUNT_TIER_5
@@ -112,7 +112,7 @@
 
 /obj/item/weapon/gun/smg/m39/elite/set_gun_config_values()
 	..()
-	fire_delay = FIRE_DELAY_TIER_10
+	fire_delay = FIRE_DELAY_TIER_SMG
 	accuracy_mult = BASE_ACCURACY_MULT + HIT_ACCURACY_MULT_TIER_7
 	accuracy_mult_unwielded = BASE_ACCURACY_MULT
 	scatter = SCATTER_AMOUNT_TIER_9
@@ -168,7 +168,7 @@
 /obj/item/weapon/gun/smg/mp5/set_gun_config_values()
 	..()
 	fire_delay = FIRE_DELAY_TIER_9
-	burst_delay = FIRE_DELAY_TIER_10
+	burst_delay = FIRE_DELAY_TIER_SMG
 	burst_amount = BURST_AMOUNT_TIER_4
 
 	accuracy_mult = BASE_ACCURACY_MULT + HIT_ACCURACY_MULT_TIER_1
@@ -219,7 +219,7 @@
 /obj/item/weapon/gun/smg/mp7/set_gun_config_values()
 	..()
 	fire_delay = FIRE_DELAY_TIER_9
-	burst_delay = FIRE_DELAY_TIER_10
+	burst_delay = FIRE_DELAY_TIER_SMG
 	burst_amount = BURST_AMOUNT_TIER_4
 
 	accuracy_mult = BASE_ACCURACY_MULT + HIT_ACCURACY_MULT_TIER_1
@@ -250,7 +250,7 @@
 /obj/item/weapon/gun/smg/ppsh/set_gun_config_values()
 	..()
 	fire_delay = FIRE_DELAY_TIER_9
-	burst_delay = FIRE_DELAY_TIER_10
+	burst_delay = FIRE_DELAY_TIER_SMG
 	burst_amount = BURST_AMOUNT_TIER_3
 
 	accuracy_mult = BASE_ACCURACY_MULT - HIT_ACCURACY_MULT_TIER_1
@@ -296,8 +296,8 @@
 
 /obj/item/weapon/gun/smg/uzi/set_gun_config_values()
 	..()
-	fire_delay = FIRE_DELAY_TIER_10
-	burst_delay = FIRE_DELAY_TIER_10
+	fire_delay = FIRE_DELAY_TIER_SMG
+	burst_delay = FIRE_DELAY_TIER_SMG
 	burst_amount = BURST_AMOUNT_TIER_4
 
 	accuracy_mult = BASE_ACCURACY_MULT
@@ -354,7 +354,7 @@
 /obj/item/weapon/gun/smg/fp9000/set_gun_config_values()
 	..()
 	fire_delay = FIRE_DELAY_TIER_9
-	burst_delay = FIRE_DELAY_TIER_10
+	burst_delay = FIRE_DELAY_TIER_SMG
 	burst_amount = BURST_AMOUNT_TIER_3
 
 	accuracy_mult = BASE_ACCURACY_MULT + HIT_ACCURACY_MULT_TIER_3
@@ -425,3 +425,18 @@
 
 /obj/item/weapon/gun/smg/nailgun/unique_action(mob/user)
 	return //Yeah no.
+
+/obj/item/weapon/gun/smg/nailgun/unload_chamber(mob/user)
+	return //Can't remove nails from mags or gun.
+
+/obj/item/weapon/gun/smg/nailgun/compact
+    name = "compact nailgun"
+    desc = "A carpentry tool, used to drive nails into tough surfaces. Cannot fire nails offensively due to a lack of a gas seal around the nail, meaning it cannot build up the pressure to fire."
+    icon_state = "cnailgun"
+    item_state = "nailgun"
+    w_class = SIZE_SMALL
+/obj/item/weapon/gun/smg/nailgun/compact/able_to_fire(mob/living/user)
+    . = ..()
+    if(.)
+        click_empty(user)
+    return FALSE

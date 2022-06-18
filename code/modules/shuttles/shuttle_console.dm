@@ -64,7 +64,7 @@ GLOBAL_LIST_EMPTY(shuttle_controls)
 
 	if(!isXeno(user) && (onboard || is_ground_level(z)) && !shuttle.iselevator)
 		if(shuttle.queen_locked)
-			if(onboard && (isSynth(user) || user.job== "Pilot Officer"))
+			if(onboard && skillcheck(user, SKILL_PILOT, SKILL_PILOT_TRAINED))
 				user.visible_message(SPAN_NOTICE("[user] starts to type on the [src]."),
 				SPAN_NOTICE("You try to take back the control over the shuttle. It will take around 3 minutes."))
 				if(do_after(user, 3 MINUTES, INTERRUPT_ALL, BUSY_ICON_FRIENDLY))
@@ -226,7 +226,7 @@ GLOBAL_LIST_EMPTY(shuttle_controls)
 			return
 		//Comment to test
 		if(!skip_time_lock && world.time < SSticker.mode.round_time_lobby + SHUTTLE_TIME_LOCK && istype(shuttle, /datum/shuttle/ferry/marine))
-			to_chat(usr, SPAN_WARNING("The shuttle is still undergoing pre-flight fuelling and cannot depart yet. Please wait another [round((SSticker.mode.round_time_lobby + SHUTTLE_TIME_LOCK-world.time)/600)] minutes before trying again."))
+			to_chat(usr, SPAN_WARNING("The shuttle is still undergoing pre-flight fueling and cannot depart yet. Please wait another [round((SSticker.mode.round_time_lobby + SHUTTLE_TIME_LOCK-world.time)/600)] minutes before trying again."))
 			return
 		if(SSticker.mode.active_lz != src && !onboard && isXenoQueen(usr))
 			to_chat(usr, SPAN_WARNING("The shuttle isn't responding to prompts, it looks like this isn't the primary shuttle."))
@@ -298,8 +298,7 @@ GLOBAL_LIST_EMPTY(shuttle_controls)
 					Q.count_niche_stat(STATISTICS_NICHE_FLIGHT)
 
 					if(Q.hive)
-						Q.hive.abandon_on_hijack()
-						Q.hive.hijack_pooled_surge = TRUE
+						addtimer(CALLBACK(Q.hive, /datum/hive_status.proc/abandon_on_hijack), DROPSHIP_WARMUP_TIME + 5 SECONDS, TIMER_UNIQUE) //+ 5 seconds catch standing in doorways
 
 					if(bomb_set)
 						for(var/obj/structure/machinery/nuclearbomb/bomb in world)
@@ -339,16 +338,17 @@ GLOBAL_LIST_EMPTY(shuttle_controls)
 	if(href_list["fire_mission"])
 		if(shuttle.moving_status != SHUTTLE_IDLE) return
 		if(shuttle.locked) return
-		shuttle.transit_gun_mission = !shuttle.transit_gun_mission
-		if(shuttle.transit_gun_mission)
+		if(!shuttle.transit_gun_mission)
 			var/mob/M = usr
 			if(M.mind && M.skills && !M.skills.get_skill_level(SKILL_PILOT)) //only pilots can activate the fire mission mode, but everyone can reset it back to transport..
 				to_chat(usr, SPAN_WARNING("A screen with graphics and walls of physics and engineering values open, you immediately force it closed."))
 				return
 			else
 				to_chat(usr, SPAN_NOTICE("You upload a flight plan for a low altitude flyby above the planet."))
+				shuttle.transit_gun_mission = TRUE
 		else
 			to_chat(usr, SPAN_NOTICE("You reset the flight plan to a transport mission between the Almayer and the planet."))
+			shuttle.transit_gun_mission = FALSE
 
 	if(href_list["lockdown"])
 		if(shuttle.door_override)
@@ -468,9 +468,11 @@ GLOBAL_LIST_EMPTY(shuttle_controls)
 			to_chat(usr, SPAN_WARNING("The console flashes a warning about the rear door not being present."))
 
 	if(href_list["cancel_flyby"])
-		var/mob/M = usr
-		if(M.mind && M.skills && !M.skills.get_skill_level(SKILL_PILOT))
-			to_chat(usr, SPAN_WARNING("Need Pilot level access to return the Dropship."))
+		if(isXeno(usr))
+			to_chat(usr, SPAN_WARNING("You have no idea how to use this button!"))
+			return
+		if(!allowed(usr))
+			to_chat(usr, SPAN_WARNING("You need Pilot level access to return the Dropship."))
 			return
 		if(shuttle.transit_gun_mission && shuttle.moving_status == SHUTTLE_INTRANSIT && shuttle.in_transit_time_left>abort_timer)
 			shuttle.in_transit_time_left = abort_timer
@@ -517,7 +519,7 @@ GLOBAL_LIST_EMPTY(shuttle_controls)
 	unslashable = TRUE
 	unacidable = TRUE
 	exproof = 1
-	req_one_access = list(ACCESS_MARINE_LEADER, ACCESS_MARINE_DROPSHIP, ACCESS_WY_CORPORATE)
+	req_one_access = list(ACCESS_MARINE_LEADER, ACCESS_MARINE_DROPSHIP, ACCESS_WY_CORPORATE_DS)
 
 /obj/structure/machinery/computer/shuttle_control/dropship1/Initialize()
 	. = ..()
@@ -541,7 +543,7 @@ GLOBAL_LIST_EMPTY(shuttle_controls)
 	unslashable = TRUE
 	unacidable = TRUE
 	exproof = 1
-	req_one_access = list(ACCESS_MARINE_LEADER, ACCESS_MARINE_DROPSHIP, ACCESS_WY_CORPORATE)
+	req_one_access = list(ACCESS_MARINE_LEADER, ACCESS_MARINE_DROPSHIP, ACCESS_WY_CORPORATE_DS)
 
 /obj/structure/machinery/computer/shuttle_control/dropship2/Initialize()
 	. = ..()

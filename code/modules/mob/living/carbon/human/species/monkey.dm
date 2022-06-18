@@ -4,6 +4,8 @@
 	name_plural = "Monkeys"
 	icobase = 'icons/mob/humans/species/monkeys/r_monkey.dmi'
 	deform = 'icons/mob/humans/species/monkeys/r_monkey.dmi'
+	eyes = "monkey_eyes_s"
+	blood_mask = 'icons/effects/monkey_blood.dmi'
 	brute_mod = 1.5
 	burn_mod = 1.5
 	pain_type = /datum/pain/monkey
@@ -32,7 +34,7 @@
 	..()
 
 /datum/species/monkey/handle_post_spawn(var/mob/living/carbon/human/H)
-	H.set_languages(list("Primitive"))
+	H.set_languages(list(LANGUAGE_MONKEY))
 	if(H.real_name == "unknown")
 		var/random_name = "[lowertext(name)] ([rand(1, 999)])"
 		H.change_real_name(H, random_name)

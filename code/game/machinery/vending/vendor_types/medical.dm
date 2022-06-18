@@ -29,6 +29,11 @@
 		/obj/item/reagent_container/hypospray/autoinjector/skillless,
 		/obj/item/reagent_container/hypospray/autoinjector/skillless/tramadol,
 
+		/obj/item/reagent_container/hypospray/autoinjector/bicaridine/skillless,
+		/obj/item/reagent_container/hypospray/autoinjector/kelotane/skillless,
+		/obj/item/reagent_container/hypospray/autoinjector/tramadol/skillless,
+		/obj/item/reagent_container/hypospray/autoinjector/tricord/skillless,
+
 		/obj/item/reagent_container/glass/bottle/bicaridine,
 		/obj/item/reagent_container/glass/bottle/antitoxin,
 		/obj/item/reagent_container/glass/bottle/dexalin,
@@ -185,6 +190,8 @@
 
 		list("MEDICAL UTILITIES", -1, null, null),
 		list("Emergency Defibrillator", round(scale * 3), /obj/item/device/defibrillator, VENDOR_ITEM_REGULAR),
+		list("Surgical Line", round(scale * 2), /obj/item/tool/surgery/surgical_line, VENDOR_ITEM_REGULAR),
+		list("Synth-Graft", round(scale * 2), /obj/item/tool/surgery/synthgraft, VENDOR_ITEM_REGULAR),
 		list("Hypospray", round(scale * 2), /obj/item/reagent_container/hypospray/tricordrazine, VENDOR_ITEM_REGULAR),
 		list("Health Analyzer", round(scale * 5), /obj/item/device/healthanalyzer, VENDOR_ITEM_REGULAR),
 		list("M276 Pattern Medical Storage Rig", round(scale * 2), /obj/item/storage/belt/medical, VENDOR_ITEM_REGULAR),
@@ -341,6 +348,10 @@
 	chem_refill = list(
 		/obj/item/reagent_container/hypospray/autoinjector/skillless,
 		/obj/item/reagent_container/hypospray/autoinjector/skillless/tramadol,
+		/obj/item/reagent_container/hypospray/autoinjector/tricord/skillless,
+		/obj/item/reagent_container/hypospray/autoinjector/bicaridine/skillless,
+		/obj/item/reagent_container/hypospray/autoinjector/kelotane/skillless,
+		/obj/item/reagent_container/hypospray/autoinjector/tramadol/skillless
 	)
 	stack_refill = list(
 		/obj/item/stack/medical/bruise_pack,

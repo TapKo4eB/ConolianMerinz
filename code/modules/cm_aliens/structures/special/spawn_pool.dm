@@ -53,6 +53,9 @@
 		if(H.is_revivable())
 			to_chat(user, SPAN_XENOWARNING("This one is not suitable yet!"))
 			return
+		if(H.chestburst && H.stat != DEAD) // This isn't covered in H.is_revivable() as it returns FALSE if chestburst is TRUE
+			to_chat(user, SPAN_XENOWARNING("Let this one burst first!"))
+			return
 		if(H.spawned_corpse)
 			to_chat(user, SPAN_XENOWARNING("This one does not look suitable!"))
 			return
@@ -119,8 +122,7 @@
 	if(linked_hive.hijack_pooled_surge && (last_surge_time + surge_cooldown) < world.time)
 		last_surge_time = world.time
 		linked_hive.stored_larva++
-		for(var/mob/dead/observer/ghost in GLOB.observer_list)
-			to_chat(ghost, SPAN_DEADSAY("The hive has gained another pooled larva! Use the Join As Xeno verb to take it."))
+		announce_dchat("The hive has gained another pooled larva! Use the Join As Xeno verb to take it.", src)
 		if(surge_cooldown > 30 SECONDS) //mostly for sanity purposes
 			surge_cooldown = surge_cooldown - surge_incremental_reduction //ramps up over time
 
@@ -151,12 +153,16 @@
 
 		new_xeno.visible_message(SPAN_XENODANGER("A larva suddenly emerges out of from the [src]!"),
 		SPAN_XENODANGER("You emerge out of the [src] and awaken from your slumber. For the Hive!"))
-		playsound(new_xeno, 'sound/effects/xeno_newlarva.ogg', 25, 1)
+		playsound(new_xeno, 'sound/effects/xeno_newlarva.ogg', 50, 1)
 		if(!SSticker.mode.transfer_xeno(xeno_candidate, new_xeno))
 			qdel(new_xeno)
 			return FALSE
 		to_chat(new_xeno, SPAN_XENOANNOUNCE("You are a xenomorph larva awakened from slumber!"))
-		playsound(new_xeno, 'sound/effects/xeno_newlarva.ogg', 25, 1)
+		playsound(new_xeno, 'sound/effects/xeno_newlarva.ogg', 50, 1)
+		if(new_xeno.client)
+			new_xeno.set_lighting_alpha_from_prefs(new_xeno.client)
+			if(new_xeno.client?.prefs.toggles_flashing & FLASH_POOLSPAWN)
+				window_flash(new_xeno.client)
 
 		linked_hive.stored_larva--
 		linked_hive.hive_ui.update_pooled_larva()

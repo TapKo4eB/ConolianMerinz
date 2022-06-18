@@ -3,26 +3,53 @@
 
 //Note: some important procs are held by the job controller, in job_controller.dm.
 //In particular, get_lowest_squad() and randomize_squad()
+/datum/squad_type //Majority of this is for a follow-on PR to fully flesh the system out and add more bits for other factions.
+	var/name = "Squad Type"
+	var/lead_name
+	var/lead_icon
+	var/sub_squad
+	var/sub_leader
+
+/datum/squad_type/marine_squad
+	name = "Squad"
+	lead_name = "Squad Leader"
+	lead_icon = "leader"
+	sub_squad = "Fireteam"
+	sub_leader = "Fireteam Leader"
+
+/datum/squad_type/marsoc_team
+	name = "Team"
+	lead_name = "Team Leader"
+	lead_icon = "soctl"
+	sub_squad = "Strike Team"
+	sub_leader = "Strike Leader"
 
 /datum/squad
-	var/name = "Empty Squad"  //Name of the squad
+	var/name //Name of the squad
 	var/tracking_id = null	//Used for the tracking subsystem
 	var/max_positions = -1 //Maximum number allowed in a squad. Defaults to infinite
 	var/color = 0 //Color for helmets, etc.
 	var/list/access = list() //Which special access do we grant them
-	var/usable = 0	 //Is it a valid squad?
-	var/no_random_spawn = 0 //Stop players from spawning into the squad
+	var/omni_squad_vendor = FALSE /// Can use any squad vendor regardless of squad connection
 	var/max_engineers = 3 //maximum # of engineers allowed in squad
 	var/max_medics = 4 //Ditto, squad medics
 	var/max_specialists = 1
-	var/num_specialists = 0
 	var/max_rto = 2
-	var/num_rto = 0
 	var/max_smartgun = 1
-	var/num_smartgun = 0
 	var/max_leaders = 1
-	var/num_leaders = 0
 	var/radio_freq = 1461 //Squad radio headset frequency.
+
+	///Variables for showing up in various places
+	var/usable = FALSE	 //Is it used in-game?
+	var/roundstart = TRUE /// Whether this squad can be picked at roundstart
+	var/locked = FALSE	//Is it available for squad management?
+	var/active = FALSE	//Is it visible in overwatch?
+	var/faction = FACTION_MARINE	//What faction runs the squad?
+
+	///Squad Type Specifics
+	var/squad_type = "Squad"	//Referenced for aSL details. Squad/Team/Cell etc.
+	var/lead_icon	//Referenced for SL's 'L' icon. If nulled, won't override icon for aSLs.
+
 	//vvv Do not set these in squad defines
 	var/mob/living/carbon/human/squad_leader = null //Who currently leads it.
 	var/list/fireteam_leaders = list(
@@ -40,52 +67,158 @@
 
 	var/num_engineers = 0
 	var/num_medics = 0
+	var/num_leaders = 0
+	var/num_smartgun = 0
+	var/num_specialists = 0
+	var/num_rto = 0
 	var/count = 0	//Current # in the squad
 	var/list/marines_list = list()	// list of mobs (or name, not always a mob ref) in that squad.
 
 	var/mob/living/carbon/human/overwatch_officer = null	//Who's overwatching this squad?
 	var/supply_cooldown = 0	//Cooldown for supply drops
-	var/primary_objective = null	//Text strings
+
+	///Text strings, not HTML safe so don't use it without encoding
+	var/primary_objective = null
 	var/secondary_objective = null
+
 	var/obj/item/device/squad_beacon/sbeacon = null
 	var/obj/item/device/squad_beacon/bomb/bbeacon = null
 	var/obj/structure/supply_drop/drop_pad = null
 
-/datum/squad/alpha
-	name = SQUAD_NAME_1
+
+/datum/squad/marine
+	name = "Root"
+	usable = TRUE
+	active = TRUE
+	faction = FACTION_MARINE
+	lead_icon = "leader"
+
+/datum/squad/marine/alpha
+	name = SQUAD_MARINE_1
 	color = 1
 	access = list(ACCESS_MARINE_ALPHA)
-	usable = 1
 	radio_freq = ALPHA_FREQ
 
-/datum/squad/bravo
-	name = SQUAD_NAME_2
+/datum/squad/marine/bravo
+	name = SQUAD_MARINE_2
 	color = 2
 	access = list(ACCESS_MARINE_BRAVO)
-	usable = 1
 	radio_freq = BRAVO_FREQ
 
-/datum/squad/charlie
-	name = SQUAD_NAME_3
+/datum/squad/marine/charlie
+	name = SQUAD_MARINE_3
 	color = 3
 	access = list(ACCESS_MARINE_CHARLIE)
-	usable = 1
 	radio_freq = CHARLIE_FREQ
 
-/datum/squad/delta
-	name = SQUAD_NAME_4
+/datum/squad/marine/delta
+	name = SQUAD_MARINE_4
 	color = 4
 	access = list(ACCESS_MARINE_DELTA)
-	usable = 1
 	radio_freq = DELTA_FREQ
 
-/datum/squad/echo
-	name = SQUAD_NAME_5
+/datum/squad/marine/echo
+	name = SQUAD_MARINE_5
 	color = 5
 	access = list(ACCESS_MARINE_ALPHA, ACCESS_MARINE_BRAVO, ACCESS_MARINE_CHARLIE, ACCESS_MARINE_DELTA)
-	usable = 0	//Normally not usable
 	radio_freq = ECHO_FREQ
+	omni_squad_vendor = TRUE
 
+	active = FALSE
+	roundstart = FALSE
+	locked = TRUE
+
+/datum/squad/marine/cryo
+	name = SQUAD_MARINE_CRYO
+	color = 6
+	access = list(ACCESS_MARINE_ALPHA, ACCESS_MARINE_BRAVO, ACCESS_MARINE_CHARLIE, ACCESS_MARINE_DELTA)
+
+	omni_squad_vendor = TRUE
+	radio_freq = CRYO_FREQ
+
+	active = FALSE
+	roundstart = FALSE
+	locked = TRUE
+
+/datum/squad/marine/marsoc
+	name = SQUAD_MARSOC
+	color = 7
+	radio_freq = MARSOC_FREQ
+	squad_type = "Team"
+	lead_icon = "soctl"
+
+	active = FALSE
+	roundstart = FALSE
+	locked = TRUE
+
+//############################### UPP Squads
+/datum/squad/upp
+	name = "Root"
+	usable = TRUE
+	omni_squad_vendor = TRUE
+	faction = FACTION_UPP
+
+/datum/squad/upp/one
+	name = "UPPS1"
+	color = 1
+
+/datum/squad/upp/twp
+	name = "UPPS2"
+	color = 2
+
+/datum/squad/upp/three
+	name = "UPPS3"
+	color = 3
+
+/datum/squad/upp/four
+	name = "UPPS4"
+	color = 4
+
+/datum/squad/upp/kdo
+	name = "UPPKdo"
+	color = 6
+	squad_type = "Team"
+	locked = TRUE
+//###############################
+/datum/squad/pmc
+	name = "Root"
+	squad_type = "Team"
+	faction = FACTION_PMC
+	usable = TRUE
+	omni_squad_vendor = TRUE
+
+/datum/squad/pmc/one
+	name = "Team Upsilon"
+	color = 3
+
+/datum/squad/pmc/two
+	name = "Team Gamma"
+	color = 6
+
+/datum/squad/pmc/wo
+	name = "Taskforce White"
+	locked = TRUE
+	faction = FACTION_WY_DEATHSQUAD
+//###############################
+/datum/squad/clf
+	name = "Root"
+	squad_type = "Cell"
+	faction = FACTION_CLF
+	usable = TRUE
+	omni_squad_vendor = TRUE
+
+/datum/squad/clf/one
+	name = "Python"
+
+/datum/squad/clf/two
+	name = "Viper"
+
+/datum/squad/clf/three
+	name = "Cobra"
+
+/datum/squad/clf/four
+	name = "Boa"
+//###############################
 /datum/squad/New()
 	. = ..()
 
@@ -162,7 +295,7 @@
  * leader_only: if truthy sends only to the squad leader
  */
 /datum/squad/proc/send_squad_message(input_text, mob/user, displayed_icon, leader_only = FALSE)
-	var/message = strip_html(input_text)
+	var/message = sanitize_control_chars(strip_html(input_text))
 	var/datum/sound_template/sfx
 
 	if(user)
@@ -194,15 +327,13 @@
 /datum/squad/proc/put_marine_in_squad(var/mob/living/carbon/human/M, var/obj/item/card/id/ID)
 
 	if(!istype(M))
-		return 0	//Logic
+		return FALSE	//Logic
 	if(!src.usable)
-		return 0
-	if(!M.mind)
-		return 0
+		return FALSE
 	if(!M.job)
-		return 0	//Not yet
+		return FALSE	//Not yet
 	if(M.assigned_squad)
-		return 0	//already in a squad
+		return FALSE	//already in a squad
 
 	var/obj/item/card/id/C = ID
 	if(!C)
@@ -210,52 +341,66 @@
 	if(!C)
 		C = M.get_active_hand()
 	if(!istype(C))
-		return 0	//No ID found
+		return FALSE	//No ID found
 
-	var/assignment = JOB_SQUAD_MARINE
+	var/assignment = M.job
 	var/paygrade
 
 	var/list/extra_access = list()
 
-	switch(M.job)
+	switch(GET_DEFAULT_ROLE(M.job))
 		if(JOB_SQUAD_ENGI)
 			assignment = JOB_SQUAD_ENGI
 			num_engineers++
-			C.claimedgear = 0
+			C.claimedgear = FALSE
 		if(JOB_SQUAD_MEDIC)
 			assignment = JOB_SQUAD_MEDIC
 			num_medics++
-			C.claimedgear = 0
+			C.claimedgear = FALSE
 		if(JOB_SQUAD_SPECIALIST)
 			assignment = JOB_SQUAD_SPECIALIST
 			num_specialists++
 		if(JOB_SQUAD_RTO)
-			if(num_rto > 0)
-				assignment = "Assistant [JOB_SQUAD_RTO]"
-				paygrade = "ME4"
-				M.comm_title = "aRTO"
-			else
-				paygrade = "ME5"
-				assignment = JOB_SQUAD_RTO
-				extra_access += ACCESS_MARINE_RTO_DROP
-				M.important_radio_channels += radio_freq
-
+			assignment = JOB_SQUAD_RTO
 			num_rto++
+			M.important_radio_channels += radio_freq
 		if(JOB_SQUAD_SMARTGUN)
 			assignment = JOB_SQUAD_SMARTGUN
 			num_smartgun++
 		if(JOB_SQUAD_LEADER)
-			if(squad_leader && squad_leader.job != JOB_SQUAD_LEADER) //field promoted SL
+			if(squad_leader && GET_DEFAULT_ROLE(squad_leader.job) != JOB_SQUAD_LEADER) //field promoted SL
 				var/old_lead = squad_leader
 				demote_squad_leader()	//replaced by the real one
 				SStracking.start_tracking(tracking_id, old_lead)
-			assignment = JOB_SQUAD_LEADER
+			assignment = squad_type + " Leader"
 			squad_leader = M
 			SStracking.set_leader(tracking_id, M)
 			SStracking.start_tracking("marine_sl", M)
 
-			if(M.job == JOB_SQUAD_LEADER) //field promoted SL don't count as real ones
+			if(GET_DEFAULT_ROLE(M.job) == JOB_SQUAD_LEADER) //field promoted SL don't count as real ones
 				num_leaders++
+
+		if(JOB_MARSOC)
+			assignment = JOB_MARSOC
+			if(name == SQUAD_MARSOC)
+				assignment = "Special Operator"
+		if(JOB_MARSOC_SL)
+			assignment = JOB_MARSOC_SL
+			if(name == SQUAD_MARSOC)
+				if(squad_leader && GET_DEFAULT_ROLE(squad_leader.job) != JOB_MARSOC_SL) //field promoted SL
+					var/old_lead = squad_leader
+					demote_squad_leader()	//replaced by the real one
+					SStracking.start_tracking(tracking_id, old_lead)
+				assignment = squad_type + " Leader"
+				squad_leader = M
+				SStracking.set_leader(tracking_id, M)
+				SStracking.start_tracking("marine_sl", M)
+				if(GET_DEFAULT_ROLE(M.job) == JOB_MARSOC_SL) //field promoted SL don't count as real ones
+					num_leaders++
+		if(JOB_MARSOC_CMD)
+			assignment = JOB_MARSOC_CMD
+			if(name == SQUAD_MARSOC)
+				assignment = "Officer"
 
 	RegisterSignal(M, COMSIG_PARENT_QDELETING, .proc/personnel_deleted, override = TRUE)
 	if(assignment != JOB_SQUAD_LEADER)
@@ -263,7 +408,7 @@
 
 	count++		//Add up the tally. This is important in even squad distribution.
 
-	if(M.job != "Squad Marine")
+	if(GET_DEFAULT_ROLE(M.job) != JOB_SQUAD_MARINE)
 		log_admin("[key_name(M)] has been assigned as [name] [M.job]") // we don't want to spam squad marines but the others are useful
 
 	marines_list += M
@@ -271,21 +416,29 @@
 	C.access += (src.access + extra_access)	//Add their squad access to their ID
 	C.assignment = "[name] [assignment]"
 
+	SEND_SIGNAL(M, COMSIG_SET_SQUAD)
+
 	if(paygrade)
 		C.paygrade = paygrade
 	C.name = "[C.registered_name]'s ID Card ([C.assignment])"
-	return 1
+
+	var/obj/item/device/radio/headset/almayer/marine/headset = locate() in list(M.wear_l_ear, M.wear_r_ear)
+	if(headset)
+		headset.set_frequency(radio_freq)
+	M.update_inv_head()
+	M.update_inv_wear_suit()
+	M.update_inv_gloves()
+	return TRUE
 
 //proc used by the overwatch console to transfer marine to another squad
-/datum/squad/proc/remove_marine_from_squad(mob/living/carbon/human/M)
-	if(!M.mind)
-		return 0
+/datum/squad/proc/remove_marine_from_squad(mob/living/carbon/human/M, var/obj/item/card/id/ID)
 	if(M.assigned_squad != src)
 		return		//not assigned to the correct squad
-	var/obj/item/card/id/C
-	C = M.wear_id
+	var/obj/item/card/id/C = ID
 	if(!istype(C))
-		return 0	//Abort, no ID found
+		C = M.wear_id
+	if(!istype(C))
+		return FALSE	//Abort, no ID found
 
 	C.access -= src.access
 	C.assignment = M.job
@@ -296,7 +449,7 @@
 //gracefully remove a marine from squad system, alive, dead or otherwise
 /datum/squad/proc/forget_marine_in_squad(mob/living/carbon/human/M)
 	if(M.assigned_squad.squad_leader == M)
-		if(M.job != JOB_SQUAD_LEADER) //a field promoted SL, not a real one
+		if(GET_DEFAULT_ROLE(M.job) != JOB_SQUAD_LEADER) //a field promoted SL, not a real one
 			demote_squad_leader()
 		else
 			M.assigned_squad.squad_leader = null
@@ -315,7 +468,7 @@
 	update_squad_ui()
 	M.assigned_squad = null
 
-	switch(M.job)
+	switch(GET_DEFAULT_ROLE(M.job))
 		if(JOB_SQUAD_ENGI)
 			num_engineers--
 		if(JOB_SQUAD_MEDIC)
@@ -337,38 +490,30 @@
 	SStracking.stop_tracking("marine_sl", old_lead)
 
 	squad_leader = null
-	switch(old_lead.job)
+	switch(GET_DEFAULT_ROLE(old_lead.job))
 		if(JOB_SQUAD_SPECIALIST)
 			old_lead.comm_title = "Spc"
-			if(old_lead.skills)
-				old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_BEGINNER)
 		if(JOB_SQUAD_ENGI)
-			old_lead.comm_title = "Eng"
-			if(old_lead.skills)
-				old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_BEGINNER)
+			old_lead.comm_title = "ComTech"
 		if(JOB_SQUAD_MEDIC)
-			old_lead.comm_title = "Med"
-			if(old_lead.skills)
-				old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_BEGINNER)
+			old_lead.comm_title = "HM"
 		if(JOB_SQUAD_RTO)
 			old_lead.comm_title = "RTO"
-			if(old_lead.skills)
-				old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_TRAINED)
 		if(JOB_SQUAD_SMARTGUN)
 			old_lead.comm_title = "SG"
-			if(old_lead.skills)
-				old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_BEGINNER)
 		if(JOB_SQUAD_LEADER)
 			if(!leader_killed)
-				if(old_lead.skills)
-					old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_NOVICE)
-				old_lead.comm_title = "Mar"
+				old_lead.comm_title = "Sgt"
+		if(JOB_MARSOC)
+			old_lead.comm_title = "Op."
+		if(JOB_MARSOC_SL)
+			old_lead.comm_title = "TL."
+		if(JOB_MARSOC_CMD)
+			old_lead.comm_title = "CMD."
 		else
-			old_lead.comm_title = "Mar"
-			if(old_lead.skills)
-				old_lead.skills.set_skill(SKILL_LEADERSHIP, SKILL_LEAD_NOVICE)
+			old_lead.comm_title = "RFN"
 
-	if(old_lead.job != JOB_SQUAD_LEADER || !leader_killed)
+	if(GET_DEFAULT_ROLE(old_lead.job) != JOB_SQUAD_LEADER || !leader_killed)
 		var/obj/item/device/radio/headset/almayer/marine/R = old_lead.get_type_in_ears(/obj/item/device/radio/headset/almayer/marine)
 		if(R)
 			for(var/obj/item/device/encryptionkey/squadlead/acting/key in R.keys)
@@ -378,10 +523,11 @@
 		if(istype(old_lead.wear_id, /obj/item/card/id))
 			var/obj/item/card/id/ID = old_lead.wear_id
 			ID.access -= ACCESS_MARINE_LEADER
+	REMOVE_TRAITS_IN(old_lead, TRAIT_SOURCE_SQUAD_LEADER)
 	old_lead.hud_set_squad()
 	old_lead.update_inv_head()	//updating marine helmet leader overlays
 	old_lead.update_inv_wear_suit()
-	to_chat(old_lead, FONT_SIZE_BIG(SPAN_BLUE("You're no longer the Squad Leader for [src]!")))
+	to_chat(old_lead, FONT_SIZE_BIG(SPAN_BLUE("You're no longer the [squad_type] Leader for [src]!")))
 
 //Not a safe proc. Returns null if squads or jobs aren't set up.
 //Mostly used in the marine squad console in marine_consoles.dm.
@@ -393,6 +539,19 @@
 		if(S.name == text)
 			return S
 	return null
+
+/datum/squad/proc/engage_squad(var/toggle_lock = FALSE)
+	active = TRUE//Shows up in Overwatch
+	usable = TRUE//Shows up in most backend checks
+	if(toggle_lock)//Allows adding new marines
+		locked = FALSE
+
+/datum/squad/proc/lock_squad(var/toggle_lock = FALSE)
+	active = FALSE
+	usable = FALSE
+	if(toggle_lock)
+		locked = TRUE
+
 
 //below are procs used by acting SL to organize their squad
 /datum/squad/proc/assign_fireteam(fireteam, mob/living/carbon/human/H, upd_ui = TRUE)
@@ -415,7 +574,7 @@
 		if(fireteam_leaders[fireteam])		//if TL exists -> FT group, otherwise -> SL group
 			SStracking.start_tracking(fireteam, H)
 			if(H.stat == CONSCIOUS)
-				to_chat(H, FONT_SIZE_HUGE(SPAN_BLUE("You were assigned to [fireteam]. Report to your Team Leader ASAP.")))
+				to_chat(H, FONT_SIZE_HUGE(SPAN_BLUE("You were assigned to [fireteam]. Report to your Fireteam Leader ASAP.")))
 			to_chat(fireteam_leaders[fireteam], FONT_SIZE_BIG(SPAN_BLUE("[H.mind ? H.comm_title : ""] [H] was assigned to your fireteam.")))
 		else
 			SStracking.start_tracking(tracking_id, H)
@@ -432,7 +591,7 @@
 			SStracking.stop_tracking(tracking_id, H)	//remove from previous FT group
 			SStracking.start_tracking(fireteam, H)
 			if(H.stat == CONSCIOUS)
-				to_chat(H, FONT_SIZE_HUGE(SPAN_BLUE("You were assigned to [fireteam]. Report to your Team Leader ASAP.")))
+				to_chat(H, FONT_SIZE_HUGE(SPAN_BLUE("You were assigned to [fireteam]. Report to your Fireteam Leader ASAP.")))
 			to_chat(fireteam_leaders[fireteam], FONT_SIZE_BIG(SPAN_BLUE("[H.mind ? H.comm_title : ""] [H] was assigned to your fireteam.")))
 		if(H.stat == CONSCIOUS)
 			to_chat(H, FONT_SIZE_HUGE(SPAN_BLUE("You were assigned to [fireteam].")))

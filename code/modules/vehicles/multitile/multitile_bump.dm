@@ -302,10 +302,12 @@
 			to_chat(V.seats[VEHICLE_DRIVER], SPAN_WARNING("[src]'s was too damaged already and didn't handle well being rammed."))
 			destroyed_action()
 	else
-		var/obj/item/defenses/handheld/H = new handheld_type(loc)
-		H.name = "handheld [name]"
-		H.obj_health = health
-		qdel(src)
+		HD.forceMove(get_turf(src))
+		HD.dropped = 1
+		HD.update_icon()
+		power_off()
+		placed = 0
+		forceMove(HD)
 	return TRUE
 
 /obj/structure/machinery/defenses/sentry/premade/dropship/handle_vehicle_bump(var/obj/vehicle/multitile/V)
@@ -450,7 +452,7 @@
 		last_damage_data = create_cause_data("[initial(V.name)] roadkill", driver)
 		log_attack("[key_name(src)] was rammed by [key_name(driver)] with [V].")
 		if(faction == driver.faction)
-			msg_admin_ff("[key_name(driver)] rammed [key_name(src)] with \the [V] in [get_area(src)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[driver.x];Y=[driver.y];Z=[driver.z]'>JMP</a>) (<a href='?priv_msg=\ref[driver.client]'>PM</a>)")
+			msg_admin_ff("[key_name(driver)] rammed [key_name(src)] with \the [V] in [get_area(src)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[driver.x];Y=[driver.y];Z=[driver.z]'>JMP</a>) ([driver.client ? "<a href='?priv_msg=[driver.client.ckey]'>PM</a>" : "NO CLIENT"])")
 	else
 		log_attack("[key_name(src)] was friendly pushed by [key_name(driver)] with [V].")	//to be able to determine whether vehicle was pushign friendlies
 
@@ -492,7 +494,7 @@
 		last_damage_data = create_cause_data("[initial(V.name)] roadkill", driver)
 		log_attack("[key_name(src)] was rammed by [key_name(driver)] with [V].")
 		if(faction == driver.faction)
-			msg_admin_ff("[key_name(driver)] rammed [key_name(src)] with \the [V] in [get_area(src)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[driver.x];Y=[driver.y];Z=[driver.z]'>JMP</a>) (<a href='?priv_msg=\ref[driver.client]'>PM</a>)")
+			msg_admin_ff("[key_name(driver)] rammed [key_name(src)] with \the [V] in [get_area(src)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[driver.x];Y=[driver.y];Z=[driver.z]'>JMP</a>) ([driver.client ? "<a href='?priv_msg=[driver.client.ckey]'>PM</a>" : "NO CLIENT"])")
 	else
 		log_attack("[key_name(src)] was friendly pushed by [key_name(driver)] with [V].")	//to be able to determine whether vehicle was pushign friendlies
 

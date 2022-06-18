@@ -95,6 +95,14 @@ export const PlayerPanel = (props, context) => {
                 onClick={() => act("access_variables")}
               />
             </Stack.Item>
+            <Stack.Item>
+              <Button
+                icon="window-restore"
+                content="View Playtimes"
+                disabled={!hasPermission(data, "show_notes")}
+                onClick={() => act("access_playtimes")}
+              />
+            </Stack.Item>
           </Stack>
           <Stack mt={1}>
             <Stack.Item width="80px" color="label">Client:</Stack.Item>
@@ -137,12 +145,21 @@ export const PlayerPanel = (props, context) => {
           {client_rank && (
             <Stack mt={1}>
               <Stack.Item width="80px" color="label">Rank:</Stack.Item>
-              <Stack.Item>
+              <Stack.Item grow={1} align="left">
                 <Button
                   icon="window-restore"
                   content={client_rank}
                   disabled={!hasPermission(data, "access_admin_datum")}
                   onClick={() => act("access_admin_datum")}
+                />
+              </Stack.Item>
+              <Stack.Item align="right">
+                <Button
+                  ml={1}
+                  icon="exclamation-triangle"
+                  disabled={!hasPermission(data, "alert_message")}
+                  onClick={() => act("alert_message")}
+                  content="Alert Message"
                 />
               </Stack.Item>
             </Stack>
@@ -237,6 +254,12 @@ const GeneralActions = (props, context) => {
             content="Bring"
             disabled={!hasPermission(data, "mob_bring")}
             onClick={() => act("mob_bring")}
+          />
+          <Button.Confirm
+            width="100%"
+            content="Follow"
+            disabled={!hasPermission(data, "jump_to")}
+            onClick={() => act("mob_follow")}
           />
           <Button
             width="100%"
@@ -767,6 +790,18 @@ const PhysicalActions = (props, context) => {
             onClick={() => act("strip_equipment", { drop_items: true })}
           />
         </Stack>
+        {!!is_human && (
+          <Stack>
+            <Button.Confirm
+              content="Set Squad"
+              icon="clipboard-list"
+              width="100%"
+              height="100%"
+              disabled={!hasPermission(data, "set_squad")}
+              onClick={() => act("set_squad")}
+            />
+          </Stack>
+        )}
         <Stack
           mt={1}
         >

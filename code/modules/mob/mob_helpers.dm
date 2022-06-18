@@ -222,7 +222,7 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 #define PIXELS_PER_STRENGTH_VAL 24
 
 /proc/shake_camera(var/mob/M, var/steps = 1, var/strength = 1, var/time_per_step = 1)
-	if(!M || !M.client || (M.shakecamera > world.time))
+	if(!M?.client || (M.shakecamera > world.time))
 		return
 
 	M.shakecamera = world.time + steps * time_per_step
@@ -230,7 +230,7 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 	var/old_X = M.client.pixel_x
 	var/old_y = M.client.pixel_y
 
-	animate(M.client, pixel_x = old_X + rand(-(strength), strength), pixel_y = old_y + rand(-(strength), strength), easing = JUMP_EASING, time = time_per_step)
+	animate(M.client, pixel_x = old_X + rand(-(strength), strength), pixel_y = old_y + rand(-(strength), strength), easing = JUMP_EASING, time = time_per_step, flags = ANIMATION_PARALLEL)
 	var/i = 1
 	while(i < steps)
 		animate(pixel_x = old_X + rand(-(strength), strength), pixel_y = old_y + rand(-(strength), strength), easing = JUMP_EASING, time = time_per_step)
@@ -352,6 +352,10 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 					zone.selecting = "l_leg"
 				else
 					zone.selecting = "l_leg"
+		if("next")
+			zone.selecting = next_in_list(usr.zone_selected, DEFENSE_ZONES_LIVING)
+		if("prev")
+			zone.selecting = prev_in_list(usr.zone_selected, DEFENSE_ZONES_LIVING)
 	zone.update_icon(usr)
 
 /mob/proc/clear_chat_spam_mute(var/warn_level = 1, var/message = FALSE, var/increase_warn = FALSE)
@@ -400,7 +404,7 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 			if(skillcheck(src, SKILL_SURGERY, SKILL_SURGERY_EXPERT))
 				return 0.6 //Synths are 40% faster. In the same conditions they work almost twice as quickly, and can perform surgeries in rough conditions or with improvised tools at full speed.
 			if(skillcheck(src, SKILL_SURGERY, SKILL_SURGERY_TRAINED))
-				return 1 			
+				return 1
 			else if(skillcheck(src, SKILL_SURGERY, SKILL_SURGERY_NOVICE))
 				return 1.2 //Medic/nurse.
 		//if(SKILL_RESEARCH)
@@ -408,3 +412,66 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 		//if(SKILL_POLICE)
 		//if(SKILL_POWERLOADER)
 		//if(SKILL_VEHICLE)
+		if(SKILL_DOMESTIC)
+			if(skillcheck(src, SKILL_DOMESTIC, SKILL_DOMESTIC_MASTER))
+				return 0.5
+			if(skillcheck(src, SKILL_DOMESTIC, SKILL_DOMESTIC_TRAINED))
+				return 1
+			else
+				return 2
+
+/mob/proc/check_view_change(var/new_size, var/atom/source)
+	return new_size
+
+/mob/proc/can_be_pulled_by(var/mob/M)
+	return TRUE
+
+/mob/proc/can_see_reagents()
+	return stat == DEAD || isSynth(src) ||HAS_TRAIT(src, TRAIT_REAGENT_SCANNER) //Dead guys and synths can always see reagents
+
+/**
+ * Examine a mob
+ *
+ * mob verbs are faster than object verbs. See
+ * [this byond forum post](https://secure.byond.com/forum/?post=1326139&page=2#comment8198716)
+ * for why this isn't atom/verb/examine()
+ */
+/mob/verb/examinate(atom/examinify as mob|obj|turf in view())
+	set name = "Examine"
+	set category = "IC"
+
+	examinify.examine(src)
+
+/mob/verb/pickup_item(obj/item/pickupify in view(1, usr))
+	set name = "Pick Up"
+	set category = "Object"
+
+	if(!canmove || stat || is_mob_restrained() || !Adjacent(pickupify))
+		return
+
+	if(world.time <= next_move)
+		return
+
+	if(!hand && r_hand)
+		to_chat(usr, SPAN_DANGER("Your right hand is full."))
+		return
+	if(hand && l_hand)
+		to_chat(usr, SPAN_DANGER("Your left hand is full."))
+		return
+
+	if(pickupify.anchored)
+		to_chat(usr, SPAN_DANGER("You can't pick that up!"))
+		return
+	if(!isturf(pickupify.loc))
+		to_chat(usr, SPAN_DANGER("You can't pick that up!"))
+		return
+
+	next_move += 6 // stop insane pickup speed
+	UnarmedAttack(pickupify)
+
+/mob/verb/pull_item(atom/movable/pullify in view(1, usr))
+	set name = "Pull"
+	set category = "Object"
+
+	if(Adjacent(pullify))
+		start_pulling(pullify)

@@ -25,6 +25,7 @@
 		W.forceMove(src)
 		l_hand = W
 		W.layer = ABOVE_HUD_LAYER
+		W.plane = ABOVE_HUD_PLANE
 		W.pickup(src)
 		W.equipped(src,WEAR_L_HAND)
 		update_inv_l_hand()
@@ -44,6 +45,7 @@
 		W.forceMove(src)
 		r_hand = W
 		W.layer = ABOVE_HUD_LAYER
+		W.plane = ABOVE_HUD_PLANE
 		W.pickup(src)
 		W.equipped(src,WEAR_R_HAND)
 		update_inv_r_hand()
@@ -129,7 +131,7 @@
 
 	if((I.flags_item & NODROP) && !force)
 		return FALSE //u_equip() only fails if item has NODROP
-
+	var/slot = get_slot_by_item(I)
 	if (I == r_hand)
 		r_hand = null
 		update_inv_r_hand()
@@ -140,13 +142,15 @@
 	if (client)
 		client.screen -= I
 	I.layer = initial(I.layer)
+	I.plane = initial(I.plane)
 	if(newloc)
 		if(!nomoveupdate)
 			I.forceMove(newloc)
 		else
 			I.forceMove(newloc)
+	I.unequipped(src, slot)
 	I.dropped(src)
-	if(I.unequip_sounds.len)
+	if(LAZYLEN(I.unequip_sounds))
 		playsound_client(client, pick(I.unequip_sounds), null, ITEM_EQUIP_VOLUME)
 
 	return TRUE
@@ -221,7 +225,7 @@
 				src.belt = W
 				equipped = 1
 		if(WEAR_ID)
-			if(!src.wear_id /* && src.w_uniform */)
+			if(!src.wear_id)
 				src.wear_id = W
 				equipped = 1
 		if(WEAR_L_EAR)
@@ -334,6 +338,7 @@
 	if(equipped)
 		recalculate_move_delay = TRUE
 		W.layer = ABOVE_HUD_LAYER
+		W.plane = ABOVE_HUD_PLANE
 		if(src.back && W.loc != src.back)
 			W.forceMove(src)
 	else
@@ -356,3 +361,10 @@
 //returns the item in a given slot
 /mob/proc/get_item_by_slot(slot_id)
 	return
+
+//Returns the slot occupied by a given item.
+/mob/proc/get_slot_by_item(obj/item/I)
+	if(I == l_hand)
+		return WEAR_L_HAND
+	if(I == r_hand)
+		return WEAR_R_HAND

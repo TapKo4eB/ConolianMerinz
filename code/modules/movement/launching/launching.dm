@@ -103,7 +103,8 @@
 		LM.target = get_step(src, turn(dir, 180))
 		LM.range = 1
 		LM.speed = launched_speed
-		LM.pass_flags = PASS_UNDER|PASS_OVER
+		LM.pass_flags = PASS_UNDER
+		LM.pass_flags |= (ismob(src) ? PASS_OVER_THROW_MOB : PASS_OVER_THROW_ITEM)
 
 		launch_towards(LM)
 
@@ -185,7 +186,13 @@
 		var/turf/T = get_turf(src)
 		if(!istype(T))
 			return
-		launch_impact(T)
+		var/atom/hit_atom = ismob(LM.target) ? null : T // TODO, just check for LM.target, the ismob is to prevent funky behavior with grenades 'n crates
+		if(!hit_atom)
+			for(var/atom/A in T)
+				if(A == LM.target)
+					hit_atom = A
+					break
+		launch_impact(hit_atom)
 	if (loc)
 		throwing = FALSE
 		rebounding = FALSE

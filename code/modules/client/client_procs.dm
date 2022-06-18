@@ -8,6 +8,13 @@
 #define GOOD_BYOND_MAJOR	513
 #define GOOD_BYOND_MINOR	1500
 
+GLOBAL_LIST_INIT(blacklisted_builds, list(
+	"1407" = "bug preventing client display overrides from working leads to clients being able to see things/mobs they shouldn't be able to see",
+	"1408" = "bug preventing client display overrides from working leads to clients being able to see things/mobs they shouldn't be able to see",
+	"1428" = "bug causing right-click menus to show too many verbs that's been fixed in version 1429",
+	"1548" = "bug breaking the \"alpha\" functionality in the game, allowing clients to be able to see things/mobs they should not be able to see."
+	))
+
 #define LIMITER_SIZE	5
 #define CURRENT_SECOND	1
 #define SECOND_COUNT	2
@@ -39,7 +46,8 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 	/client/proc/toggle_eject_to_hand,
 	/client/proc/toggle_automatic_punctuation,
 	/client/proc/toggle_middle_mouse_click,
-	/client/proc/toggle_clickdrag_override
+	/client/proc/toggle_clickdrag_override,
+	/client/proc/toggle_dualwield
 ))
 
 /client/Topic(href, href_list, hsrc)
@@ -111,20 +119,66 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 		//del(usr)
 		return
 
-	//Admin PM //Why is this not in /datums/admin/Topic()
 	if(href_list["priv_msg"])
-		var/client/C = locate(href_list["priv_msg"])
-		if(ismob(C)) 		//Old stuff can feed-in mobs instead of clients
-			var/mob/M = C
-			C = M.client
-		if(!C) return //Outdated links to logged players generate runtimes
-		if(unansweredAhelps[C.computer_id]) unansweredAhelps.Remove(C.computer_id)
-		cmd_admin_pm(C,null)
+		var/client/receiver_client
+		for(var/client/C as anything in GLOB.clients)
+			if(C.ckey == ckey(href_list["priv_msg"]))
+				receiver_client = C
+				break
+		if(!receiver_client)
+			to_chat(src, SPAN_WARNING("The person you were attempting to PM has gone offline!"))
+			return
+		if(unansweredAhelps[receiver_client.computer_id]) unansweredAhelps.Remove(receiver_client.computer_id)
+		cmd_admin_pm(receiver_client, null)
 		return
 
 	else if(href_list["FaxView"])
 		var/info = locate(href_list["FaxView"])
 		show_browser(usr, "<body class='paper'>[info]</body>", "Fax Message", "Fax Message")
+
+	//NOTES OVERHAUL
+	if(href_list["add_merit_info"])
+		var/key = href_list["add_merit_info"]
+		var/add = input("Add Merit Note") as null|message
+		if(!add)
+			return
+
+		var/datum/entity/player/P = get_player_from_key(key)
+		P.add_note(add, FALSE, NOTE_MERIT)
+
+	if(href_list["add_wl_info_1"])
+		var/key = href_list["add_wl_info_1"]
+		var/add = input("Add Commander Note") as null|message
+		if(!add)
+			return
+
+		var/datum/entity/player/P = get_player_from_key(key)
+		P.add_note(add, FALSE, NOTE_COMMANDER)
+
+	if(href_list["add_wl_info_2"])
+		var/key = href_list["add_wl_info_2"]
+		var/add = input("Add Synthetic Note") as null|message
+		if(!add)
+			return
+
+		var/datum/entity/player/P = get_player_from_key(key)
+		P.add_note(add, FALSE, NOTE_SYNTHETIC)
+
+	if(href_list["add_wl_info_3"])
+		var/key = href_list["add_wl_info_3"]
+		var/add = input("Add Yautja Note") as null|message
+		if(!add)
+			return
+
+		var/datum/entity/player/P = get_player_from_key(key)
+		P.add_note(add, FALSE, NOTE_YAUTJA)
+
+	if(href_list["remove_wl_info"])
+		var/key = href_list["remove_wl_info"]
+		var/index = text2num(href_list["remove_index"])
+
+		var/datum/entity/player/P = get_player_from_key(key)
+		P.remove_note(index)
 
 	//Logs all hrefs
 	if(CONFIG_GET(flag/log_hrefs) && href_logfile)
@@ -160,7 +214,7 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 			if(proc_to_call in GLOB.whitelisted_client_procs)
 				call(src, proc_to_call)()
 			else
-				message_staff("[key_name_admin(src)] attempted to do a href exploit. (Inputted command: [proc_to_call])")
+				message_staff("[key_name_admin(src)] attempted to do a href exploit. (Inputted command: [html_encode(proc_to_call)])")
 			return // Don't call hsrc in this case since it's ourselves
 
 	if(href_list[CLAN_ACTION])
@@ -283,6 +337,17 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 		qdel(src)
 		return*/
 	//hardcode for now
+
+	if (num2text(byond_build) in GLOB.blacklisted_builds)
+		log_access("Failed login: [key] - blacklisted byond build ([byond_version].[byond_build])")
+		to_chat_immediate(src, SPAN_WARNING(FONT_SIZE_HUGE("Your version of byond is blacklisted.")))
+		to_chat_immediate(src, SPAN_WARNING(FONT_SIZE_LARGE("Byond build [byond_build] ([byond_version].[byond_build]) has been blacklisted for the following reason: [GLOB.blacklisted_builds[num2text(byond_build)]].")))
+		to_chat_immediate(src, SPAN_WARNING(FONT_SIZE_LARGE("Please download a new version of byond. If [byond_build] is the latest (which it shouldn't be), you can go to <a href=\"https://secure.byond.com/download/build\">BYOND's website</a> to download other versions.")))
+		to_chat_immediate(src, SPAN_NOTICE(FONT_SIZE_LARGE("Have a CM day.")))
+		qdel(src)
+		return
+
+	//do this check after the blacklist check to avoid confusion
 	if((byond_version < GOOD_BYOND_MAJOR) || ((byond_version == GOOD_BYOND_MAJOR) && (byond_build < GOOD_BYOND_MINOR)))
 		to_chat(src, FONT_SIZE_HUGE(SPAN_BOLDNOTICE("YOUR BYOND VERSION IS NOT WELL SUITED FOR THIS SERVER. Download latest BETA build or you may suffer random crashes or disconnects.")))
 
@@ -317,8 +382,13 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 	create_clickcatcher()
 	apply_clickcatcher()
 
-	if(prefs.lastchangelog != changelog_hash) //bolds the changelog button on the interface so we know there are updates.
+	if(prefs.lastchangelog != GLOB.changelog_hash) //bolds the changelog button on the interface so we know there are updates.
 		winset(src, "infowindow.changelog", "background-color=#ED9F9B;font-style=bold")
+
+	if(prefs.toggle_prefs & TOGGLE_FULLSCREEN)
+		toggle_fullscreen(TRUE)
+	else
+		toggle_fullscreen(FALSE)
 
 
 	var/file = file2text("config/donators.txt")
@@ -387,10 +457,10 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 					spawn() alert("You have logged in already with another key this round, please log out of this one NOW or risk being banned!")
 				if(matches)
 					if(M.client)
-						message_staff("<font color='red'><B>Notice: </B>[SPAN_BLUE("<A href='?src=\ref[usr];priv_msg=\ref[src]'>[key_name_admin(src)]</A> has the same [matches] as <A href='?src=\ref[usr];priv_msg=\ref[src]'>[key_name_admin(M)]</A>.")]", 1)
+						message_staff("<font color='red'><B>Notice: </B>[SPAN_BLUE("<A href='?src=\ref[usr];priv_msg=[src.ckey]'>[key_name_admin(src)]</A> has the same [matches] as <A href='?src=\ref[usr];priv_msg=[src.ckey]'>[key_name_admin(M)]</A>.")]", 1)
 						log_access("Notice: [key_name(src)] has the same [matches] as [key_name(M)].")
 					else
-						message_staff("<font color='red'><B>Notice: </B>[SPAN_BLUE("<A href='?src=\ref[usr];priv_msg=\ref[src]'>[key_name_admin(src)]</A> has the same [matches] as [key_name_admin(M)] (no longer logged in).")]", 1)
+						message_staff("<font color='red'><B>Notice: </B>[SPAN_BLUE("<A href='?src=\ref[usr];priv_msg=[src.ckey]'>[key_name_admin(src)]</A> has the same [matches] as [key_name_admin(M)] (no longer logged in).")]", 1)
 						log_access("Notice: [key_name(src)] has the same [matches] as [key_name(M)] (no longer logged in).")
 
 
@@ -560,3 +630,10 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 					winset(src, "srvkeybinds-[REF(key)]", "parent=default;name=[key];command=\"me\\n.typing\"")
 				if("Whisper")
 					winset(src, "srvkeybinds-[REF(key)]", "parent=default;name=[key];command=whisper")
+
+/client/proc/toggle_fullscreen(new_value)
+	if(new_value)
+		winset(src, "mainwindow", "is-maximized=false;can-resize=false;titlebar=false;menu=menu")
+	else
+		winset(src, "mainwindow", "is-maximized=false;can-resize=true;titlebar=true;menu=menu")
+	winset(src, "mainwindow", "is-maximized=true")

@@ -118,12 +118,13 @@
 				if(!client)
 					return TRUE
 				var/mob/dead/observer/observer = new()
+				observer.set_lighting_alpha_from_pref(client)
 				spawning = TRUE
 				observer.started_as_observer = TRUE
 
 				close_spawn_windows()
 
-				var/obj/O = locate("landmark*Observer-Start")
+				var/obj/effect/landmark/observer_start/O = SAFEPICK(GLOB.observer_starts)
 				if(istype(O))
 					to_chat(src, SPAN_NOTICE("Now teleporting."))
 					observer.forceMove(O.loc)
@@ -218,9 +219,7 @@
 			return
 
 		else
-			if(!ready && href_list["preference"])
-				if(client) client.prefs.process_link(src, href_list)
-			else new_player_panel()
+			new_player_panel()
 
 /mob/new_player/proc/AttemptLateSpawn(rank)
 	if (src != usr)
@@ -239,20 +238,15 @@
 	close_spawn_windows()
 
 	var/turf/T
-	if(SSmapping.configs[GROUND_MAP].map_name != MAP_WHISKEY_OUTPOST)
-		T = get_turf(pick(GLOB.latejoin))
-	else if (SSmapping.configs[GROUND_MAP].map_name == MAP_WHISKEY_OUTPOST)
-		T = get_turf(pick(GLOB.latewhiskey))
+	T = get_turf(pick(GLOB.latejoin))
 
 	var/mob/living/carbon/human/character = create_character()	//creates the human and transfers vars and mind
 	RoleAuthority.equip_role(character, RoleAuthority.roles_for_mode[rank], T)
 	EquipCustomItems(character)
 
 	GLOB.data_core.manifest_inject(character)
-	if(SSmapping.configs[GROUND_MAP].map_name == MAP_WHISKEY_OUTPOST)
-		call(/datum/game_mode/whiskey_outpost/proc/spawn_player)(character)
 	SSticker.minds += character.mind//Cyborgs and AIs handle this in the transform proc.	//TODO!!!!! ~Carn
-	SSticker.mode.latejoin_tally++
+	SSticker.mode.latejoin_tally += RoleAuthority.calculate_role_weight(RoleAuthority.roles_for_mode[rank])
 
 	for(var/datum/squad/sq in RoleAuthority.squads)
 		if(sq)
@@ -271,7 +265,13 @@
 	if(character.mind && character.mind.player_entity)
 		var/datum/entity/player_entity/player = character.mind.player_entity
 		if(player.get_playtime(STATISTIC_HUMAN) == 0 && player.get_playtime(STATISTIC_XENO) == 0)
-			msg_admin_niche("NEW PLAYER: <b>[key_name(character, 1, 1, 0)] (<A HREF='?_src_=admin_holder;ahelp=adminmoreinfo;extra=\ref[character]'>?</A>)</b>. IP: [character.lastKnownIP], CID: [character.computer_id]")
+			msg_admin_niche("NEW JOIN: <b>[key_name(character, 1, 1, 0)] (<A HREF='?_src_=admin_holder;ahelp=adminmoreinfo;extra=\ref[character]'>?</A>)</b>. IP: [character.lastKnownIP], CID: [character.computer_id]")
+		if(character.client)
+			var/client/C = character.client
+			if(C.player_data && C.player_data.playtime_loaded && length(C.player_data.playtimes) == 0)
+				msg_admin_niche("NEW PLAYER: <b>[key_name(character, 1, 1, 0)] (<A HREF='?_src_=admin_holder;ahelp=adminmoreinfo;extra=\ref[C]'>?</A>)</b>. IP: [character.lastKnownIP], CID: [character.computer_id]")
+			if(C.player_data && C.player_data.playtime_loaded && ((round(C.get_total_human_playtime() DECISECONDS_TO_HOURS, 0.1)) <= 5))
+				msg_sea("NEW PLAYER: <b>[key_name(character, 0, 1, 0)] has less than 5 hours as a human. Current role: [get_actual_job_name(character)] - Current location: [get_area(character)]")
 
 	character.client.init_statbrowser() // init verbs for the late join
 
@@ -333,7 +333,7 @@
 			roles_show ^= FLAG_SHOW_MEDICAL
 
 		else if(roles_show & FLAG_SHOW_MARINES && ROLES_MARINES.Find(J.title))
-			dat += "<hr>Squad Marine:<br>"
+			dat += "<hr>Squad Riflemen:<br>"
 			roles_show ^= FLAG_SHOW_MARINES
 
 		dat += "<a href='byond://?src=\ref[src];lobby_choice=SelectedJob;job_selected=[J.title]'>[J.disp_title] ([J.current_positions]) (Active: [active])</a><br>"

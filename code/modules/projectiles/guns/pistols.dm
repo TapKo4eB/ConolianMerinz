@@ -179,7 +179,7 @@
 
 
 /obj/item/weapon/gun/pistol/heavy/set_gun_attachment_offsets()
-	attachable_offset = list("muzzle_x" = 31, "muzzle_y" = 21,"rail_x" = 9, "rail_y" = 23, "under_x" = 20, "under_y" = 17, "stock_x" = 20, "stock_y" = 17)
+	attachable_offset = list("muzzle_x" = 30, "muzzle_y" = 20,"rail_x" = 17, "rail_y" = 21, "under_x" = 20, "under_y" = 17, "stock_x" = 20, "stock_y" = 17)
 
 
 /obj/item/weapon/gun/pistol/heavy/set_gun_config_values()
@@ -196,7 +196,7 @@
 
 /obj/item/weapon/gun/pistol/heavy/co
 	name = "polished vintage Desert Eagle"
-	desc = "A bulky 50 caliber pistol with a serious kick, probably taken from some museum somewhere. Its rosewood grips signify this much: it's hella classy."
+	desc = "The Desert Eagle. Expensive, heavy, and unwieldy, yet immensely powerful. Sporting rosewood grips and a monstrous amount of kick, it's a symbol of power more than anything. But it can kill a bear in its tracks, and you look like a badass in doing so."
 	icon_state = "c_deagle"
 	item_state = "c_deagle"
 	base_gun_icon = "c_deagle"
@@ -204,7 +204,7 @@
 
 /obj/item/weapon/gun/pistol/heavy/co/gold
 	name = "golden vintage Desert Eagle"
-	desc = "A bulky 50 caliber pistol with a serious kick, probably taken from some museum somewhere. Its frame is anodized in gold with rosewood grips. Pretentious and flashy? Yes, but that's the point."
+	desc = "A Desert Eagle anodized in gold and adorned with rosewood grips. The living definition of ostentatious, it's flashy, unwieldy, tremendously heavy, and kicks like a mule. But as a symbol of power, there's nothing like it."
 	icon_state = "g_deagle"
 	item_state = "g_deagle"
 	base_gun_icon = "g_deagle"
@@ -217,9 +217,10 @@
 	desc = "The Korovin PK-9 is a cheap, robust and reliable sidearm, its design is strongly inspired by the classic ancient Makarov pistol. Commonly used by many groups, mostly those worried about cost."
 	icon_state = "pk9"
 	item_state = "pk9"
+	inherent_traits = list(TRAIT_GUN_SILENCED)
 	fire_sound = 'sound/weapons/gun_c99.ogg'
 	current_mag = /obj/item/ammo_magazine/pistol/c99
-	flags_gun_features = GUN_AUTO_EJECTOR|GUN_CAN_POINTBLANK|GUN_ONE_HAND_WIELDED|GUN_INTERNAL_SILENCED
+	flags_gun_features = GUN_AUTO_EJECTOR|GUN_CAN_POINTBLANK|GUN_ONE_HAND_WIELDED
 	attachable_allowed = list(
 						/obj/item/attachable/reddot,
 						/obj/item/attachable/reflex,
@@ -231,14 +232,6 @@
 /obj/item/weapon/gun/pistol/c99/set_gun_attachment_offsets()
 	attachable_offset = list("muzzle_x" = 30, "muzzle_y" = 19,"rail_x" = 10, "rail_y" = 22, "under_x" = 21, "under_y" = 18, "stock_x" = 21, "stock_y" = 18)
 
-/obj/item/weapon/gun/pistol/c99/handle_starting_attachment()
-	..()
-	var/obj/item/attachable/suppressor/S = new(src)
-	S.hidden = TRUE
-	S.flags_attach_features &= ~ATTACH_REMOVABLE
-	S.Attach(src)
-	update_attachable(S.slot)
-
 /obj/item/weapon/gun/pistol/c99/set_gun_config_values()
 	..()
 	fire_delay = FIRE_DELAY_TIER_10
@@ -247,8 +240,7 @@
 	scatter = SCATTER_AMOUNT_TIER_6
 	burst_scatter_mult = SCATTER_AMOUNT_TIER_6
 	scatter_unwielded = SCATTER_AMOUNT_TIER_6
-	damage_mult = BASE_BULLET_DAMAGE_MULT + BULLET_DAMAGE_MULT_TIER_6 //5
-	//damage mult reduced by 1 tier due to suppressor
+	damage_mult = BASE_BULLET_DAMAGE_MULT + BULLET_DAMAGE_MULT_TIER_5
 
 /obj/item/weapon/gun/pistol/c99/upp
 	desc = "The Korovin PK-9 is a cheap, robust and reliable sidearm, its design is strongly inspired by the classic ancient Makarov pistol. This version has been refitted for military usage by the UPP."
@@ -265,7 +257,7 @@
 
 
 /obj/item/weapon/gun/pistol/c99/upp/tranq/handle_starting_attachment()
-	..() //handles the suppressor
+	..()
 	var/obj/item/attachable/lasersight/LS = new(src)
 	LS.flags_attach_features &= ~ATTACH_REMOVABLE
 	LS.Attach(src)
@@ -405,17 +397,28 @@
 
 /obj/item/weapon/gun/pistol/mod88
 	name = "\improper 88 Mod 4 combat pistol"
-	desc = "A powerful sidearm issued mainly to Weyland-Yutani response teams, but issued to the USCM in small numbers, based on the original VP70 more than a century ago. Fires 9mm armor shredding rounds and is capable of 3-round burst."
+	desc = "Standard issue USCM firearm. Also found in the hands of Weyland-Yutani PMC teams. Fires 9mm armor shredding rounds and is capable of 3-round burst."
 	icon_state = "88m4"
 	item_state = "88m4"
-
 	fire_sound = 'sound/weapons/gun_88m4_v7.ogg'
 	reload_sound = 'sound/weapons/gun_88m4_reload.ogg'
 	unload_sound = 'sound/weapons/gun_88m4_unload.ogg'
 	current_mag = /obj/item/ammo_magazine/pistol/mod88
 	force = 8
 	flags_gun_features = GUN_AUTO_EJECTOR|GUN_CAN_POINTBLANK|GUN_ONE_HAND_WIELDED|GUN_AMMO_COUNTER
-
+	attachable_allowed = list(
+						/obj/item/attachable/suppressor,
+						/obj/item/attachable/extended_barrel,
+						/obj/item/attachable/heavy_barrel,
+						/obj/item/attachable/compensator,
+						/obj/item/attachable/flashlight,
+						/obj/item/attachable/reflex,
+						/obj/item/attachable/reddot,
+						/obj/item/attachable/burstfire_assembly,
+						/obj/item/attachable/lasersight,
+						/obj/item/attachable/flashlight/grip,
+						/obj/item/attachable/magnetic_harness,
+						/obj/item/attachable/stock/mod88)
 
 /obj/item/weapon/gun/pistol/mod88/set_gun_attachment_offsets()
 	attachable_offset = list("muzzle_x" = 27, "muzzle_y" = 21,"rail_x" = 8, "rail_y" = 22, "under_x" = 21, "under_y" = 18, "stock_x" = 18, "stock_y" = 15)

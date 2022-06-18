@@ -1,17 +1,18 @@
 
 /obj/vehicle/multitile/apc/medical
-	name = "\improper M577-MED Armored Personnel Carrier"
-	desc = "A medical modification of the M577 Armored Personnel Carrier. An armored transport with four big wheels. Has compact surgery theater set up inside and stores a significant amount of medical supplies. Entrances on the sides."
+	name = "M577-MED Armored Personnel Carrier"
+	desc = "A medical modification of the M577 Armored Personnel Carrier. An armored transport with four big wheels. Designed as a reliable mobile triage that stores a significant amount of medical supplies for in-field resupplying of medics. Entrances on the sides."
 
 	icon_state = "apc_base_med"
 
 	interior_map = "apc_med"
 
-	passengers_slots = 4
-	//MED APC can store additional 4 dead revivable bodies for the triage
+	//increased 4->6, because having only 4 passenger slots is not nearly enough, especially if you have also a medic/nurse/synth inside helping with triage
+	passengers_slots = 6
+	//MED APC can store additional 8 dead revivable bodies for the triage
 	//but interior won't allow more revivable dead if passengers_taken_slots >= passengers_slots + revivable_dead_slots
 	//to prevent infinitely growing the marine force inside of the vehicle
-	revivable_dead_slots = 4
+	revivable_dead_slots = 8
 
 	entrances = list(
 		"left" = list(2, 0),
@@ -31,13 +32,13 @@
 /obj/vehicle/multitile/apc/medical/load_role_reserved_slots()
 	var/datum/role_reserved_slots/RRS = new
 	RRS.category_name = "Crewmen"
-	RRS.roles = list(JOB_CREWMAN, JOB_UPP_CREWMAN)
+	RRS.roles = list(JOB_CREWMAN, JOB_WO_CREWMAN, JOB_UPP_CREWMAN, JOB_PMC_CREWMAN)
 	RRS.total = 2
 	role_reserved_slots += RRS
 
 	RRS = new
 	RRS.category_name = "Medical Support"
-	RRS.roles = list(JOB_CMO, JOB_DOCTOR, JOB_RESEARCHER, JOB_WO_CMO, JOB_WO_DOCTOR, JOB_WO_RESEARCHER, JOB_SYNTH, JOB_WO_SYNTH)
+	RRS.roles = JOB_MEDIC_ROLES_LIST + list(JOB_WO_CMO, JOB_WO_DOCTOR, JOB_WO_RESEARCHER, JOB_SYNTH, JOB_WO_SYNTH)
 	RRS.total = 1
 	role_reserved_slots += RRS
 

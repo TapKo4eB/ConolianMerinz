@@ -43,10 +43,9 @@ Additional game mode variables.
 	var/list/datum/mind/picked_queens = list()
 	var/datum/mind/survivors[] = list()
 	var/datum/mind/synth_survivor = null
-	var/datum/mind/predators[] = list()
 	var/datum/mind/hellhounds[] = list() //Hellhound spawning is not supported at round start.
 	var/list/dead_queens // A list of messages listing the dead queens
-	var/pred_keys[] = list() //People who are playing predators, we can later reference who was a predator during the round.
+	var/predators = list()
 
 	var/xeno_required_num 	= 0 //We need at least one. You can turn this off in case we don't care if we spawn or don't spawn xenos.
 	var/xeno_starting_num 	= 0 //To clamp starting xenos.
@@ -78,8 +77,8 @@ Additional game mode variables.
 	var/latejoin_larva_drop = LATEJOIN_MARINES_PER_LATEJOIN_LARVA //A larva will spawn in once the tally reaches this level. If set to 0, no latejoin larva drop
 
 	//Role Authority set up.
-	var/role_instruction 	= 0 // 1 is to replace, 2 is to add, 3 is to remove.
-	var/roles_for_mode[] //Won't have a list if the instruction is set to 0.
+	/// List of role titles to override to different roles when starting game
+	var/list/role_mappings
 
 	//Bioscan related.
 	var/bioscan_current_interval = 5 MINUTES//5 minutes in
@@ -89,12 +88,16 @@ Additional game mode variables.
 	var/round_time_pooled_cutoff = 25 MINUTES	//Time for when free pooled larvae stop spawning.
 
 	var/round_time_resin = 40 MINUTES	//Time for when resin placing is allowed close to LZs
-	var/resin_allow_finished = FALSE
 
 	var/round_time_evolution_ovipositor = 5 MINUTES //Time for when ovipositor becomes necessary for evolution to progress.
 	var/evolution_ovipositor_threshold = FALSE
 
 	var/flags_round_type = NO_FLAGS
+	var/toggleable_flags = NO_FLAGS
+
+
+/datum/game_mode/proc/get_roles_list()
+	return ROLES_REGULAR_ALL
 
 //===================================================\\
 
@@ -124,41 +127,9 @@ Additional game mode variables.
 //===================================================\\
 
 /datum/game_mode/proc/initialize_predator(mob/living/carbon/human/new_predator, var/ignore_pred_num = FALSE)
-	predators += new_predator.mind //Add them to the proper list.
-	pred_keys += new_predator.ckey //Add their key.
-
+	predators[new_predator.ckey] = list("Name" = new_predator.real_name, "Status" = "Alive")
 	if(!ignore_pred_num)
 		pred_current_num++
-
-#define calculate_pred_max (Floor(length(GLOB.player_list) / pred_per_players) + pred_additional_max + pred_start_count)
-
-/datum/game_mode/proc/initialize_starting_predator_list()
-	if(prob(pred_round_chance)) //First we want to determine if it's actually a predator round.
-		flags_round_type |= MODE_PREDATOR //It is now a predator round.
-		var/L[] = get_whitelisted_predators() //Grabs whitelisted preds who are ready at game start.
-		var/datum/mind/M
-		var/i //Our iterator for the maximum amount of pred spots available. The actual number is changed later on.
-		var/datum/job/J = RoleAuthority.roles_by_name[JOB_PREDATOR]
-		var/pred_max = calculate_pred_max
-
-		while(L.len && i < pred_max)
-			M = pick(L)
-			if(!istype(M)) continue
-			L -= M
-			M.roundstart_picked = TRUE
-			predators += M
-			if(M.current && J)
-				if(J.get_whitelist_status(RoleAuthority.roles_whitelist, M.current.client) == WHITELIST_NORMAL)
-					i++
-			else
-				i++
-
-/datum/game_mode/proc/initialize_post_predator_list() //TO DO: Possibly clean this using tranfer_to.
-	var/temp_pred_list[] = predators //We don't want to use the actual predator list as it will be overriden.
-	predators = list() //Empty it. The temporary minds we used aren't going to be used much longer.
-	for(var/datum/mind/new_pred in temp_pred_list)
-		if(!istype(new_pred)) continue
-		attempt_to_join_as_predator(new_pred.current)
 
 /datum/game_mode/proc/get_whitelisted_predators(readied = 1)
 	// Assemble a list of active players who are whitelisted.
@@ -195,6 +166,8 @@ Additional game mode variables.
 
 	if(pred_candidate) pred_candidate.moveToNullspace() //Nullspace it for garbage collection later.
 
+#define calculate_pred_max (Floor(length(GLOB.player_list) / pred_per_players) + pred_additional_max + pred_start_count)
+
 /datum/game_mode/proc/check_predator_late_join(mob/pred_candidate, show_warning = 1)
 
 	if(!pred_candidate.client)
@@ -217,8 +190,9 @@ Additional game mode variables.
 		if(show_warning) to_chat(pred_candidate, SPAN_WARNING("There is no Hunt this round! Maybe the next one."))
 		return
 
-	if(pred_candidate.ckey in pred_keys)
-		if(show_warning) to_chat(pred_candidate, SPAN_WARNING("You already were a Yautja! Give someone else a chance."))
+	if(pred_candidate.ckey in predators)
+		if(show_warning)
+			to_chat(pred_candidate, SPAN_WARNING("You already were a Yautja! Give someone else a chance."))
 		return
 
 	if(J.get_whitelist_status(RoleAuthority.roles_whitelist, pred_candidate.client) == WHITELIST_NORMAL)
@@ -363,7 +337,7 @@ Additional game mode variables.
 		INVOKE_ASYNC(src, .proc/pick_queen_spawn, picked_queens[hive], hive.hivenumber)
 
 /datum/game_mode/proc/check_xeno_late_join(mob/xeno_candidate)
-	if(jobban_isbanned(xeno_candidate, "Alien")) // User is jobbanned
+	if(jobban_isbanned(xeno_candidate, JOB_XENOMORPH)) // User is jobbanned
 		to_chat(xeno_candidate, SPAN_WARNING("You are banned from playing aliens and cannot spawn as a xenomorph."))
 		return
 	return 1
@@ -374,10 +348,14 @@ Additional game mode variables.
 
 	for(var/mob/living/carbon/Xenomorph/X in GLOB.living_xeno_list)
 		var/area/A = get_area(X)
-		if(is_admin_level(X.z) && (!A || !(A.flags_area & AREA_ALLOW_XENO_JOIN))) continue //xenos on admin z level don't count
-		if(istype(X) && !X.client)
-			if(X.away_timer >= XENO_LEAVE_TIMER || (isXenoLarva(X) && X.away_timer >= XENO_LEAVE_TIMER_LARVA) ) available_xenos_non_ssd += X
-			available_xenos += X
+		if(is_admin_level(X.z) && (!A || !(A.flags_area & AREA_ALLOW_XENO_JOIN)) || X.aghosted)
+			continue //xenos on admin z level and aghosted ones don't count
+		if(istype(X) && ((!isXenoLarva(X) && (XENO_LEAVE_TIMER - X.away_timer < XENO_AVAILABLE_TIMER)) || (isXenoLarva(X) && (XENO_LEAVE_TIMER_LARVA - X.away_timer < XENO_AVAILABLE_TIMER))))
+			if(!X.client)
+				available_xenos += X
+			else
+				available_xenos_non_ssd += X
+
 
 	var/datum/hive_status/hive
 	for(var/hivenumber in GLOB.hive_datum)
@@ -413,6 +391,11 @@ Additional game mode variables.
 						to_chat(xeno_candidate, message)
 						to_chat(xeno_candidate, SPAN_WARNING("You must wait 2.5 minutes before rejoining the game!"))
 						return FALSE
+
+				for(var/mob_name in SP.linked_hive.banished_ckeys)
+					if(SP.linked_hive.banished_ckeys[mob_name] == xeno_candidate.ckey)
+						to_chat(xeno_candidate, SPAN_WARNING("You are banished from this hive, You may not rejoin unless the Queen re-admits you or dies."))
+						return
 				if(isnewplayer(xeno_candidate))
 					var/mob/new_player/N = xeno_candidate
 					N.close_spawn_windows()
@@ -433,10 +416,6 @@ Additional game mode variables.
 			to_chat(xeno_candidate, SPAN_WARNING("You cannot join if the xenomorph is dead."))
 			return FALSE
 
-		if(new_xeno.client)
-			to_chat(xeno_candidate, SPAN_WARNING("That xenomorph has been occupied."))
-			return FALSE
-
 		if(!xeno_bypass_timer)
 			var/deathtime = world.time - xeno_candidate.timeofdeath
 			if(istype(xeno_candidate, /mob/new_player))
@@ -455,7 +434,7 @@ Additional game mode variables.
 				return FALSE
 
 		if(alert(xeno_candidate, "Everything checks out. Are you sure you want to transfer yourself into [new_xeno]?", "Confirm Transfer", "Yes", "No") == "Yes")
-			if(new_xeno.client || !(new_xeno in GLOB.living_xeno_list) || new_xeno.stat == DEAD || !xeno_candidate) // Do it again, just in case
+			if(((!isXenoLarva(new_xeno) && new_xeno.away_timer < XENO_LEAVE_TIMER) || (isXenoLarva(new_xeno) && new_xeno.away_timer < XENO_LEAVE_TIMER_LARVA)) || !(new_xeno in GLOB.living_xeno_list) || new_xeno.stat == DEAD || !xeno_candidate) // Do it again, just in case
 				to_chat(xeno_candidate, SPAN_WARNING("That xenomorph can no longer be controlled. Please try another."))
 				return FALSE
 		else return FALSE
@@ -464,6 +443,10 @@ Additional game mode variables.
 		if(isnewplayer(xeno_candidate))
 			var/mob/new_player/N = xeno_candidate
 			N.close_spawn_windows()
+		for(var/mob_name in new_xeno.hive.banished_ckeys)
+			if(new_xeno.hive.banished_ckeys[mob_name] == xeno_candidate.ckey)
+				to_chat(xeno_candidate, SPAN_WARNING("You are banished from this hive, You may not rejoin unless the Queen re-admits you or dies."))
+				return
 		if(transfer_xeno(xeno_candidate, new_xeno))
 			return 1
 	to_chat(xeno_candidate, "JAS01: Something went wrong, tell a coder.")
@@ -679,8 +662,8 @@ Additional game mode variables.
 
 	if(is_synth)
 		survivor_types = list(
-				"Survivor - Synthetic", //to be expanded later
-			)
+			/datum/equipment_preset/synth/survivor, //to be expanded later
+		)
 
 	//Give them proper jobs and stuff here later
 	var/randjob = pick(survivor_types)
@@ -820,12 +803,7 @@ Additional game mode variables.
 
 //We do NOT want to initilialize the gear before everyone is properly spawned in
 /datum/game_mode/proc/initialize_post_marine_gear_list()
-
-	//We take the number of marine players, deduced from other lists, and then get a scale multiplier from it, to be used in arbitrary manners to distribute equipment
-	//This might count players who ready up but get kicked back to the lobby
-	var/marine_pop_size = length(GLOB.alive_human_list)
-
-	var/scale = max(marine_pop_size / MARINE_GEAR_SCALING_NORMAL, 1) //This gives a decimal value representing a scaling multiplier. Cannot go below 1
+	var/scale = get_scaling_value()
 
 	//Set up attachment vendor contents related to Marine count
 	for(var/i in GLOB.cm_vending_vendors)
@@ -834,6 +812,14 @@ Additional game mode variables.
 
 	//Scale the amount of cargo points through a direct multiplier
 	supply_controller.points = round(supply_controller.points * scale)
+
+/datum/game_mode/proc/get_scaling_value()
+	//We take the number of marine players, deduced from other lists, and then get a scale multiplier from it, to be used in arbitrary manners to distribute equipment
+	//This might count players who ready up but get kicked back to the lobby
+	var/marine_pop_size = length(GLOB.alive_human_list)
+
+	//This gives a decimal value representing a scaling multiplier. Cannot go below 1
+	return max(marine_pop_size / MARINE_GEAR_SCALING_NORMAL, 1)
 
 // for the toolbox
 /datum/game_mode/proc/end_round_message()

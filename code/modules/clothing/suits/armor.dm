@@ -8,7 +8,7 @@
 	max_heat_protection_temperature = ARMOR_max_heat_protection_temperature
 	siemens_coefficient = 0.6
 	w_class = SIZE_HUGE
-	allowed = list(/obj/item/weapon/gun)//Guns only.
+	allowed = list(/obj/item/weapon/gun, /obj/item/storage/backpack/general_belt)//Guns only.
 	uniform_restricted = list(/obj/item/clothing/under)
 	valid_accessory_slots = list(ACCESSORY_SLOT_MEDAL, ACCESSORY_SLOT_ARMOR_A, ACCESSORY_SLOT_ARMOR_L, ACCESSORY_SLOT_ARMOR_S, ACCESSORY_SLOT_ARMOR_M)
 	restricted_accessory_slots = list(ACCESSORY_SLOT_ARMOR_A, ACCESSORY_SLOT_ARMOR_L, ACCESSORY_SLOT_ARMOR_S)
@@ -30,14 +30,16 @@
 	item_state = "armor"
 	blood_overlay_type = "armor"
 	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN
-	armor_melee = CLOTHING_ARMOR_MEDIUM
+	armor_melee = CLOTHING_ARMOR_MEDIUMLOW
 	armor_bullet = CLOTHING_ARMOR_MEDIUM
 	armor_laser = CLOTHING_ARMOR_LOW
 	armor_energy = CLOTHING_ARMOR_LOW
 	armor_bomb = CLOTHING_ARMOR_LOW
-	armor_bio = CLOTHING_ARMOR_LOW
+	armor_bio = CLOTHING_ARMOR_MEDIUM
 	armor_rad = CLOTHING_ARMOR_LOW
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUMLOW
+
+
 
 /obj/item/clothing/suit/armor/vest/pilot
 	name = "\improper M70 flak jacket"
@@ -67,7 +69,7 @@
 		/obj/item/explosive/grenade,
 		/obj/item/device/binoculars,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/storage/large_holster/machete,
 		/obj/item/storage/belt/gun/m4a3,
 		/obj/item/storage/belt/gun/m44)
@@ -87,6 +89,14 @@
 	icon = 'icons/obj/items/clothing/cm_suits.dmi'
 	icon_state = "dutch_armor"
 	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN
+	armor_melee = CLOTHING_ARMOR_HIGH
+	armor_bullet = CLOTHING_ARMOR_HIGHPLUS
+	armor_laser = CLOTHING_ARMOR_LOW
+	armor_energy = CLOTHING_ARMOR_LOW
+	armor_bomb = CLOTHING_ARMOR_LOW
+	armor_bio = CLOTHING_ARMOR_LOW
+	armor_rad = CLOTHING_ARMOR_LOW
+	armor_internaldamage = CLOTHING_ARMOR_MEDIUMLOW
 	uniform_restricted = list(/obj/item/clothing/under/marine/veteran/dutch)
 
 /obj/item/clothing/suit/armor/vest/security
@@ -94,15 +104,16 @@
 	desc = "An armored vest that protects against some damage. This one has a Weyland-Yutani corporate badge."
 	icon_state = "armorsec"
 	item_state = "armor"
+	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN
 	armor_melee = CLOTHING_ARMOR_MEDIUMLOW
 	armor_bullet = CLOTHING_ARMOR_MEDIUM
 	armor_laser = CLOTHING_ARMOR_LOW
 	armor_energy = CLOTHING_ARMOR_NONE
 	armor_bomb = CLOTHING_ARMOR_LOW
-	armor_bio = CLOTHING_ARMOR_LOW
+	armor_bio = CLOTHING_ARMOR_MEDIUM
 	armor_rad = CLOTHING_ARMOR_LOW
-	slowdown = SLOWDOWN_ARMOR_NONE
 	valid_accessory_slots = list(ACCESSORY_SLOT_ARMOR_A, ACCESSORY_SLOT_ARMOR_L, ACCESSORY_SLOT_ARMOR_S, ACCESSORY_SLOT_ARMOR_M)
+
 
 /obj/item/clothing/suit/armor/vest/warden
 	name = "Warden's jacket"
@@ -139,12 +150,10 @@
 	armor_laser = CLOTHING_ARMOR_LOW
 	armor_energy = CLOTHING_ARMOR_LOW
 	armor_bomb = CLOTHING_ARMOR_LOW
-	armor_bio = CLOTHING_ARMOR_NONE
+	armor_bio = CLOTHING_ARMOR_MEDIUM
 	armor_rad = CLOTHING_ARMOR_NONE
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUM
-	siemens_coefficient = 0.7
-	time_to_unequip = 5
-	time_to_equip = 10
+
 
 /obj/item/clothing/suit/armor/bulletproof/badge
 	icon_state = "bulletproofbadge"
@@ -170,6 +179,29 @@
 	siemens_coefficient = 0.5
 	time_to_unequip = 20
 	time_to_equip = 20
+
+/obj/item/clothing/suit/armor/gladiator
+	name = "gladiator armor"
+	desc = "Are you not entertained? Is that not why you are here?"
+	icon_state = "gladiator"
+	item_state = "gladiator"
+	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_LEGS|BODY_FLAG_ARMS
+	armor_melee = CLOTHING_ARMOR_HIGH
+	armor_bullet = CLOTHING_ARMOR_LOW
+	armor_laser = CLOTHING_ARMOR_LOW
+	armor_energy = CLOTHING_ARMOR_LOW
+	armor_bomb = CLOTHING_ARMOR_LOW
+	armor_internaldamage = CLOTHING_ARMOR_MEDIUM
+	flags_inventory = BLOCKSHARPOBJ
+	flags_inv_hide = HIDEJUMPSUIT
+	siemens_coefficient = 0.5
+	time_to_unequip = 20
+	time_to_equip = 20
+	allowed = list(/obj/item/weapon/melee/claymore/mercsword,
+		/obj/item/weapon/shield/riot,
+		/obj/item/device/flashlight,
+	)
+	valid_accessory_slots = list(ACCESSORY_SLOT_MEDAL)
 
 /obj/item/clothing/suit/armor/riot/marine
 	name = "\improper M5 riot control armor"
@@ -237,9 +269,8 @@
 	armor_laser = CLOTHING_ARMOR_LOW
 	armor_energy = CLOTHING_ARMOR_LOW
 	armor_bomb = CLOTHING_ARMOR_LOW
-	armor_bio = CLOTHING_ARMOR_NONE
+	armor_bio = CLOTHING_ARMOR_MEDIUM
 	armor_rad = CLOTHING_ARMOR_NONE
-	slowdown = SLOWDOWN_ARMOR_NONE
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUMLOW
 	valid_accessory_slots = list(ACCESSORY_SLOT_ARMOR_A, ACCESSORY_SLOT_ARMOR_L, ACCESSORY_SLOT_ARMOR_S, ACCESSORY_SLOT_ARMOR_M)
 
@@ -247,7 +278,7 @@
 //When the wearer gets hit, this armor will teleport the user a short distance away (to safety or to more danger, no one knows. That's the fun of it!)
 /obj/item/clothing/suit/armor/reactive
 	name = "Reactive Teleport Armor"
-	desc = "Someone seperated our Research Director from his own head!"
+	desc = "Someone seperated our Research Director from their own head!"
 	var/active = 0.0
 	icon_state = "reactiveoff"
 	item_state = "reactiveoff"
@@ -393,7 +424,7 @@
 //Non-hardsuit ERT armor.
 /obj/item/clothing/suit/armor/vest/ert
 	name = "emergency response team armor"
-	desc = "A set of armor worn by members of the NanoTrasen Emergency Response Team."
+	desc = "A set of armor worn by members of the Weyland-Yutani Emergency Response Team."
 	icon_state = "ertarmor_cmd"
 	item_state = "armor"
 	armor_melee = CLOTHING_ARMOR_MEDIUM
@@ -408,24 +439,24 @@
 //Commander
 /obj/item/clothing/suit/armor/vest/ert/command
 	name = "emergency response team commander armor"
-	desc = "A set of armor worn by the commander of a NanoTrasen Emergency Response Team. Has blue highlights."
+	desc = "A set of armor worn by the commander of a Weyland-Yutani Emergency Response Team. Has blue highlights."
 
 //Security
 /obj/item/clothing/suit/armor/vest/ert/security
 	name = "emergency response team security armor"
-	desc = "A set of armor worn by security members of the NanoTrasen Emergency Response Team. Has red highlights."
+	desc = "A set of armor worn by security members of the Weyland-Yutani Emergency Response Team. Has red highlights."
 	icon_state = "ertarmor_sec"
 
 //Engineer
 /obj/item/clothing/suit/armor/vest/ert/engineer
 	name = "emergency response team engineer armor"
-	desc = "A set of armor worn by engineering members of the NanoTrasen Emergency Response Team. Has orange highlights."
+	desc = "A set of armor worn by engineering members of the Weyland-Yutani Emergency Response Team. Has orange highlights."
 	icon_state = "ertarmor_eng"
 
 //Medical
 /obj/item/clothing/suit/armor/vest/ert/medical
 	name = "emergency response team medical armor"
-	desc = "A set of armor worn by medical members of the NanoTrasen Emergency Response Team. Has red and white highlights."
+	desc = "A set of armor worn by medical members of the Weyland-Yutani Emergency Response Team. Has red and white highlights."
 	icon_state = "ertarmor_med"
 
 

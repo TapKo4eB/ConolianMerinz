@@ -15,12 +15,14 @@
 	speed = XENO_SPEED_TIER_4
 
 	evolution_allowed = FALSE
-	deevolves_to = XENO_CASTE_DRONE
+	deevolves_to = list(XENO_CASTE_DRONE)
 	eggs_max = 5
 	throwspeed = SPEED_AVERAGE
 	can_hold_facehuggers = 1
 	can_hold_eggs = CAN_HOLD_ONE_HAND
 	weed_level = WEED_LEVEL_STANDARD
+
+	hugger_nurturing = TRUE
 	huggers_max = 16
 	eggs_max = 7
 

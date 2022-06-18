@@ -1,5 +1,5 @@
 #define SAVEFILE_VERSION_MIN	8
-#define SAVEFILE_VERSION_MAX	12
+#define SAVEFILE_VERSION_MAX	16
 
 //handles converting savefiles to new formats
 //MAKE SURE YOU KEEP THIS UP TO DATE!
@@ -21,10 +21,32 @@
 		return 0
 
 	if(savefile_version < 12) //we've split toggles into toggles_sound and toggles_chat
-//		if(S["toggles"])
-//			qdel(S["toggles"])
-		S["toggles_chat"] << TOGGLES_SOUND_DEFAULT
+		S["toggles_sound"] << TOGGLES_SOUND_DEFAULT
 		S["toggles_chat"] << TOGGLES_CHAT_DEFAULT
+
+	if(savefile_version < 13)
+		var/sound_toggles
+		S["toggles_sound"] >> sound_toggles
+		sound_toggles |= SOUND_INTERNET
+		S["toggles_sound"] << sound_toggles
+
+	if(savefile_version < 14) //toggle unnest flashing on by default
+		var/flash_toggles
+		S["toggles_flashing"] >> flash_toggles
+		flash_toggles |= FLASH_UNNEST
+		S["toggles_flashing"] << flash_toggles
+
+	if(savefile_version < 15) //toggles on membership publicity by default because forgot to six months ago
+		var/pref_toggles
+		S["toggle_prefs"] >> pref_toggles
+		pref_toggles |= TOGGLE_MEMBER_PUBLIC
+		S["toggle_prefs"] << pref_toggles
+
+	if(savefile_version < 16) //toggle unpool flashing on by default
+		var/flash_toggles_two
+		S["toggles_flashing"] >> flash_toggles_two
+		flash_toggles_two |= FLASH_POOLSPAWN
+		S["toggles_flashing"] << flash_toggles_two
 
 	savefile_version = SAVEFILE_VERSION_MAX
 	return 1
@@ -68,18 +90,22 @@
 	S["default_slot"]		>> default_slot
 	S["toggles_chat"]		>> toggles_chat
 	S["chat_display_preferences"] >> chat_display_preferences
+	S["toggles_ghost"]		>> toggles_ghost
 	S["toggles_sound"]		>> toggles_sound
 	S["toggle_prefs"]		>> toggle_prefs
+	S["toggles_flashing"]	>> toggles_flashing
 	S["UI_style_color"]		>> UI_style_color
 	S["UI_style_alpha"]		>> UI_style_alpha
 	S["stylesheet"] 		>> stylesheet
 	S["window_skin"]		>> window_skin
 	S["fps"]				>> fps
+	S["ghost_vision_pref"]	>> ghost_vision_pref
 
 	S["xeno_prefix"]		>> xeno_prefix
 	S["xeno_postfix"]		>> xeno_postfix
 	S["xeno_name_ban"]		>> xeno_name_ban
-	S["playtime_perks"] 		>> playtime_perks
+	S["playtime_perks"]		>> playtime_perks
+	S["xeno_vision_level_pref"]		>> xeno_vision_level_pref
 	S["view_controller"]	>> View_MC
 	S["observer_huds"]		>> observer_huds
 
@@ -88,16 +114,25 @@
 	S["pred_name"]			>> predator_name
 	S["pred_gender"]		>> predator_gender
 	S["pred_age"]			>> predator_age
+	S["pred_trans_type"]	>> predator_translator_type
 	S["pred_mask_type"]		>> predator_mask_type
 	S["pred_armor_type"]	>> predator_armor_type
 	S["pred_boot_type"]		>> predator_boot_type
+	S["pred_mask_mat"]		>> predator_mask_material
 	S["pred_armor_mat"]		>> predator_armor_material
+	S["pred_greave_mat"]	>> predator_greave_material
+	S["pred_caster_mat"]	>> predator_caster_material
+	S["pred_cape_type"]		>> predator_cape_type
+	S["pred_cape_color"]	>> predator_cape_color
+	S["pred_flavor_text"]	>> predator_flavor_text
 
 	S["commander_status"]	>> commander_status
 	S["co_sidearm"]			>> commander_sidearm
 	S["yautja_status"]		>> yautja_status
 	S["synth_status"]		>> synth_status
 	S["key_bindings"] 		>> key_bindings
+
+	S["grade_path"]			>> sea_path
 	var/list/remembered_key_bindings
 	S["remembered_key_bindings"] >> remembered_key_bindings
 
@@ -105,6 +140,8 @@
 	S["show_permission_errors"] >> show_permission_errors
 	S["hear_vox"] >> hear_vox
 	S["hide_statusbar"] >> hide_statusbar
+	S["no_radials_preference"] >> no_radials_preference
+	S["no_radial_labels_preference"] >> no_radial_labels_preference
 	S["hotkeys"] >> hotkeys
 
 	//Sanitize
@@ -115,26 +152,40 @@
 	default_slot	= sanitize_integer(default_slot, 1, MAX_SAVE_SLOTS, initial(default_slot))
 	toggles_chat	= sanitize_integer(toggles_chat, 0, 65535, initial(toggles_chat))
 	chat_display_preferences	= sanitize_integer(chat_display_preferences, 0, 65535, initial(chat_display_preferences))
+	toggles_ghost	= sanitize_integer(toggles_ghost, 0, 65535, initial(toggles_ghost))
 	toggles_sound	= sanitize_integer(toggles_sound, 0, 65535, initial(toggles_sound))
 	toggle_prefs	= sanitize_integer(toggle_prefs, 0, 65535, initial(toggle_prefs))
+	toggles_flashing= sanitize_integer(toggles_flashing, 0, 65535, initial(toggles_flashing))
 	UI_style_color	= sanitize_hexcolor(UI_style_color, initial(UI_style_color))
 	UI_style_alpha	= sanitize_integer(UI_style_alpha, 0, 255, initial(UI_style_alpha))
 	window_skin		= sanitize_integer(window_skin, 0, 65535, initial(window_skin))
+	ghost_vision_pref = sanitize_inlist(ghost_vision_pref, list(GHOST_VISION_LEVEL_NO_NVG, GHOST_VISION_LEVEL_MID_NVG, GHOST_VISION_LEVEL_FULL_NVG), GHOST_VISION_LEVEL_MID_NVG)
 	playtime_perks   = sanitize_integer(playtime_perks, 0, 1, 1)
+	xeno_vision_level_pref = sanitize_inlist(xeno_vision_level_pref, list(XENO_VISION_LEVEL_NO_NVG, XENO_VISION_LEVEL_MID_NVG, XENO_VISION_LEVEL_FULL_NVG), XENO_VISION_LEVEL_MID_NVG)
 	hear_vox  		= sanitize_integer(hear_vox, FALSE, TRUE, TRUE)
 	hide_statusbar = sanitize_integer(hide_statusbar, FALSE, TRUE, FALSE)
+	no_radials_preference = sanitize_integer(no_radials_preference, FALSE, TRUE, FALSE)
+	no_radial_labels_preference = sanitize_integer(no_radial_labels_preference, FALSE, TRUE, FALSE)
 
 	synthetic_name 		= synthetic_name ? sanitize_text(synthetic_name, initial(synthetic_name)) : initial(synthetic_name)
-	synthetic_type		= sanitize_text(synthetic_type, initial(synthetic_type))
+	synthetic_type		= sanitize_inlist(synthetic_type, PLAYER_SYNTHS, initial(synthetic_type))
 	predator_name 		= predator_name ? sanitize_text(predator_name, initial(predator_name)) : initial(predator_name)
 	predator_gender 	= sanitize_text(predator_gender, initial(predator_gender))
 	predator_age 		= sanitize_integer(predator_age, 100, 10000, initial(predator_age))
+	predator_translator_type = sanitize_inlist(predator_translator_type, PRED_TRANSLATORS, initial(predator_translator_type))
 	predator_mask_type 	= sanitize_integer(predator_mask_type,1,1000000,initial(predator_mask_type))
 	predator_armor_type = sanitize_integer(predator_armor_type,1,1000000,initial(predator_armor_type))
 	predator_boot_type 	= sanitize_integer(predator_boot_type,1,1000000,initial(predator_boot_type))
-	predator_armor_material = sanitize_inlist(predator_armor_material, list("ebony", "silver", "bronze"), initial(predator_armor_material))
+	predator_mask_material = sanitize_inlist(predator_mask_material, PRED_MATERIALS, initial(predator_mask_material))
+	predator_armor_material = sanitize_inlist(predator_armor_material, PRED_MATERIALS, initial(predator_armor_material))
+	predator_greave_material = sanitize_inlist(predator_greave_material, PRED_MATERIALS, initial(predator_greave_material))
+	predator_caster_material = sanitize_inlist(predator_caster_material, PRED_MATERIALS + "retro", initial(predator_caster_material))
+	predator_cape_type = sanitize_inlist(predator_cape_type, GLOB.all_yautja_capes + "None", initial(predator_cape_type))
+	predator_cape_color = sanitize_hexcolor(predator_cape_color, initial(predator_cape_color))
+	predator_flavor_text = predator_flavor_text ? sanitize_text(predator_flavor_text, initial(predator_flavor_text)) : initial(predator_flavor_text)
 	commander_status	= sanitize_inlist(commander_status, whitelist_hierarchy, initial(commander_status))
 	commander_sidearm   = sanitize_inlist(commander_sidearm, list("Mateba","Commodore's Mateba","Golden Desert Eagle","Desert Eagle"), initial(commander_sidearm))
+	sea_path			= sanitize_inlist(sea_path, list("Command", "Technical"), initial(sea_path))
 	yautja_status		= sanitize_inlist(yautja_status, whitelist_hierarchy + list("Elder"), initial(yautja_status))
 	synth_status		= sanitize_inlist(synth_status, whitelist_hierarchy, initial(synth_status))
 	key_bindings 		= sanitize_keybindings(key_bindings)
@@ -182,14 +233,18 @@
 	S["default_slot"]		<< default_slot
 	S["toggles_chat"]		<< toggles_chat
 	S["chat_display_preferences"] << chat_display_preferences
+	S["toggles_ghost"]		<< toggles_ghost
 	S["toggles_sound"]		<< toggles_sound
 	S["toggle_prefs"]		<< toggle_prefs
+	S["toggles_flashing"]	<< toggles_flashing
 	S["window_skin"]		<< window_skin
 	S["fps"]				<< fps
+	S["ghost_vision_pref"]	<< ghost_vision_pref
 
 	S["xeno_prefix"]		<< xeno_prefix
 	S["xeno_postfix"]		<< xeno_postfix
 	S["xeno_name_ban"]		<< xeno_name_ban
+	S["xeno_vision_level_pref"]		<< xeno_vision_level_pref
 	S["playtime_perks"] 		<< playtime_perks
 
 	S["view_controller"]	<< View_MC
@@ -200,15 +255,23 @@
 	S["pred_name"] 			<< predator_name
 	S["pred_gender"] 		<< predator_gender
 	S["pred_age"]			<< predator_age
+	S["pred_trans_type"]	<< predator_translator_type
 	S["pred_mask_type"] 	<< predator_mask_type
 	S["pred_armor_type"] 	<< predator_armor_type
 	S["pred_boot_type"] 	<< predator_boot_type
+	S["pred_mask_mat"]		<< predator_mask_material
 	S["pred_armor_mat"]		<< predator_armor_material
+	S["pred_greave_mat"]	<< predator_greave_material
+	S["pred_caster_mat"]	<< predator_caster_material
+	S["pred_cape_type"]		<< predator_cape_type
+	S["pred_cape_color"]	<< predator_cape_color
+	S["pred_flavor_text"]	<< predator_flavor_text
 
 	S["commander_status"] 	<< commander_status
 	S["co_sidearm"]			<< commander_sidearm
 	S["yautja_status"]		<< yautja_status
 	S["synth_status"]		<< synth_status
+	S["grade_path"]			<< sea_path
 
 	S["lang_chat_disabled"] << lang_chat_disabled
 	S["show_permission_errors"] << show_permission_errors
@@ -218,6 +281,8 @@
 	S["hear_vox"] << hear_vox
 
 	S["hide_statusbar"] << hide_statusbar
+	S["no_radials_preference"] << no_radials_preference
+	S["no_radial_labels_preference"] << no_radial_labels_preference
 
 	return TRUE
 
@@ -341,15 +406,12 @@
 	r_eyes			= sanitize_integer(r_eyes, 0, 255, initial(r_eyes))
 	g_eyes			= sanitize_integer(g_eyes, 0, 255, initial(g_eyes))
 	b_eyes			= sanitize_integer(b_eyes, 0, 255, initial(b_eyes))
-	if(gender == MALE)
-		underwear	= sanitize_integer(underwear, 1, underwear_m.len, initial(underwear))
-	else
-		underwear	= sanitize_integer(underwear, 1, underwear_f.len, initial(underwear))
+	underwear	= sanitize_inlist(underwear, gender == MALE ? underwear_m : underwear_f, initial(underwear))
 	undershirt		= sanitize_integer(undershirt, 1, undershirt_t.len, initial(undershirt))
 	backbag			= sanitize_integer(backbag, 1, backbaglist.len, initial(backbag))
 	//b_type			= sanitize_text(b_type, initial(b_type))
 
-	alternate_option = sanitize_integer(alternate_option, 0, 2, initial(alternate_option))
+	alternate_option = sanitize_integer(alternate_option, 0, 3, initial(alternate_option))
 	if(!job_preference_list)
 		ResetJobs()
 	else

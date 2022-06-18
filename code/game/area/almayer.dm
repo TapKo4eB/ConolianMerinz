@@ -59,6 +59,8 @@
 	name = "\improper Combat Information Center"
 	icon_state = "cic"
 	fake_zlevel = 1 // upperdeck
+	soundscape_playlist = SCAPE_PL_CIC
+	soundscape_interval = 20
 	flags_area = AREA_NOTUNNEL
 
 /area/almayer/command/cichallway
@@ -70,6 +72,8 @@
 	name = "\improper AI Core"
 	icon_state = "airoom"
 	fake_zlevel = 1 // upperdeck
+	soundscape_playlist = SCAPE_PL_ARES
+	soundscape_interval = 8
 	flags_area = AREA_NOTUNNEL
 
 /area/almayer/command/securestorage
@@ -104,6 +108,9 @@
 	icon_state = "upperengineering"
 	fake_zlevel = 1 // upperdeck
 
+/area/almayer/engineering/upper_engineering/notunnel
+	flags_area = AREA_NOTUNNEL
+
 /area/almayer/engineering/ce_room
 	name = "\improper Chief Engineer Office"
 	icon_state = "ceroom"
@@ -131,6 +138,8 @@
 	name = "\improper Engine Reactor Core Room"
 	icon_state = "coreroom"
 	fake_zlevel = 2 // lowerdeck
+	soundscape_playlist = SCAPE_PL_ENG
+	soundscape_interval = 15
 
 /area/almayer/engineering/starboard_atmos
 	name = "\improper Atmospherics Starboard"
@@ -167,6 +176,9 @@
 	icon_state = "weaponroom"
 	fake_zlevel = 2 // lowerdeck
 
+/area/almayer/shipboard/weapon_room/notunnel
+	flags_area = AREA_NOTUNNEL
+
 /area/almayer/shipboard/starboard_point_defense
 	name = "\improper Point Defense Starboard"
 	icon_state = "starboardpd"
@@ -190,12 +202,12 @@
 	name = "\improper Brig Armory"
 	icon_state = "brig"
 
-/area/almayer/shipboard/brig/main_office_perma
-	name = "\improper Brig Main Office and Perma"
+/area/almayer/shipboard/brig/main_office
+	name = "\improper Brig Main Office"
 	icon_state = "brig"
 
-/area/almayer/shipboard/brig/secondary_office
-	name = "\improper Brig Secondary Office"
+/area/almayer/shipboard/brig/perma
+	name = "\improper Brig Perma Cells"
 	icon_state = "brig"
 
 /area/almayer/shipboard/brig/cryo
@@ -224,6 +236,10 @@
 
 /area/almayer/shipboard/brig/dress
 	name = "\improper CIC Dress Uniform Room"
+	icon_state = "brig"
+
+/area/almayer/shipboard/brig/processing
+	name = "\improper Brig Processing and Holding"
 	icon_state = "brig"
 
 /area/almayer/shipboard/brig/cells
@@ -257,6 +273,8 @@
 	name = "\improper Hangar"
 	icon_state = "hangar"
 	fake_zlevel = 2 // lowerdeck
+	soundscape_playlist = SCAPE_PL_HANGAR
+	soundscape_interval = 35
 
 /area/almayer/hallways/vehiclehangar
 	name = "\improper Vehicle Storage"
@@ -457,9 +475,12 @@
 	fake_zlevel = 1 // upperdeck
 
 /area/almayer/living/offices
-	name = "\improper Flight Office"
+	name = "\improper Conference Office"
 	icon_state = "briefing"
 	fake_zlevel = 2 // lowerdeck
+
+/area/almayer/living/offices/flight
+	name = "\improper Flight Office"
 
 /area/almayer/living/captain_mess
 	name = "\improper Captain's Mess"
@@ -478,6 +499,11 @@
 
 /area/almayer/living/commandbunks
 	name = "\improper Commanding Officer's Bunk"
+	icon_state = "livingspace"
+	fake_zlevel = 1 // upperdeck
+
+/area/almayer/living/synthcloset
+	name = "\improper Synthetic Storage Closet"
 	icon_state = "livingspace"
 	fake_zlevel = 1 // upperdeck
 
@@ -645,7 +671,7 @@
 /area/almayer/lifeboat_pumps
 	name = "Lifeboat Fuel Pumps"
 	icon_state = "lifeboat_pump"
-	requires_power = 0
+	requires_power = 1
 	fake_zlevel = 1
 
 /area/almayer/lifeboat_pumps/north1
@@ -665,22 +691,12 @@
 	icon_state = "selfdestruct"
 	fake_zlevel = 1 // upperdeck
 
-/area/almayer/lifeboat
+/area/space/almayer/lifeboat_dock
+	name = "\improper Lifeboat Docking Port"
 	icon = 'icons/turf/area_almayer.dmi'
 	icon_state = "lifeboat"
-	requires_power = 0
 	fake_zlevel = 1 // upperdeck
 	flags_atom = AREA_NOTUNNEL
-
-/area/almayer/lifeboat/boat1
-	name = "\improper Starboard Lifeboat Shuttle"
-
-/area/almayer/lifeboat/boat2
-	name = "\improper Port Lifeboat Shuttle"
-
-/area/almayer/lifeboat/boat1/space
-
-/area/almayer/lifeboat/boat2/space
 
 /area/almayer/evacuation
 	icon = 'icons/turf/areas.dmi'

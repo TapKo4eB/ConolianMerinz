@@ -5,6 +5,11 @@
 
 /////////////////////// Hand Labeler ////////////////////////////////
 
+/atom/proc/set_name_label(var/new_label)
+	name_label = new_label
+	name = initial(name)
+	if(name_label)
+		name += " ([name_label])"
 
 /obj/item/tool/hand_labeler
 	name = "hand labeler"
@@ -35,10 +40,10 @@
 	if(isliving(A))
 		to_chat(user, SPAN_NOTICE("You can't label living beings."))
 		return
-	if(istype(A, /obj/item/reagent_container/glass))
+	if((istype(A, /obj/item/reagent_container/glass)) && (!(istype(A, /obj/item/reagent_container/glass/minitank))))
 		to_chat(user, SPAN_NOTICE("The label will not stick to [A]. Use a pen instead."))
 		return
-	if(istype(A, /obj/item/tool/surgery))
+	if(istype(A, /obj/item/tool/surgery) || istype(A, /obj/item/reagent_container/pill))
 		to_chat(user, SPAN_NOTICE("That wouldn't be sanitary."))
 		return
 	if((istype(A, /obj/vehicle/multitile)) || (istype(A, /obj/structure))) // disallow naming structures
@@ -50,16 +55,16 @@
 	if(!label || !length(label))
 		remove_label(A, user)
 		return
-	if(A.name == "[initial(A.name)] ([label])") //object name = new object.name, so people don't spam
+	if(A.name_label == label)
 		to_chat(user, SPAN_NOTICE("It already has the same label."))
 		return
 
 	user.visible_message(SPAN_NOTICE("[user] labels [A] as \"[label]\"."), \
-						 SPAN_NOTICE("You label [A] as \"[label]\"."))
+	SPAN_NOTICE("You label [A] as \"[label]\"."))
 
 	log_admin("[user] has labeled [A.name] with label \"[label]\". (CKEY: ([user.ckey]))")
 
-	A.name = "[initial(A.name)] ([label])"
+	A.set_name_label(label)
 
 	playsound(A, label_sound, 20, TRUE)
 
@@ -100,7 +105,7 @@
 
 	log_admin("[user] has removed label from [A.name]. (CKEY: ([user.ckey]))")
 
-	A.name = "[initial(A.name)]"
+	A.set_name_label(null)
 
 	playsound(A, remove_label_sound, 20, TRUE)
 
@@ -139,7 +144,7 @@
 	icon = 'icons/obj/items/paper.dmi'
 	icon_state = "pen"
 	item_state = "pen"
-	flags_equip_slot = SLOT_WAIST|SLOT_EAR
+	flags_equip_slot = SLOT_WAIST|SLOT_EAR|SLOT_SUIT_STORE
 	throwforce = 0
 	w_class = SIZE_TINY
 	throw_speed = SPEED_VERY_FAST
@@ -241,10 +246,10 @@
 
 
 /obj/item/tool/pen/paralysis/attack(mob/living/M as mob, mob/user as mob)
-	if(!(istype(M,/mob)))
+	if(!(istype(M)))
 		return
 	..()
-	if(M.can_inject(user,1))
+	if(M.can_inject(user, TRUE))
 		if(reagents.total_volume)
 			if(M.reagents) reagents.trans_to(M, 50)
 
@@ -258,7 +263,7 @@
 	name = "rubber stamp"
 	desc = "A rubber stamp for stamping important documents."
 	icon = 'icons/obj/items/paper.dmi'
-	icon_state = "stamp-qm"
+	icon_state = "stamp-def"
 	item_state = "stamp"
 	throwforce = 0
 	w_class = SIZE_TINY
@@ -306,3 +311,7 @@
 /obj/item/tool/stamp/centcomm
 	name = "centcomm rubber stamp"
 	icon_state = "stamp-cent"
+
+/obj/item/tool/stamp/ro
+	name = "requisitions officer's rubber stamp"
+	icon_state = "stamp-ro"

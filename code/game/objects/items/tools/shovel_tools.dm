@@ -1,7 +1,4 @@
 
-
-
-
 //*****************************Shovels********************************/
 
 /obj/item/tool/shovel
@@ -93,11 +90,57 @@
 					else
 						OT.bleed_layer -= transfer_amount
 						OT.update_icon(1,0)
-
 			to_chat(user, SPAN_NOTICE("You dig up some [dirt_type_to_name(turfdirt)]."))
 			dirt_amt = transfer_amount
 			dirt_type = turfdirt
 			update_icon()
+
+			var/digmore = FALSE
+			var/sandbagcheck = FALSE
+			while(dirt_amt > 0) // loop to check for leftover dirt and use it on nearby sandbags
+				var/obj/item/stack/sandbags_empty/SB = user.get_inactive_hand()
+				if(!istype(SB, /obj/item/stack/sandbags_empty)) // If no sandbag in off hand, checks around the user
+					for(var/obj/item/stack/sandbags_empty/sandbags in range(1, user))
+						SB = sandbags
+						break
+
+				if(!istype(SB, /obj/item/stack/sandbags_empty)) // Checks sandbag a second time to confirm, if none are found, cancels everything
+					to_chat(user, SPAN_NOTICE("There are no sandbags nearby to fill up."))
+					break
+
+				if(sandbagcheck == FALSE)
+					sandbagcheck = TRUE
+					to_chat(user, SPAN_NOTICE("You begin filling the sandbags with [dirt_type_to_name(turfdirt)]."))
+					if(!do_after(user, shovelspeed / 2, INTERRUPT_ALL|BEHAVIOR_IMMOBILE, BUSY_ICON_BUILD)) // Sandbag filling speed faster than normal, no skillchecks required since filling bags is almost instant
+						to_chat(user, SPAN_NOTICE("You stop filling the sandbags with [dirt_type_to_name(turfdirt)]."))
+						return
+
+				if(get_dist(user, SB) > 1) // check if sandbag still beside them
+					break
+
+				if(SB.amount < 0) // check if sandbag is used by someone else
+					SB = null
+					continue
+
+				var/dirttransfer_amount = min(SB.amount, dirt_amt)
+				dirt_amt -= dirttransfer_amount
+				update_icon()
+				var/obj/item/stack/sandbags/new_bags = new(user.loc)
+				new_bags.amount = dirttransfer_amount
+				new_bags.add_to_stacks(user)
+				var/replace = (user.get_inactive_hand() == SB)
+				playsound(user.loc, "rustle", 30, 1, 6)
+				SB.use(dirttransfer_amount)
+				if(!SB && replace)
+					user.put_in_hands(new_bags)
+
+				if(dirt_amt <= 0) // Ends the loop when no dirt is left
+					digmore = TRUE
+					break
+			if(digmore)
+				afterattack(target, user, proximity)
+// auto repeat ends
+
 	else
 		dump_shovel(target, user)
 
@@ -195,3 +238,4 @@
 	w_class = SIZE_MEDIUM
 	force = 2
 	icon_state = "etool_c"
+	item_state = "etool_c"

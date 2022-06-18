@@ -1,7 +1,7 @@
 //This is the proc for gibbing a mob. Cannot gib ghosts.
 //added different sort of gibs and animations. N
 /mob/proc/gib(var/cause = "gibbing")
-	death(create_cause_data(cause), 1)
+	death(istype(cause, /datum/cause_data) ? cause : create_cause_data(cause), TRUE)
 	gib_animation()
 	if (!SSticker?.mode?.hardcore)
 		spawn_gibs()
@@ -85,7 +85,7 @@
 
 	track_death_calculations()
 
-	INVOKE_ASYNC(src, .proc/handle_death_cause, cause_data)
+	INVOKE_ASYNC(src, .proc/handle_death_cause, cause_data, get_turf(src))
 
 	med_hud_set_health()
 	med_hud_set_armor()
@@ -95,12 +95,16 @@
 	SEND_SIGNAL(src, COMSIG_MOB_DEATH)
 	return 1
 
-/mob/proc/handle_death_cause(var/datum/cause_data/cause_data)
-	track_mob_death(cause_data)
+/mob/proc/handle_death_cause(var/datum/cause_data/cause_data, var/turf/death_loc)
+	track_mob_death(cause_data, death_loc)
 	if(cause_data)
+		var/obj/O = cause_data.resolve_cause()
+		if(isdefenses(O))
+			var/obj/structure/machinery/defenses/TR = O
+			TR.earn_kill()
 		var/mob/cause_mob = cause_data.resolve_mob()
 		if(cause_mob)
-			if(isYautja(cause_mob) && cause_mob.client)
+			if(isYautja(cause_mob) && cause_mob.client && cause_mob != src)
 				INVOKE_ASYNC(cause_mob.client, /client.proc/add_honor, max(life_kills_total, 1))
 
 			if(isXeno(cause_mob))

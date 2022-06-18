@@ -131,14 +131,8 @@
 		next_movement = world.time + MINIMAL_MOVEMENT_INTERVAL
 		return
 
-	if(!mob.canmove || mob.is_mob_incapacitated(TRUE) || !mob.on_movement())
+	if(!mob.canmove || mob.is_mob_incapacitated(TRUE))
 		return
-
-	// run mob move event if it is carbon
-	if(istype(mob,/mob/living/carbon))
-		var/mob/living/carbon/carbon_mob = mob
-		if(!carbon_mob.on_movement())
-			return //something blocked us from moving
 
 	//Check if you are being grabbed and if so attemps to break it
 	if(mob.pulledby)
@@ -148,6 +142,10 @@
 			return
 		else if(!mob.resist_grab(TRUE))
 			return
+
+	if(SEND_SIGNAL(mob, COMSIG_MOB_MOVE_OR_LOOK, TRUE, direct, direct) & COMPONENT_OVERRIDE_MOB_MOVE_OR_LOOK)
+		next_movement = world.time + MINIMAL_MOVEMENT_INTERVAL
+		return
 
 	if(mob.buckled)
 		return mob.buckled.relaymove(mob, direct)
@@ -164,6 +162,8 @@
 		if(mob.next_move_slowdown)
 			move_delay += mob.next_move_slowdown
 			mob.next_move_slowdown = 0
+		if((mob.flags_atom & DIRLOCK) && mob.dir != direct)
+			move_delay += MOVE_REDUCTION_DIRECTION_LOCKED // by Geeves
 
 		mob.last_move_intent = world.time + 10
 		mob.cur_speed = Clamp(10/(move_delay + 0.5), MIN_SPEED, MAX_SPEED)
@@ -270,6 +270,3 @@
 
 	prob_slip = round(prob_slip)
 	return(prob_slip)
-
-/mob/proc/on_movement()
-	return TRUE

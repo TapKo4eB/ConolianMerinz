@@ -16,8 +16,9 @@
 	armor_internaldamage = CLOTHING_ARMOR_NONE
 	w_class = SIZE_MEDIUM
 	blood_overlay_type = "uniform"
-	var/has_sensor = 1//For the crew computer 2 = unable to change mode
-	var/sensor_mode = 3
+	var/sensor_faction = FACTION_MARINE
+	var/has_sensor = UNIFORM_HAS_SENSORS // For the crew computer
+	var/sensor_mode = SENSOR_MODE_LOCATION
 		/*
 		1 = Report living/dead
 		2 = Report detailed damages
@@ -39,9 +40,7 @@
 /obj/item/clothing/under/Initialize()
 	. = ..()
 	if(worn_state)
-		if(!item_state_slots)
-			item_state_slots = list()
-		item_state_slots[WEAR_BODY] = worn_state
+		LAZYSET(item_state_slots, WEAR_BODY, worn_state)
 	else
 		worn_state = icon_state
 
@@ -57,13 +56,13 @@
 	else if(flags_jumpsuit & UNIFORM_SLEEVE_CUTTABLE)
 		flags_jumpsuit &= ~UNIFORM_SLEEVE_CUTTABLE
 		log_debug("CLOTHING: Jumpsuit of name: \"[src.name]\" and type: \"[src.type]\" was flagged as having cuttable sleeves but could not detect a cut icon state.")
-	
+
 	if((worn_state + "_dj") in icon_states(default_onmob_icons[WEAR_BODY]))
 		flags_jumpsuit |= UNIFORM_JACKET_REMOVABLE
 	else if(flags_jumpsuit & UNIFORM_JACKET_REMOVABLE)
 		flags_jumpsuit &= ~UNIFORM_JACKET_REMOVABLE
 		log_debug("CLOTHING: Jumpsuit of name: \"[src.name]\" and type: \"[src.type]\" was flagged as having a removable jacket but could not detect a shirtless icon state.")
-	
+
 	//autodetect preset states are valid
 	if((flags_jumpsuit & UNIFORM_SLEEVE_ROLLED) && !(flags_jumpsuit & UNIFORM_SLEEVE_ROLLABLE))
 		flags_jumpsuit &= ~UNIFORM_SLEEVE_ROLLED
@@ -86,7 +85,7 @@
 /obj/item/clothing/under/select_gamemode_skin(expected_type, list/override_icon_state, list/override_protection)
 	. = ..()
 	worn_state = icon_state
-	item_state_slots[WEAR_BODY] = worn_state
+	LAZYSET(item_state_slots, WEAR_BODY, worn_state)
 
 /obj/item/clothing/under/update_clothing_icon()
 	if(ismob(loc))
@@ -103,11 +102,11 @@
 			if(over_object)
 				switch(over_object.name)
 					if("r_hand")
-						usr.drop_inv_item_on_ground(src)
-						usr.put_in_r_hand(src)
+						if(usr.drop_inv_item_on_ground(src))
+							usr.put_in_r_hand(src)
 					if("l_hand")
-						usr.drop_inv_item_on_ground(src)
-						usr.put_in_l_hand(src)
+						if(usr.drop_inv_item_on_ground(src))
+							usr.put_in_l_hand(src)
 				add_fingerprint(usr)
 
 
@@ -115,22 +114,22 @@
 	..()
 	if(has_sensor)
 		switch(sensor_mode)
-			if(0)
+			if(SENSOR_MODE_OFF)
 				to_chat(user, "Its sensors appear to be disabled.")
-			if(1)
+			if(SENSOR_MODE_BINARY)
 				to_chat(user, "Its binary life sensors appear to be enabled.")
-			if(2)
+			if(SENSOR_MODE_DAMAGE)
 				to_chat(user, "Its vital tracker appears to be enabled.")
-			if(3)
+			if(SENSOR_MODE_LOCATION)
 				to_chat(user, "Its vital tracker and tracking beacon appear to be enabled.")
 
 /obj/item/clothing/under/proc/set_sensors(mob/user)
 	if (istype(user, /mob/dead/)) return
 	if (user.stat || user.is_mob_restrained()) return
-	if(has_sensor >= 2)
+	if(has_sensor >= UNIFORM_FORCED_SENSORS)
 		to_chat(user, "The controls are locked.")
 		return 0
-	if(has_sensor <= 0)
+	if(has_sensor <= UNIFORM_NO_SENSORS)
 		to_chat(user, "This suit does not have any sensors.")
 		return 0
 
@@ -148,26 +147,26 @@
 
 	if (loc == user)
 		switch(sensor_mode)
-			if(0)
+			if(SENSOR_MODE_OFF)
 				to_chat(user, "You disable your suit's remote sensing equipment.")
-			if(1)
+			if(SENSOR_MODE_BINARY)
 				to_chat(user, "Your suit will now report whether you are live or dead.")
-			if(2)
+			if(SENSOR_MODE_DAMAGE)
 				to_chat(user, "Your suit will now report your vital lifesigns.")
-			if(3)
+			if(SENSOR_MODE_LOCATION)
 				to_chat(user, "Your suit will now report your vital lifesigns as well as your coordinate position.")
 	else if (ismob(loc))
 		switch(sensor_mode)
-			if(0)
+			if(SENSOR_MODE_OFF)
 				for(var/mob/V in viewers(usr, 1))
 					V.show_message(SPAN_DANGER("[user] disables [src.loc]'s remote sensing equipment."), 1)
-			if(1)
+			if(SENSOR_MODE_BINARY)
 				for(var/mob/V in viewers(usr, 1))
 					V.show_message("[user] turns [src.loc]'s remote sensors to binary.", 1)
-			if(2)
+			if(SENSOR_MODE_DAMAGE)
 				for(var/mob/V in viewers(usr, 1))
 					V.show_message("[user] sets [src.loc]'s sensors to track vitals.", 1)
-			if(3)
+			if(SENSOR_MODE_LOCATION)
 				for(var/mob/V in viewers(usr, 1))
 					V.show_message("[user] sets [src.loc]'s sensors to maximum.", 1)
 
@@ -178,16 +177,17 @@
 	set_sensors(usr)
 
 /obj/item/clothing/under/proc/update_rollsuit_status()
-	var/mob/living/carbon/human/H
-	if(ishuman(loc))
-		H = loc
+	var/human_bodytype
+	if(sprite_sheets && ishuman(loc))
+		var/mob/living/carbon/human/H = loc
+		human_bodytype = H.species.get_bodytype(H)
 
 	var/icon/under_icon
 	if(icon_override)
 		under_icon = icon_override
-	else if(H && sprite_sheets && sprite_sheets[H.species.get_bodytype(H)])
-		under_icon = sprite_sheets[H.species.get_bodytype(H)]
-	else if(item_icons && item_icons[WEAR_BODY])
+	else if(human_bodytype && LAZYISIN(sprite_sheets, human_bodytype))
+		under_icon = sprite_sheets[human_bodytype]
+	else if(LAZYISIN(item_icons, WEAR_BODY))
 		under_icon = item_icons[WEAR_BODY]
 	else
 		under_icon = default_onmob_icons[WEAR_BODY]
@@ -209,26 +209,27 @@
 		if(flags_jumpsuit & UNIFORM_JACKET_REMOVED)
 			to_chat(usr, SPAN_NOTICE("You roll the jacket's sleeves in your hands.")) //visual representation that the sleeves have been rolled while jacket has been removed.
 		else if(flags_jumpsuit & UNIFORM_SLEEVE_ROLLED)
-			item_state_slots[WEAR_BODY] = "[worn_state]_d"
+			LAZYSET(item_state_slots, WEAR_BODY, "[worn_state]_d")
 			update_clothing_icon()
 		else
-			item_state_slots[WEAR_BODY] = "[worn_state]"
+			LAZYSET(item_state_slots, WEAR_BODY, worn_state)
 			update_clothing_icon()
 
 	else
 		to_chat(usr, SPAN_WARNING("You cannot roll your sleeves!"))
 
 /obj/item/clothing/under/proc/update_removejacket_status()
-	var/mob/living/carbon/human/H
-	if(ishuman(loc))
-		H = loc
+	var/human_bodytype
+	if(sprite_sheets && ishuman(loc))
+		var/mob/living/carbon/human/H = loc
+		human_bodytype = H.species.get_bodytype(H)
 
 	var/icon/under_icon
 	if(icon_override)
 		under_icon = icon_override
-	else if(H && sprite_sheets && sprite_sheets[H.species.get_bodytype(H)])
-		under_icon = sprite_sheets[H.species.get_bodytype(H)]
-	else if(item_icons && item_icons[WEAR_BODY])
+	else if(human_bodytype && LAZYISIN(sprite_sheets, human_bodytype))
+		under_icon = sprite_sheets[human_bodytype]
+	else if(LAZYISIN(item_icons, WEAR_BODY))
 		under_icon = item_icons[WEAR_BODY]
 	else
 		under_icon = default_onmob_icons[WEAR_BODY]
@@ -248,16 +249,16 @@
 	if(flags_jumpsuit & UNIFORM_JACKET_REMOVABLE)
 		flags_jumpsuit ^= UNIFORM_JACKET_REMOVED
 		if(flags_jumpsuit & UNIFORM_JACKET_REMOVED)
-			item_state_slots[WEAR_BODY] = "[worn_state]_dj"
+			LAZYSET(item_state_slots, WEAR_BODY, "[worn_state]_dj")
 			if(ismob(loc))
 				var/mob/M = loc
 				M.update_inv_wear_id()
 		else if(flags_jumpsuit & UNIFORM_SLEEVE_CUT)
-			item_state_slots[WEAR_BODY] = "[worn_state]_df"
+			LAZYSET(item_state_slots, WEAR_BODY, "[worn_state]_df")
 		else if(flags_jumpsuit & UNIFORM_SLEEVE_ROLLED)
-			item_state_slots[WEAR_BODY] = "[worn_state]_d"
+			LAZYSET(item_state_slots, WEAR_BODY, "[worn_state]_d")
 		else
-			item_state_slots[WEAR_BODY] = "[worn_state]"
+			LAZYSET(item_state_slots, WEAR_BODY, worn_state)
 		update_clothing_icon()
 	else
 		to_chat(usr, SPAN_WARNING("\The [src] doesn't have a removable jacket!"))
@@ -274,7 +275,7 @@
 			flags_jumpsuit &= ~(UNIFORM_SLEEVE_ROLLABLE|UNIFORM_SLEEVE_CUTTABLE)
 			flags_jumpsuit |= UNIFORM_SLEEVE_CUT
 
-			item_state_slots[WEAR_BODY] = "[worn_state]_df"
+			LAZYSET(item_state_slots, WEAR_BODY, "[worn_state]_df")
 			user.visible_message("[user] slices [src] with [B].")
 			update_clothing_icon()
 			update_rollsuit_status()

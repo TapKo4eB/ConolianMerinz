@@ -3,11 +3,12 @@
     "map_path": "map_files/Kutjevo",
     "map_file": "Kutjevo.dmm",
     "survivor_types": [
-        "Survivor - Kutjevo Doctor",
-        "Survivor - Chaplain",
-        "Survivor - Kutjevo Engineer",
-        "Survivor - Trucker",
-        "Survivor - Kutjevo Security Guard"
+        "/datum/equipment_preset/survivor/doctor/kutjevo",
+        "/datum/equipment_preset/survivor/chaplain/kutjevo",
+        "/datum/equipment_preset/survivor/engineer/kutjevo",
+        "/datum/equipment_preset/survivor/colonial_marshal/kutjevo",
+        "/datum/equipment_preset/survivor/trucker/kutjevo",
+        "/datum/equipment_preset/survivor/security/kutjevo"
     ],
     "defcon_triggers": [
         4250,
@@ -22,5 +23,16 @@
         "neaera",
         "stok"
 	],
-	"traits": [{ "Ground": true }]
+	"traits": [{ "Ground": true }],
+	"nightmare": {
+		"scenario": "maps/Nightmare/maps/Kutjevo/scenario.json",
+        "mapgen": "maps/Nightmare/maps/Kutjevo/mapgen.json"
+    },
+    "gamemodes": [
+        "Distress Signal",
+        "Hunter Games",
+        "Hive Wars",
+        "Faction Clash",
+        "Infection"
+    ]
 }

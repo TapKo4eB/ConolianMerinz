@@ -14,6 +14,28 @@
 	var/datum/squad/current_squad = null
 
 	var/is_announcement_active = TRUE
+	var/announcement_title = COMMAND_ANNOUNCE
+	var/announcement_faction = FACTION_MARINE
+	var/add_pmcs = TRUE
+	var/lz_selection = TRUE
+	var/has_squad_overwatch = TRUE
+	var/tacmap_type = TACMAP_DEFAULT
+	var/tacmap_base_type = TACMAP_BASE_OCCLUDED
+	var/tacmap_additional_parameter = null
+	var/minimap_name = "Marine Minimap"
+	var/faction = FACTION_MARINE
+
+/obj/structure/machinery/computer/groundside_operations/Initialize()
+	if(SSticker.mode && MODE_HAS_FLAG(MODE_FACTION_CLASH))
+		add_pmcs = FALSE
+	else if(SSticker.current_state < GAME_STATE_PLAYING)
+		RegisterSignal(SSdcs, COMSIG_GLOB_MODE_PRESETUP, .proc/disable_pmc)
+	return ..()
+
+/obj/structure/machinery/computer/groundside_operations/proc/disable_pmc()
+	if(MODE_HAS_FLAG(MODE_FACTION_CLASH))
+		add_pmcs = FALSE
+	UnregisterSignal(SSdcs, COMSIG_GLOB_MODE_PRESETUP)
 
 /obj/structure/machinery/computer/groundside_operations/attack_remote(var/mob/user as mob)
 	return attack_hand(user)
@@ -28,17 +50,22 @@
 	user.set_interaction(src)
 
 	var/dat = "<head><title>Groundside Operations Console</title></head><body>"
-	dat += "<BR><A HREF='?src=\ref[src];operation=announce'>[is_announcement_active ? "Make an announcement" : "*Unavaliable*"]</A>"
+	dat += "<BR><A HREF='?src=\ref[src];operation=announce'>[is_announcement_active ? "Make An Announcement" : "*Unavailable*"]</A>"
 	dat += "<BR><A href='?src=\ref[src];operation=mapview'>Tactical Map</A>"
 	dat += "<BR><hr>"
+	var/datum/squad/marine/echo/echo_squad = locate() in RoleAuthority.squads
+	if(!echo_squad.active && faction == FACTION_MARINE)
+		dat += "<BR><A href='?src=\ref[src];operation=activate_echo'>Designate Echo Squad</A>"
+		dat += "<BR><hr>"
 
-	if(SSticker.mode && (isnull(SSticker.mode.active_lz) || isnull(SSticker.mode.active_lz.loc)))
+	if(lz_selection && SSticker.mode && (isnull(SSticker.mode.active_lz) || isnull(SSticker.mode.active_lz.loc)))
 		dat += "<BR>Primary LZ <BR><A HREF='?src=\ref[src];operation=selectlz'>Select primary LZ</A>"
 		dat += "<BR><hr>"
 
-	dat += "Current Squad: <A href='?src=\ref[src];operation=pick_squad'>[!isnull(current_squad) ? "[current_squad.name]" : "----------"]</A><BR>"
-	if(current_squad)
-		dat += get_overwatch_info()
+	if(has_squad_overwatch)
+		dat += "Current Squad: <A href='?src=\ref[src];operation=pick_squad'>[!isnull(current_squad) ? "[current_squad.name]" : "----------"]</A><BR>"
+		if(current_squad)
+			dat += get_overwatch_info()
 
 	dat += "<BR><A HREF='?src=\ref[user];mach_close=groundside_operations'>Close</A>"
 	show_browser(user, dat, name, "groundside_operations", "size=600x700")
@@ -166,11 +193,10 @@
 		current_mapviewer = null
 		return
 
-	if(!istype(marine_mapview_overlay_5))
-		overlay_marine_mapview()
-
-	current_mapviewer << browse_rsc(marine_mapview_overlay_5, "marine_minimap.png")
-	show_browser(current_mapviewer, "<img src=marine_minimap.png>", "Marine Minimap", "marineminimap", "size=[(map_sizes[1][1]*2)+50]x[(map_sizes[1][2]*2)+50]", closeref = src)
+	var/icon/O = overlay_tacmap(tacmap_type, tacmap_base_type, tacmap_additional_parameter)
+	if(O)
+		current_mapviewer << browse_rsc(O, "marine_minimap.png")
+		show_browser(current_mapviewer, "<img src=marine_minimap.png>", minimap_name, "marineminimap", "size=[(map_sizes[1]*2)+50]x[(map_sizes[2]*2)+50]", closeref = src)
 
 /obj/structure/machinery/computer/groundside_operations/Topic(href, href_list)
 	if (href_list["close"] && current_mapviewer)
@@ -195,6 +221,9 @@
 			if(!is_announcement_active)
 				to_chat(usr, SPAN_WARNING("Please allow at least [COOLDOWN_COMM_MESSAGE*0.1] second\s to pass between announcements."))
 				return FALSE
+			if(announcement_faction != FACTION_MARINE && usr.faction != announcement_faction)
+				to_chat(usr, SPAN_WARNING("Access denied."))
+				return
 			var/input = stripped_multiline_input(usr, "Please write a message to announce to the station crew.", "Priority Announcement", "")
 			if(!input || !is_announcement_active || !(usr in view(1,src)))
 				return FALSE
@@ -209,18 +238,13 @@
 					var/paygrade = get_paygrades(id.paygrade, FALSE, H.gender)
 					signed = "[paygrade] [id.registered_name]"
 
-			marine_announcement(input, signature = signed)
+			marine_announcement(input, announcement_title, faction_to_display = announcement_faction, add_PMCs = add_pmcs, signature = signed)
 			addtimer(CALLBACK(src, .proc/reactivate_announcement, usr), COOLDOWN_COMM_MESSAGE)
-			message_staff("[key_name(usr)] has made a command annoucement.")
+			message_staff("[key_name(usr)] has made a command announcement.")
 			log_announcement("[key_name(usr)] has announced the following: [input]")
 
 		if("award")
-			if(usr.job != "Commanding Officer")
-				to_chat(usr, SPAN_WARNING("Only the Commanding Officer can award medals."))
-				return
-
-			if(give_medal_award(loc))
-				visible_message(SPAN_NOTICE("[src] prints a medal."))
+			print_medal(usr, src)
 
 		if("selectlz")
 			if(SSticker.mode.active_lz)
@@ -236,7 +260,7 @@
 		if("pick_squad")
 			var/list/squad_list = list()
 			for(var/datum/squad/S in RoleAuthority.squads)
-				if(S.usable)
+				if(S.active && S.faction == faction)
 					squad_list += S.name
 
 			var/name_sel = tgui_input_list(usr, "Which squad would you like to look at?", "Pick Squad", squad_list)
@@ -269,6 +293,18 @@
 					cam = new_cam
 					usr.reset_view(cam)
 
+		if("activate_echo")
+			var/reason = input(usr, "What is the purpose of Echo Squad?", "Activation Reason")
+			if(!reason)
+				return
+			if(alert(usr, "Confirm activation of Echo Squad for [reason]", "Confirm Activation", "Yes", "No") == "No") return
+			var/datum/squad/marine/echo/echo_squad = locate() in RoleAuthority.squads
+			if(!echo_squad)
+				visible_message(SPAN_BOLDNOTICE("ERROR: Unable to locate Echo Squad database."))
+				return
+			echo_squad.engage_squad(TRUE)
+			message_staff("[key_name(usr)] activated Echo Squad for '[reason]'.")
+
 		if("refresh")
 			attack_hand(usr)
 
@@ -291,5 +327,37 @@
 		if(H && istype(H) && istype(H.head, /obj/item/clothing/head/helmet/marine))
 			var/obj/item/clothing/head/helmet/marine/helm = H.head
 			return helm.camera
+
+/obj/structure/machinery/computer/groundside_operations/upp
+	announcement_title = UPP_COMMAND_ANNOUNCE
+	announcement_faction = FACTION_UPP
+	add_pmcs = FALSE
+	lz_selection = FALSE
+	has_squad_overwatch = FALSE
+	tacmap_type = TACMAP_FACTION
+	tacmap_base_type = TACMAP_BASE_OPEN
+	tacmap_additional_parameter = FACTION_UPP
+	minimap_name = "UPP Tactical Map"
+
+/obj/structure/machinery/computer/groundside_operations/clf
+	announcement_title = CLF_COMMAND_ANNOUNCE
+	announcement_faction = FACTION_CLF
+	add_pmcs = FALSE
+	lz_selection = FALSE
+	has_squad_overwatch = FALSE
+	tacmap_type = TACMAP_FACTION
+	tacmap_base_type = TACMAP_BASE_OPEN
+	tacmap_additional_parameter = FACTION_CLF
+	minimap_name = "CLF Tactical Map"
+
+/obj/structure/machinery/computer/groundside_operations/pmc
+	announcement_title = PMC_COMMAND_ANNOUNCE
+	announcement_faction = FACTION_PMC
+	lz_selection = FALSE
+	has_squad_overwatch = FALSE
+	tacmap_type = TACMAP_FACTION
+	tacmap_base_type = TACMAP_BASE_OPEN
+	tacmap_additional_parameter = FACTION_PMC
+	minimap_name = "PMC Tactical Map"
 
 #undef COOLDOWN_COMM_MESSAGE

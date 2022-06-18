@@ -98,12 +98,14 @@ GLOBAL_LIST_EMPTY(all_multi_vehicles)
 
 	//list of stuff we do NOT want to be pulled inside
 	var/list/forbidden_atoms = list(
+		/obj/structure/airlock_assembly,
 		/obj/structure/barricade,
 		/obj/structure/machinery/defenses,
 		/obj/structure/machinery/m56d_post,
-		/obj/structure/barricade,
 		/obj/structure/machinery/cm_vending,
 		/obj/structure/machinery/vending,
+		/obj/structure/window,
+		/obj/structure/windoor_assembly,
 	)
 
 	var/wall_ram_damage = 30
@@ -125,6 +127,9 @@ GLOBAL_LIST_EMPTY(all_multi_vehicles)
 		// You can't hide from the MPs
 		ACCESS_MARINE_BRIG,
 	)
+
+	//used for IFF stuff. Determined by driver. It will remember faction of a last driver. IFF-compatible rounds won't damage vehicle.
+	var/vehicle_faction = ""
 
 	//All the connected entrances sorted by tag
 	//Exits will be loaded by the interior manager and sorted by tag to match
@@ -282,7 +287,7 @@ GLOBAL_LIST_EMPTY(all_multi_vehicles)
 	for(var/obj/item/hardpoint/H in hardpoints)
 		// Health check is done before the hardpoint takes damage
 		// This way, the frame won't take damage at the same time hardpoints break
-		if(H.health > 0)
+		if(H.can_take_damage())
 			H.take_damage(damage * get_dmg_multi(type))
 			all_broken = FALSE
 
@@ -326,6 +331,7 @@ GLOBAL_LIST_EMPTY(all_multi_vehicles)
 
 	M.set_interaction(src)
 	M.reset_view(src)
+	give_action(M, /datum/action/human_action/cancel_view)
 
 /obj/vehicle/multitile/proc/get_seat_mob(var/seat)
 	return seats[seat]

@@ -10,7 +10,8 @@
 	mob_inherent_traits = list(
 		TRAIT_YAUTJA_TECH,
 		TRAIT_SUPER_STRONG,
-		TRAIT_FOREIGN_BIO
+		TRAIT_FOREIGN_BIO,
+		TRAIT_DEXTROUS
 		)
 	unarmed_type = /datum/unarmed_attack/punch/strong
 	secondary_unarmed_type = /datum/unarmed_attack/bite/strong
@@ -49,6 +50,8 @@
 	knock_down_reduction = 4
 	stun_reduction = 4
 
+	acid_blood_dodge_chance = 70
+
 		//Set their special slot priority
 
 	slot_equipment_priority= list( \
@@ -78,16 +81,18 @@
 		WEAR_IN_BACK\
 	)
 
+	ignores_stripdrag_flag = TRUE
+
 /datum/species/yautja/New()
 	. = ..()
-	RegisterSignal(SSdcs, COMSIG_GLOB_MODE_POSTSETUP, .proc/setup_yautja_icons)
+	RegisterSignal(SSdcs, COMSIG_GLOB_MODE_PREGAME_LOBBY, .proc/setup_yautja_icons)
 
 /datum/species/yautja/proc/setup_yautja_icons()
 	SIGNAL_HANDLER
 
 	icobase_source = CONFIG_GET(string/species_hunter)
 	deform_source = CONFIG_GET(string/species_hunter)
-	UnregisterSignal(SSdcs, COMSIG_GLOB_MODE_POSTSETUP, .proc/setup_yautja_icons)
+	UnregisterSignal(SSdcs, COMSIG_GLOB_MODE_PREGAME_LOBBY, .proc/setup_yautja_icons)
 
 /datum/species/yautja/larva_impregnated(var/obj/item/alien_embryo/embryo)
 	var/datum/hive_status/hive = GLOB.hive_datum[embryo.hivenumber]
@@ -125,6 +130,8 @@
 		M.hunter_data.hunter = null
 		M.hud_set_hunter()
 
+	set_predator_status(H, gibbed ? "Gibbed" : "Dead")
+
 	// Notify all yautja so they start the gear recovery
 	message_all_yautja("[H.real_name] has died at \the [get_area_name(H)].")
 
@@ -134,11 +141,29 @@
 		H.message_thrall("Your master has fallen!")
 		H.hunter_data.thrall = null
 
+/datum/species/yautja/handle_dead_death(var/mob/living/carbon/human/H, gibbed)
+	set_predator_status(H, gibbed ? "Gibbed" : "Dead")
+
+/datum/species/yautja/handle_cryo(var/mob/living/carbon/human/H)
+	set_predator_status(H, "Cryo")
+
+/datum/species/yautja/proc/set_predator_status(var/mob/living/carbon/human/H, var/status = "Alive")
+	if(!H.persistent_ckey)
+		return
+	var/datum/game_mode/GM
+	if(SSticker?.mode)
+		GM = SSticker.mode
+		if(H.persistent_ckey in GM.predators)
+			GM.predators[H.persistent_ckey]["Status"] = status
+		else
+			GM.predators[H.persistent_ckey] = list("Name" = H.real_name, "Status" = status)
+
 /datum/species/yautja/post_species_loss(mob/living/carbon/human/H)
 	..()
 	var/datum/mob_hud/medical/advanced/A = huds[MOB_HUD_MEDICAL_ADVANCED]
 	A.add_to_hud(H)
 	H.blood_type = pick("A+","A-","B+","B-","O-","O+","AB+","AB-")
+	H.h_style = "Bald"
 	GLOB.yautja_mob_list -= H
 	for(var/obj/limb/L in H.limbs)
 		switch(L.name)
@@ -161,6 +186,7 @@
 	H.universal_understand = 1
 
 	H.blood_type = "Y*"
+	H.h_style = "Standard"
 	GLOB.yautja_mob_list += H
 	for(var/obj/limb/L in H.limbs)
 		switch(L.name)
@@ -181,8 +207,8 @@
 				L.max_damage = 75
 				L.time_to_knit = 600 // 1 minute, time is in tenths of a second
 
-
-	var/datum/mob_hud/medical/advanced/A = huds[MOB_HUD_MEDICAL_ADVANCED]
-	A.remove_from_hud(H)
-	H.set_languages(list("Sainja"))
+	H.set_languages(list(LANGUAGE_YAUTJA))
 	return ..()
+
+/datum/species/yautja/get_hairstyle(var/style)
+	return GLOB.yautja_hair_styles_list[style]

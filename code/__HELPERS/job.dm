@@ -60,10 +60,12 @@
 			JOB_XO,
 			JOB_SO,
 			JOB_PILOT,
+			JOB_DROPSHIP_CREW_CHIEF,
 			JOB_CREWMAN,
 			JOB_CORPORATE_LIAISON,
 			JOB_CHIEF_ENGINEER,
 			JOB_ORDNANCE_TECH,
+			JOB_MAINT_TECH,
 			JOB_CHIEF_REQUISITION,
 			JOB_CARGO_TECH,
 			JOB_SQUAD_LEADER,
@@ -74,15 +76,13 @@
 			JOB_SQUAD_SMARTGUN,
 			JOB_SQUAD_MARINE,
 			JOB_CMO,
-			JOB_DOCTOR,
 			JOB_RESEARCHER,
+			JOB_DOCTOR,
+			JOB_NURSE,
+			JOB_POLICE_CADET,
 			JOB_POLICE,
+			JOB_WARDEN,
 			JOB_CHIEF_POLICE,
+			JOB_WARDEN,
 			JOB_SEA
 			)
-
-/proc/get_role_uniforms(rank)
-	for(var/job_name in GLOB.gear_presets_list)
-		var/datum/equipment_preset/job = GLOB.gear_presets_list[job_name]
-		if(job.rank == rank)
-			return job.uniform_sets

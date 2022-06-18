@@ -130,6 +130,9 @@
 #define XENO_HIVE_FERAL "xeno_hive_feral"
 #define XENO_HIVE_TAMED "xeno_hive_tamed"
 #define XENO_HIVE_MUTATED "xeno_hive_mutated"
+#define XENO_HIVE_FORSAKEN "xeno_hive_forsaken"
+
+#define ALL_XENO_HIVES list(XENO_HIVE_NORMAL, XENO_HIVE_CORRUPTED, XENO_HIVE_ALPHA, XENO_HIVE_BRAVO, XENO_HIVE_CHARLIE, XENO_HIVE_DELTA, XENO_HIVE_FERAL, XENO_HIVE_TAMED, XENO_HIVE_MUTATED, XENO_HIVE_FORSAKEN)
 
 //=================================================
 
@@ -157,7 +160,6 @@
 #define LANGUAGE_ALIEN		2
 #define LANGUAGE_DOG		4
 #define LANGUAGE_CAT		8
-#define LANGUAGE_BINARY		16
 #define LANGUAGE_OTHER		32768
 #define LANGUAGE_UNIVERSAL	65535
 
@@ -168,6 +170,7 @@
 #define SQUEEZE_UNDER_VEHICLES 	(1<<1)  // Only the van is supported as of now.
 #define EASY_SURGERY			(1<<2)  // Surgeries on this mob don't require advanced skills.
 #define SURGERY_MODE_ON			(1<<3)  // Mob on surgery mode, will attempt surgery when using relevant items on harm/disarm intent.
+#define MUTINEER				(1<<4)  // Part of the Mutiny Gang
 
 //=================================================
 
@@ -230,6 +233,7 @@
 #define ACTION_RED_POWER_UP		10
 #define ACTION_GREEN_POWER_UP	11
 #define ACTION_BLUE_POWER_UP	12
+#define ACTION_PURPLE_POWER_UP	13
 
 //defins for datum/hud
 
@@ -301,6 +305,7 @@
 // Carrier strain flags
 #define CARRIER_NORMAL 		"Normal"
 #define CARRIER_SHAMAN		"Shaman"
+#define CARRIER_EGGSAC		"Eggsac"
 
 // Burrower strain flags
 #define BURROWER_NORMAL 	"Normal"
@@ -308,7 +313,6 @@
 
 // Sentinel strain flags
 #define SENTINEL_NORMAL		"Normal"
-#define SENTINEL_SCATTERSPIT "Scatterspitter"
 
 // Spitter strain flags
 #define SPITTER_NORMAL		"Normal"

@@ -8,6 +8,9 @@
 	var/variant = 0
 	var/variant_prefix_name = ""
 
+/turf/open/auto_turf/insert_self_into_baseturfs()
+	baseturfs += type
+
 /turf/open/auto_turf/is_weedable()//for da xenos
 	return TRUE
 
@@ -80,6 +83,9 @@
 /turf/open/auto_turf/sand
 	layer_name = list("red dirt", "sand", "rocky sand", "this layer does not exist", "call a coder")
 
+/turf/open/auto_turf/sand/insert_self_into_baseturfs()
+	baseturfs += /turf/open/auto_turf/sand/layer0
+
 /turf/open/auto_turf/sand/get_dirt_type()
 	return DIRT_TYPE_SAND
 
@@ -105,6 +111,9 @@
 	icon_prefix = "ice"
 	layer_name = list("cracked permafrost","permafrost","glacial permafrost","warn a coder","warn a coder")
 
+/turf/open/auto_turf/ice/insert_self_into_baseturfs()
+	baseturfs += /turf/open/auto_turf/ice/layer0
+
 /turf/open/auto_turf/ice/get_dirt_type()
 	return NO_DIRT
 /turf/open/auto_turf/ice/layer0 //still have to manually define the layers for the editor
@@ -126,6 +135,9 @@
 	icon_state = "snow_0"
 	icon_prefix = "snow"
 	layer_name = list("icy dirt", "shallow snow", "deep snow", "very deep snow", "rock filled snow")
+
+/turf/open/auto_turf/snow/insert_self_into_baseturfs()
+	baseturfs += /turf/open/auto_turf/snow/layer0
 
 /turf/open/auto_turf/snow/get_dirt_type()
 	if(bleed_layer)
@@ -168,7 +180,7 @@
 	M.visible_message(SPAN_NOTICE("[M] starts clearing out the [name]."), SPAN_NOTICE("You start clearing out the [name]."), null, 5, CHAT_TYPE_XENO_COMBAT)
 	playsound(M.loc, 'sound/weapons/alien_claw_swipe.ogg', 25, 1)
 	xeno_attack_delay(M)
-	if(!do_after(M, 25, INTERRUPT_ALL, BUSY_ICON_FRIENDLY))
+	if(!do_after(M, 12, INTERRUPT_ALL, BUSY_ICON_FRIENDLY))
 		return XENO_NO_DELAY_ACTION
 
 	if(!bleed_layer)
@@ -219,3 +231,64 @@
 /turf/open/auto_turf/snow/layer4
 	icon_state = "snow_4" //Add sorokyne rock decals to this one
 	bleed_layer = 4
+
+
+//new strata turfs
+
+/turf/open/auto_turf/snow/brown_base
+	icon_state = "snow_b_0"
+	icon_prefix = "snow_b"
+
+/turf/open/auto_turf/snow/brown_base/insert_self_into_baseturfs()
+	baseturfs += /turf/open/auto_turf/snow/brown_base/layer0
+
+/turf/open/auto_turf/snow/brown_base/layer0 //still have to manually define the layers for the editor
+	icon_state = "snow_b_0"
+	bleed_layer = 0
+
+/turf/open/auto_turf/snow/brown_base/layer1
+	icon_state = "snow_b_1"
+	bleed_layer = 1
+
+/turf/open/auto_turf/snow/brown_base/layer2
+	icon_state = "snow_b_2"
+	bleed_layer = 2
+
+/turf/open/auto_turf/snow/brown_base/layer3
+	icon_state = "snow_b_3"
+	bleed_layer = 3
+
+/turf/open/auto_turf/snow/brown_base/layer4
+	icon_state = "snow_b_4" //Add sorokyne rock decals to this one
+	bleed_layer = 4
+/turf/open/auto_turf/strata_grass
+	name = "matted grass"
+	icon = 'icons/turf/floors/auto_strata_grass.dmi'
+	icon_state = "grass_0"
+	icon_prefix = "grass"
+	layer_name = list("ground","lush thick grass")
+	desc = "grass, dirt, mud, and other assorted high moisture cave flooring."
+
+/turf/open/auto_turf/strata_grass/insert_self_into_baseturfs()
+	baseturfs += /turf/open/auto_turf/strata_grass/layer0
+
+/turf/open/auto_turf/strata_grass/layer0
+	icon_state = "grass_0"
+	bleed_layer = 0
+	variant_prefix_name = "matted grass"
+
+/turf/open/auto_turf/strata_grass/layer0_mud
+	icon_state = "grass_0_mud"
+	bleed_layer = 0
+	variant = "mud"
+	variant_prefix_name = "muddy"
+
+/turf/open/auto_turf/strata_grass/layer0_mud_alt
+	icon_state = "grass_0_mud_alt"
+	bleed_layer = 0
+	variant = "mud_alt"
+	variant_prefix_name = "muddy"
+
+/turf/open/auto_turf/strata_grass/layer1
+	icon_state = "grass_1"
+	bleed_layer = 1

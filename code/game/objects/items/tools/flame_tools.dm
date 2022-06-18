@@ -115,20 +115,29 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 	name = "match"
 	desc = "A simple match stick, used for lighting fine smokables."
 	icon = 'icons/obj/items/cigarettes.dmi'
-	icon_state = "match_unlit"
+	icon_state = "match"
 	var/burnt = 0
 	var/smoketime = 10 SECONDS
+	var/burnt_name = "burnt match"
 	w_class = SIZE_TINY
 
 	attack_verb = list("burnt", "singed")
+
+/obj/item/tool/match/afterattack(atom/target, mob/living/carbon/human/user, proximity_flag, click_parameters)
+	if(istype(user) && istype(target, /obj/item/clothing/shoes/marine) && user.shoes == target && light_match())
+		if(prob(5))
+			user.visible_message(SPAN_NOTICE("<b>[user]</b> strikes \the [src] against their [target.name] and it splinters into pieces!"), SPAN_NOTICE("You strike \the [src] against your [target.name] and it splinters into pieces!"), max_distance = 3)
+			qdel(src)
+		else
+			user.visible_message(SPAN_NOTICE("<b>[user]</b> strikes \the [src] against their [target.name], igniting it!"), SPAN_NOTICE("You strike \the [src] against your [target.name], igniting it!"), max_distance = 3)
+		return
+	return ..()
 
 /obj/item/tool/match/process(delta_time)
 	smoketime -= delta_time SECONDS
 	if(smoketime < 1)
 		burn_out()
 		return
-
-
 
 /obj/item/tool/match/Destroy()
 	if(heat_source)
@@ -141,30 +150,38 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 	return ..()
 
 /obj/item/tool/match/proc/light_match()
-	if(heat_source) return
+	if(heat_source || burnt)
+		return
 	heat_source = 1000
 	playsound(src.loc,"match",15, 1, 3)
 	damtype = "burn"
-	icon_state = "match_lit"
+	icon_state = "[initial(icon_state)]_lit"
 	if(ismob(loc))
 		loc.SetLuminosity(2, FALSE, src)
 	else
 		SetLuminosity(2)
 	START_PROCESSING(SSobj, src)
 	update_icon()
+	return TRUE
 
 /obj/item/tool/match/proc/burn_out(mob/user)
 	heat_source = 0
 	burnt = 1
 	damtype = "brute"
-	icon_state = "match_burnt"
+	icon_state = "[initial(icon_state)]_burnt"
 	item_state = "cigoff"
 	if(user && loc != user)
 		user.SetLuminosity(0, FALSE, src)
 	SetLuminosity(0)
-	name = "burnt match"
+	name = burnt_name
 	desc = "A match. This one has seen better days."
 	STOP_PROCESSING(SSobj, src)
+
+/obj/item/tool/match/paper
+	name = "paper match"
+	desc = "A simple match stick, used for lighting fine smokables."
+	icon_state = "papermatch"
+	burnt_name = "burnt paper match"
 
 /obj/item/tool/lighter/dropped(mob/user)
 	if(heat_source && src.loc != user)
@@ -183,6 +200,7 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 	item_state = "cigoff"
 	w_class = SIZE_TINY
 	flags_armor_protection = 0
+	flags_equip_slot = SLOT_EAR | SLOT_FACE
 	flags_atom = CAN_BE_SYRINGED
 	attack_verb = list("burnt", "singed")
 	blood_overlay_type = ""
@@ -198,6 +216,7 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 	flags_atom |= NOREACT // so it doesn't react until you light it
 	create_reagents(chem_volume) // making the cigarrete a chemical holder with a maximum volume of 15
 	reagents.add_reagent("nicotine",10)
+	AddElement(/datum/element/mouth_drop_item)
 
 /obj/item/clothing/mask/cigarette/attackby(obj/item/W, mob/user)
 	..()
@@ -299,6 +318,8 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 			light(SPAN_NOTICE("[user] lights their [src] from the broken light."))
 
 /obj/item/clothing/mask/cigarette/proc/light(flavor_text)
+	SIGNAL_HANDLER
+
 	if(!heat_source)
 		heat_source = 1000
 		damtype = "fire"
@@ -366,6 +387,32 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 		M.update_inv_wear_mask()
 	STOP_PROCESSING(SSobj, src)
 	qdel(src)
+
+/obj/item/clothing/mask/cigarette/flamer_fire_act()
+	. = ..()
+	if(!heat_source)
+		light()
+
+/obj/item/clothing/mask/cigarette/extinguish()
+	. = ..()
+	if(heat_source)
+		die()
+
+/obj/item/clothing/mask/cigarette/proc/handle_extinguish()
+	SIGNAL_HANDLER
+
+	if(heat_source)
+		die()
+
+/obj/item/clothing/mask/cigarette/pickup(mob/user)
+	. = ..()
+	RegisterSignal(user, COMSIG_LIVING_PREIGNITION, .proc/light)
+	RegisterSignal(user, COMSIG_HUMAN_EXTINGUISH, .proc/handle_extinguish)
+
+/obj/item/clothing/mask/cigarette/dropped(mob/user)
+	. = ..()
+	if(loc != user)
+		UnregisterSignal(user, list(COMSIG_LIVING_PREIGNITION, COMSIG_HUMAN_EXTINGUISH))
 
 /obj/item/clothing/mask/cigarette/ucigarette
 	icon_on = "ucigon"
@@ -617,6 +664,24 @@ CIGARETTE PACKETS ARE IN FANCY.DM
 	item_state = "zippo"
 	icon_on = "zippoon"
 	icon_off = "zippo"
+	var/engraved = FALSE
+	
+/obj/item/tool/lighter/zippo/attackby(obj/item/W as obj, mob/user as mob)
+	. = ..()
+	if(istype(W, /obj/item/attachable/bayonet))
+		if(engraved)
+			to_chat(user, SPAN_NOTICE("\The [src] is already engraved."))
+			return
+		
+		var/str = copytext(reject_bad_text(input(user,"Engrave text?", "Set engraving", "")), 1)
+		if(length(str) == 0 || length(str) > 32)
+			to_chat(user, SPAN_NOTICE("You fumble [W], maybe try again?"))
+			return
+		desc += "\nEngraved with \"[str]\""
+		engraved = TRUE
+		to_chat(user, SPAN_NOTICE("You engrave \the [src] with \"[str]\"."))
+		
+		log_admin("[user] has engraved \the [src] with engraving \"[str]\". (CKEY: ([user.ckey]))")
 
 /obj/item/tool/lighter/zippo/gold
 	name = "golden Zippo lighter"

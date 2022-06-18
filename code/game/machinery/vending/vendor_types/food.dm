@@ -19,7 +19,7 @@
 			list("USCM Prepared Meal (Tofu)", 15, /obj/item/reagent_container/food/snacks/mre_pack/meal6, VENDOR_ITEM_REGULAR),
 			list("USCM Protein Bar", 50, /obj/item/reagent_container/food/snacks/protein_pack, VENDOR_ITEM_REGULAR),
 
-			/*list("CHRISTMAS MEALS", -1, null, null),		//NOT ANY MORE BINCH
+			/*list("CHRISTMAS MEALS", -1, null, null),		//Jummy Christmas Food
 			list("Xmas Prepared Meal (Fruitcake)", 25, /obj/item/reagent_container/food/snacks/mre_pack/xmas3, VENDOR_ITEM_REGULAR),
 			list("Xmas Prepared Meal (Gingerbread Cookies)", 25, /obj/item/reagent_container/food/snacks/mre_pack/xmas2, VENDOR_ITEM_REGULAR),
 			list("Xmas Prepared Meal (Sugar Cookies)", 25, /obj/item/reagent_container/food/snacks/mre_pack/xmas1, VENDOR_ITEM_REGULAR),*/

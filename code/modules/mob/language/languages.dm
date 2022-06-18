@@ -1,8 +1,8 @@
 /datum/language/common
-	name = "English"
-	desc = "Common earth English."
+	name = LANGUAGE_ENGLISH
+	desc = "Common Earth English. The standard language of the United Americas."
 	speech_verb = "says"
-	key = "0"
+	key = "1"
 	flags = RESTRICTED
 
 	syllables = list("al", "an", "ar", "as", "at", "ea", "ed", "en", "er", "es", "ha", "he", "hi", "in", "is", "it", "le", "me", "nd", "ne", "ng", "nt", "on", "or", "ou", "re", "se", "st", "te", "th", "ti", "to", "ve", "wa", "all", "and", "are", "but", "ent", "era", "ere", "eve", "for", "had", "hat", "hen", "her", "hin", "his", "ing", "ion", "ith", "not", "ome", "oul", "our", "sho", "ted", "ter", "tha", "the", "thi", "tio", "uld", "ver", "was", "wit", "you")
@@ -17,47 +17,46 @@
 
 // Galactic common languages (systemwide accepted standards).
 /datum/language/japanese
-	name = "Japanese"
-	desc = "A language boasting an extensive grammatical system, three writing systems, and a new smattering of English loanwords. This gained popularity due to high cultural contact in the RESS, and finds use outside due to immigration."
+	name = LANGUAGE_JAPANESE
+	desc = "A notoriously complex language boasting an extensive grammatical system, three writing systems, and a new smattering of English loanwords. It has gained popularity due to high cultural contact in the 3WE, and finds use outside due to emigration."
 	speech_verb = "vocalizes"
 	colour = "japanese"
 	key = "2"
-
-	syllables = list("ka", "ki", "ku", "ke", "ko", "ta", "chi", "tsu", "te", "to", "sa", "shi", "su", "se", "so", "na", "ni", "nu", "ne", "no", "n", "ha", "hi", "fu", "he", "ho", "ma", "mi", "mu", "me", "mo", "ya", "yu", "yo", "ra", "ri", "ru", "re", "ro", "wa", "wo")
+	space_chance = 100 //uses a unique system
 
 /datum/language/russian
-	name = "Russian"
-	desc = "An East Slavic language from Earth."
-	speech_verb = "says"
+	name = LANGUAGE_RUSSIAN
+	desc = "An East Slavic language from Earth. The dominant tongue of the UPP and frequently used by Slavic minorities in the United Americas."
+	speech_verb = "enunciates"
 	colour = "soghun"
 	key = "3"
 
-	syllables = list("al", "an", "bi", "vye", "vo", "go", "dye", "yel", "?n", "yer", "yet", "ka", "ko", "la", "ly", "lo", "l", "na", "nye", "ny", "no", "ov", "ol", "on", "or", "slog", "ot", "po", "pr", "ra", "rye", "ro", "st", "ta", "tye", "to", "t", "at", "bil", "vyer", "yego", "yeny", "yenn", "yest", "kak", "ln", "ova", "ogo", "oro", "ost", "oto", "pry", "pro", "sta", "stv", "tor", "chto", "eto")
+	syllables = list("al", "an", "bi", "vye", "vo", "go", "dye", "yel", "en", "yer", "yet", "ka", "ko", "la", "ly", "lo", "l", "na", "nye", "ny", "no", "ov", "ol", "on", "or", "slog", "ot", "po", "pr", "ra", "rye", "ro", "st", "ta", "tye", "to", "t", "at", "bil", "vyer", "yego", "yeny", "yenn", "yest", "kak", "ln", "ova", "ogo", "oro", "ost", "oto", "pry", "pro", "sta", "stv", "tor", "chto", "eto", "rus", "nar", "arya", "mol")
 
 /datum/language/german
-	name = "Spacendeutchen"
-	desc = "A common dialect consisting of a hybrid between American English and German developed due to the high immigration and subsequent enlistment of German-Americans into the USCM."
+	name = LANGUAGE_WELTRAUMDEUTSCH
+	desc = "A common dialect consisting of a hybrid between American English and Hochdeutsch developed due to the high immigration and subsequent enlistment of German-Americans into the USCM."
 	speech_verb = "proclaims"
 	ask_verb = "inquires"
-	exclaim_verb = "bellows loudly"
+	exclaim_verb = "bellows"
 	colour = "german"
 	key = "4"
 
-	syllables = list("die", "das", "wein", "mir", "und", "wier", "ein", "nein", "gen", "en", "sauen", "bien", "nien", "rien", "rhein", "deut", "der", "lieb", "en", "stein", "nein", "ja", "wolle", "sil", "be")
+	syllables = list("die", "das", "wein", "mir", "und", "wir", "ein", "nein", "gen", "en", "sauen", "bin", "nein", "rhein", "deut", "der", "lieb", "en", "stein", "nein", "ja", "wolle", "sil", "bei", "der", "sie", "sch", "kein", "nur", "ach", "kann", "volk", "vau", "gelb", "grun", "macht", "zwei", "vier", "nacht", "tag")
 
 /datum/language/spanish
-	name = "Spanish"
-	desc = "The second most common language spoken in the UA, mostly concentrated and brought from marines from the Latin American territories and in the former southern USA."
+	name = LANGUAGE_NEOSPANISH
+	desc = "The second most common language spoken in the UA, mutated and brought from marines from the Latin American territories and in the former southern USA."
 	speech_verb = "dice"
 	ask_verb = "cuestiona"
 	exclaim_verb = "grita"
 	colour = "spanish"
 	key = "5"
 
-	syllables = list("ha", "pana", "ja", "blo", "que", "spa", "di", "ga", "na", "ces", "si", "mo", "so", "de", "el", "to", "ro", "mi", "ca", "la", "di", "ah", "mio", "tar", "ion", "gran", "van", "jo", "cie", "qie", "las", "locho", "mas")
+	syllables = list("ha", "pana", "ja", "blo", "que", "spa", "di", "ga", "na", "ces", "si", "mo", "so", "de", "el", "to", "ro", "mi", "ca", "la", "di", "ah", "mio", "tar", "ion", "gran", "van", "jo", "cie", "qie", "las", "locho", "mas", "no", "gui", "es", "mal")
 
 /datum/language/commando
-	name = "Tactical Sign Language"
+	name = LANGUAGE_TSL
 	desc = "TSL is a modern technique with a combination of modified American sign language, tactical hand signals and discreet and esoteric code names for radios only known by elite commando groups."
 	speech_verb = "discreetly communicates"
 	ask_verb = "interrogates"
@@ -70,7 +69,7 @@
 	space_chance = 50
 
 /datum/language/sainja //Yautja tongue
-	name = "Sainja"
+	name = LANGUAGE_YAUTJA
 	desc = "The deep, rumbling, gutteral sounds of the Yautja predators. It is difficult to speak for those without facial mandibles."
 	speech_verb = "rumbles"
 	ask_verb = "rumbles"
@@ -82,17 +81,17 @@
 	syllables = list("!", "?", ".", "@", "$", "%", "^", "&", "*", "-", "=", "+", "e", "b", "y", "p", "|", "z", "~", ">")
 	space_chance = 20
 
-/datum/language/monkey
-	name = "Primitive"
+/datum/language/primitive
+	name = LANGUAGE_MONKEY
 	desc = "Ook ook ook."
 	speech_verb = "chimpers"
 	ask_verb = "chimpers"
 	exclaim_verb = "screeches"
 	colour = "monkey"
-	key = "m"
+	key = "9"
 
-/datum/language/xenocommon
-	name = "Xenomorph"
+/datum/language/xenomorph
+	name = LANGUAGE_XENOMORPH
 	colour = "xenotalk"
 	desc = "The common tongue of the xenomorphs."
 	speech_verb = "hisses"
@@ -102,7 +101,7 @@
 	flags = RESTRICTED
 
 /datum/language/xenos
-	name = "Hivemind"
+	name = LANGUAGE_HIVEMIND
 	desc = "Xenomorphs have the strange ability to commune over a psychic hivemind."
 	speech_verb = "hiveminds"
 	ask_verb = "hiveminds"
@@ -122,7 +121,7 @@
 		C.hivemind_broadcast(message, GLOB.hive_datum[C.hivenumber])
 
 /datum/language/binary
-	name = "Robot Talk"
+	name = LANGUAGE_BINARY
 	desc = "Most human stations support free-use communications protocols and routing hubs for synthetic use."
 	colour = "say_quote"
 	speech_verb = "states"
@@ -173,7 +172,7 @@
 		R.cell_use_power(C.active_usage)
 
 /datum/language/binary/drone
-	name = "Drone Talk"
+	name = LANGUAGE_DRONE
 	desc = "A heavily encoded damage control coordination stream."
 	speech_verb = "transmits"
 	ask_verb = "transmits"
@@ -184,8 +183,8 @@
 	drone_only = 1
 
 /datum/language/event_hivemind
-	name = "Telepath Implant"
-	desc = "An event only language that provides a hivemind for it's users."
+	name = LANGUAGE_TELEPATH
+	desc = "An event only language that provides a hivemind for its users."
 	speech_verb = "resonates"
 	ask_verb = "resonates"
 	exclaim_verb = "resonates"

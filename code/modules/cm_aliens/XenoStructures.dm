@@ -234,6 +234,89 @@
 		return
 
 
+//xeno marker :0)
+/obj/effect/alien/resin/marker
+	name = "Resin Mark"
+	desc = "Something has made its mark on the world, and there it is..."
+	icon = 'icons/mob/hud/xeno_markers.dmi'
+	icon_state = "marker_nub"
+	health = HEALTH_RESIN_XENO_SPIKE
+	var/list/xenos_tracking = list()
+	var/datum/xeno_mark_define/mark_meaning = null
+	var/image/seenMeaning //this needs to be a static image because it needs to be dynamically added/removed from xenos' huds as resin marks are created/destroyed
+	var/datum/hivenumber = null
+	var/createdby = null
+
+	//scuffed variables so the overwatch code doesnt have a fit
+	var/interference = 0
+	var/stat = null
+
+/obj/effect/alien/resin/marker/Initialize(mapload, mob/builder)
+	. = ..()
+	if(!isXeno(builder))
+		return
+
+	var/mob/living/carbon/Xenomorph/X = builder
+
+	X.built_structures |= src
+	createdby = X.nicknumber
+	mark_meaning = new X.selected_mark
+	seenMeaning =  image(icon, src.loc, mark_meaning.icon_state, ABOVE_HUD_LAYER, "pixel_y" = 5)
+	seenMeaning.plane = ABOVE_HUD_PLANE
+	hivenumber = X.hivenumber
+	X.hive.resin_marks += src
+
+	X.hive.mark_ui.update_all_data()
+
+	for(var/mob/living/carbon/Xenomorph/XX in X.hive.totalXenos)
+		XX.hud_set_marks()		//this should be a hud thing, but that code is too confusing so I am doing it here
+
+	addtimer(CALLBACK(src, .proc/check_for_weeds), 30 SECONDS, TIMER_UNIQUE)
+
+/obj/effect/alien/resin/marker/Destroy()
+	var/datum/hive_status/builder_hive = GLOB.hive_datum[hivenumber]
+
+	builder_hive.resin_marks -= src
+
+	for(var/mob/living/carbon/Xenomorph/XX in builder_hive.totalXenos)
+		XX.built_structures -= src
+		if(!XX.client)
+			continue
+		XX.client.images -= seenMeaning		 //this should be a hud thing, but that code is too confusing so I am doing it here
+		XX.hive.mark_ui.update_all_data()
+
+	for(var/mob/living/carbon/Xenomorph/X in xenos_tracking) //no floating references :0)
+		X.stop_tracking_resin_mark(TRUE)
+	. = ..()
+
+/obj/effect/alien/resin/marker/proc/check_for_weeds()
+	var/turf/T = get_turf(src)
+	for(var/i in T.contents)
+		if(istype(i, /obj/effect/alien/weeds))
+			addtimer(CALLBACK(src, .proc/check_for_weeds), 30 SECONDS, TIMER_UNIQUE)
+			return
+	qdel(src)
+
+/obj/effect/alien/resin/marker/examine(mob/user)
+	. = ..()
+	var/mob/living/carbon/Xenomorph/xeno_createdby
+	var/datum/hive_status/builder_hive = GLOB.hive_datum[hivenumber]
+	for(var/mob/living/carbon/Xenomorph/X in builder_hive.totalXenos)
+		if(X.nicknumber == createdby)
+			xeno_createdby = X
+	if(isXeno(user) || isobserver(user))
+		to_chat(user, "[mark_meaning.desc], ordered by [xeno_createdby.name]")
+
+/obj/effect/alien/resin/marker/attack_alien(mob/living/carbon/Xenomorph/M)
+	if(M.hive_pos == 1 || M.nicknumber == createdby)
+		. = ..()
+	else
+		return
+
+/obj/effect/alien/resin/marker/proc/hud_set_queen_overwatch()
+	//the stupidest way around feeding effects in as mobs to overwatch() lmao
+	return
+
 //Resin Doors
 /obj/structure/mineral_door/resin
 	name = "resin door"
@@ -400,11 +483,8 @@
 /obj/effect/alien/resin/acid_pillar
 	name = "acid pillar"
 	desc = "A resin pillar that is oozing with acid."
-	icon = 'icons/obj/structures/alien/structures64x64.dmi'
-	icon_state = "resin_pillar"
-
-	pixel_x = -16
-	pixel_y = -16
+	icon = 'icons/obj/structures/alien/structures.dmi'
+	icon_state = "acid_pillar_idle"
 
 	health = HEALTH_RESIN_XENO_ACID_PILLAR
 	var/hivenumber = XENO_HIVE_NORMAL
@@ -414,9 +494,9 @@
 	var/firing_cooldown = 2 SECONDS
 
 	var/acid_type = /obj/effect/xenomorph/spray/weak
-
-	var/list/mob/living/carbon/next_fire
 	var/range = 5
+
+	var/currently_firing = FALSE
 
 /obj/effect/alien/resin/acid_pillar/Initialize(mapload, hive)
 	. = ..()
@@ -430,13 +510,16 @@
 	if(get_dist(src, C) > range)
 		return FALSE
 
-	if(C.stat == DEAD)
+	var/check_dead = FALSE
+	if(C.ally_of_hivenumber(hivenumber))
+		if(!C.on_fire || !isXeno(C))
+			return FALSE
+	else if(C.lying || C.is_mob_incapacitated(TRUE))
 		return FALSE
 
-	if(C.ally_of_hivenumber(hivenumber))
-		if(!C.on_fire)
-			return FALSE
-	else if(C.lying)
+	if(!check_dead && C.health < 0)
+		return FALSE
+	if(check_dead && C.stat == DEAD)
 		return FALSE
 
 	var/turf/current_turf
@@ -459,55 +542,43 @@
 		return TRUE
 
 /obj/effect/alien/resin/acid_pillar/process()
+	if(currently_firing)
+		return
+	var/mob/living/carbon/target = null
+	var/furthest_distance = INFINITY
 	for(var/mob/living/carbon/C in urange(range, get_turf(loc)))
 		if(!can_target(C))
 			continue
-
-		var/can_fire = LAZYACCESS(next_fire, C)
-
-		if(can_fire && can_fire > world.time)
+		var/distance_between = get_dist(src, C)
+		if(distance_between > furthest_distance)
 			continue
-
-		SSacid_pillar.queue_attack(src, C)
+		furthest_distance = distance_between
+		target = C
+	if(target)
+		currently_firing = TRUE
+		SSacid_pillar.queue_attack(src, target)
+		playsound(loc, 'sound/effects/splat.ogg', 50, TRUE)
+		flick("acid_pillar_attack", src)
 
 /obj/effect/alien/resin/acid_pillar/proc/acid_travel(var/datum/acid_spray_info/info)
 	if(QDELETED(src))
 		return FALSE
 
-	var/turf/next_turf = can_target(info.target, info.distance_travelled+2)
-
-	if(!isturf(next_turf))
+	if(info.distance_travelled > range || info.current_turf == info.target_turf)
 		return FALSE
 
-	if(info.distance_travelled > range)
+	var/turf/next_turf = get_step_towards(info.current_turf, info.target_turf)
+	if(next_turf.density)
 		return FALSE
-
-	var/mob/living/carbon/C = info.target
-
-	var/turf/potential_turf = get_step_towards(info.current_turf, C)
-
-	if(!potential_turf.density)
-		next_turf = potential_turf
 
 	info.distance_travelled += 1
 	info.current_turf = next_turf
 
 	new acid_type(next_turf, create_cause_data(initial(name)), hivenumber)
-
-	if(get_dist(next_turf, C) == 0)
-		LAZYSET(next_fire, info.target, world.time + firing_cooldown)
-		RegisterSignal(info.target, COMSIG_PARENT_QDELETING, .proc/cleanup_next_fire, TRUE)
-		return FALSE
-
 	return TRUE
-
-/obj/effect/alien/resin/acid_pillar/proc/cleanup_next_fire(var/datum/D)
-	SIGNAL_HANDLER
-	LAZYREMOVE(next_fire, D)
 
 /obj/effect/alien/resin/acid_pillar/Destroy()
 	STOP_PROCESSING(SSprocessing, src)
-	next_fire = null
 	return ..()
 
 /obj/effect/alien/resin/acid_pillar/get_projectile_hit_boolean(obj/item/projectile/P)
@@ -711,7 +782,7 @@
 	icon_state = "neuro_nade_greyscale"
 	item_state = "neuro_nade_greyscale"
 
-	has_iff = FALSE
+	antigrief_protection = FALSE
 
 	dangerous = TRUE
 	rebounds = FALSE
@@ -762,11 +833,6 @@
 	else
 		to_chat(M, SPAN_XENOWARNING("It's about to burst!"))
 	return XENO_NO_DELAY_ACTION
-
-/obj/item/explosive/grenade/alien/verb_pickup()
-	if(isXeno(usr))
-		attack_alien(usr)
-	return
 
 /obj/item/explosive/grenade/alien/acid
 	name = "acid grenade"

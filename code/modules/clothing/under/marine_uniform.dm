@@ -38,7 +38,7 @@
 
 /obj/item/clothing/under/marine/set_sensors(mob/user)
 	if(!skillcheckexplicit(user, SKILL_ANTAG, SKILL_ANTAG_AGENT))
-		to_chat(user, SPAN_WARNING("The sensors in your uniform can't be modified."))
+		to_chat(user, SPAN_WARNING("The sensors in \the [src] can't be modified."))
 		return
 	. = ..()
 
@@ -49,30 +49,30 @@
 			flags_jumpsuit |= UNIFORM_DO_NOT_HIDE_ACCESSORIES
 
 /obj/item/clothing/under/marine/medic
-	name = "\improper USCM medic uniform"
-	desc = "Standard-issue Marine Medic fatigues. They have shards of light Kevlar to help protect against stabbing weapons and bullets."
+	name = "\improper USCM corpsman uniform"
+	desc = "Standard-issue Marine hospital corpsman fatigues. They have shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "marine_medic"
 	worn_state = "marine_medic"
-	specialty = "USCM medic"
+	specialty = "USCM Hospital Corpsman"
 
 /obj/item/clothing/under/marine/engineer
-	name = "\improper USCM engineer uniform"
-	desc = "Standard-issue Marine Engineer fatigues. They have shards of light Kevlar to help protect against stabbing weapons and bullets."
+	name = "\improper USCM ComTech uniform"
+	desc = "Standard-issue Marine combat technician fatigues. They have shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "marine_engineer"
 	worn_state = "marine_engineer"
-	specialty = "USCM engineer"
+	specialty = "USCM Combat Technician"
 
 /obj/item/clothing/under/marine/rto
-	name = "\improper marine RT operator uniform"
-	desc = "Standard-issue RT Operator fatigues. They have shards of light Kevlar to help protect against stabbing weapons and bullets."
+	name = "\improper USCM radio telephone operator uniform"
+	desc = "Standard-issue RTO fatigues. They have shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "marine_rto"
 	item_state = "marine_rto"
-	specialty = "marine RT operator"
+	specialty = "marine Radio Telephone Operator"
 
 /obj/item/clothing/under/marine/sniper
 	name = "\improper USCM sniper uniform"
 	flags_jumpsuit = FALSE
-	specialty = "USCM sniper"
+	specialty = "USCM Sniper"
 
 /obj/item/clothing/under/marine/tanker
 	name = "\improper USCM tanker uniform"
@@ -89,12 +89,12 @@
 	..(loc,expected_type, override_icon_state, new_name, new_protection)
 
 /obj/item/clothing/under/marine/chef
-	name = "\improper USCM Mess Sergeant uniform"
-	desc = "Standard-issue Mess Sergeant uniform. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
+	name = "\improper USCM Mess Technician uniform"
+	desc = "Standard-issue Mess Technician uniform. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "chef_uniform"
 	worn_state = "chef_uniform"
 	flags_jumpsuit = FALSE
-	specialty = "USCM mess sergeant"
+	specialty = "USCM mess technician"
 	flags_atom = NO_SNOW_TYPE
 
 /obj/item/clothing/under/marine/mp
@@ -102,18 +102,21 @@
 	desc = "Standard-issue Military Police uniform. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "MP_jumpsuit"
 	worn_state = "MP_jumpsuit"
-	suit_restricted = list(/obj/item/clothing/suit/storage/marine, /obj/item/clothing/suit/armor/riot/marine)
-	flags_jumpsuit = FALSE
+	suit_restricted = list(/obj/item/clothing/suit/storage/marine, /obj/item/clothing/suit/armor/riot/marine, /obj/item/clothing/suit/storage/jacket/marine/service/mp)
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 	specialty = "military police"
 	flags_atom = NO_SNOW_TYPE
+
+/obj/item/clothing/under/marine/mp/cadet
+	name = "MP cadet jumpsuit"
 
 /obj/item/clothing/under/marine/warden
 	name = "military warden jumpsuit"
 	desc = "Standard-issue Military Warden uniform. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "warden_jumpsuit"
 	worn_state = "warden_jumpsuit"
-	suit_restricted = list(/obj/item/clothing/suit/storage/marine, /obj/item/clothing/suit/armor/riot/marine)
-	flags_jumpsuit = FALSE
+	suit_restricted = list(/obj/item/clothing/suit/storage/marine, /obj/item/clothing/suit/armor/riot/marine, /obj/item/clothing/suit/storage/jacket/marine/service/warden)
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 	specialty = "military warden"
 	flags_atom = NO_SNOW_TYPE
 
@@ -133,7 +136,8 @@
 	icon_state = "WO_jumpsuit"
 	item_state = "WO_jumpsuit"
 	worn_state = "WO_jumpsuit"
-	suit_restricted = list(/obj/item/clothing/suit/storage/marine, /obj/item/clothing/suit/armor/riot/marine)
+	suit_restricted = list(/obj/item/clothing/suit/storage/marine, /obj/item/clothing/suit/armor/riot/marine, /obj/item/clothing/suit/storage/jacket/marine/service/cmp)
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 	specialty = "chief MP"
 	flags_atom = NO_SNOW_TYPE
 
@@ -148,13 +152,21 @@
 	name = "pilot officer bodysuit"
 	desc = "A bodysuit worn by pilot officers of the USCM, and is meant for survival in inhospitable conditions. Fly the marines onwards to glory. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "pilot_flightsuit"
+	item_state = "pilot_flightsuit"
 	worn_state = "pilot_flightsuit"
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
+	flags_atom = NO_NAME_OVERRIDE
 	flags_cold_protection = ICE_PLANET_min_cold_protection_temperature
-	suit_restricted = list(/obj/item/clothing/suit/armor/vest/pilot)
+	suit_restricted = list(/obj/item/clothing/suit/armor/vest/pilot, /obj/item/clothing/suit/storage/marine/light/vest/dcc)
 
-/obj/item/clothing/under/marine/officer/pilot/New()
-	select_gamemode_skin(type)
-	return //This way we keep it as a bodysuit across all maps.
+/obj/item/clothing/under/marine/officer/pilot/dcc
+	name = "dropship crew chief bodysuit"
+	desc = "A bodysuit worn by dropship crew chiefs of the USCM, and is meant for survival in inhospitable conditions. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
+	icon_state = "crewchief_flightsuit"
+	item_state = "crewchief_flightsuit"
+	worn_state = "crewchief_flightsuit"
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
+	flags_atom = NO_SNOW_TYPE|NO_NAME_OVERRIDE
 
 /obj/item/clothing/under/marine/officer/tanker
 	name = "vehicle crewman uniform"
@@ -256,40 +268,29 @@
 	specialty = "researcher"
 	flags_atom = NO_SNOW_TYPE
 
+/obj/item/clothing/under/marine/officer/formal/servicedress
+	name = "captain's dress shirt"
+	desc = "The shirt and tie of a two-piece Navy service dress uniform for high-ranking officers. Wear with style and substance."
+	specialty = "captain's service dress"
+	icon_state = "CO_service"
+	worn_state = "CO_service"
+	flags_atom = NO_SNOW_TYPE
+
 /obj/item/clothing/under/marine/officer/formal/white
-	name = "formal commanding officer's white uniform"
-	desc = "The well-ironed formal uniform of a USCM officer. Even looking at it the wrong way could result in you, and your platoon being court-martialed. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
+	name = "captain's white formal uniform"
+	desc = "A well-ironed USCM officer uniform in brilliant white with gold accents, intended for parades or hot weather. Wear this with pride."
 	icon_state = "CO_formal_white"
 	worn_state = "CO_formal_white"
-	specialty = "USCM officer"
+	specialty = "captain's white formal"
 	flags_atom = NO_SNOW_TYPE
-	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 
 /obj/item/clothing/under/marine/officer/formal/black
-	name = "formal commanding officer's black uniform"
-	desc = "The well-ironed formal uniform of a USCM officer. Even looking at it the wrong way could result in you, and your platoon being court-martialed. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
+	name = "captain's gray formal uniform"
+	desc = "A well-ironed USCM officer uniform in subdued gray with gold accents, intended for more formal or somber events. Wear this with pride."
 	icon_state = "CO_formal_black"
 	worn_state = "CO_formal_black"
-	specialty = "USCM officer"
+	specialty = "captain's gray formal"
 	flags_atom = NO_SNOW_TYPE
-	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
-
-/obj/item/clothing/under/marine/officer/dining
-	name = "dining commanding officer uniform"
-	desc = "The well-ironed dining uniform of a USCM officer. This uniform is saved for dining, that way you and the years-old stain upon the collar look sharp during your most important meals."
-	icon_state = "CO_dining"
-	worn_state = "CO_dining"
-	specialty = "USCM officer"
-	flags_atom = NO_SNOW_TYPE
-
-/obj/item/clothing/under/marine/officer/casual
-	name = "casual commanding officer uniform"
-	desc = "Casual clothing you brought aboard to show the marines you do in fact have style. Should only be worn during downtime, or special occasions."
-	icon_state = "CO_casual"
-	worn_state = "CO_casual"
-	specialty = "USCM officer"
-	flags_atom = NO_SNOW_TYPE
-	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 
 /obj/item/clothing/under/marine/dress
 	name = "marine dress uniform"
@@ -409,6 +410,7 @@
 	armor_bio = CLOTHING_ARMOR_NONE
 	armor_rad = CLOTHING_ARMOR_NONE
 	armor_internaldamage = CLOTHING_ARMOR_LOW
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 	suit_restricted = list(/obj/item/clothing/suit/storage/marine/veteran/PMC,
 							/obj/item/clothing/suit/storage/marine/smartgunner/veteran/PMC,
 							/obj/item/clothing/suit/armor/vest/security)//For survivors.
@@ -418,6 +420,7 @@
 	desc = "A white set of fatigues, designed for private security operators. The symbol of the Weyland-Yutani corporation is emblazed on the suit. This particular suit looks like it belongs to a high-ranking officer."
 	icon_state = "officer_jumpsuit"
 	worn_state = "officer_jumpsuit"
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 
 /obj/item/clothing/under/marine/veteran/PMC/commando
 	name = "\improper PMC commando uniform"
@@ -441,7 +444,7 @@
 	icon_state = "bear_jumpsuit"
 	worn_state = "bear_jumpsuit"
 	min_cold_protection_temperature = ICE_PLANET_min_cold_protection_temperature
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 	suit_restricted = list(/obj/item/clothing/suit/storage/marine/veteran/bear)
 
 
@@ -451,7 +454,8 @@
 	icon_state = "upp_uniform"
 	worn_state = "upp_uniform"
 	min_cold_protection_temperature = ICE_PLANET_min_cold_protection_temperature
-	has_sensor = FALSE
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_UPP
 	suit_restricted = list(/obj/item/clothing/suit/storage/marine/faction/UPP, /obj/item/clothing/suit/gimmick/jason, /obj/item/clothing/suit/storage/snow_suit/soviet)
 	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 
@@ -514,7 +518,7 @@
 	icon_state = "freelancer_uniform"
 	worn_state = "freelancer_uniform"
 	min_cold_protection_temperature = ICE_PLANET_min_cold_protection_temperature
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 	suit_restricted = list(/obj/item/clothing/suit/storage/marine/faction/freelancer)
 
 //=========================//Dutch Dozen\\================================\\
@@ -527,7 +531,7 @@
 	flags_heat_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_LEGS
 	icon_state = "dutch_jumpsuit"
 	worn_state = "dutch_jumpsuit"
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 	suit_restricted = list(/obj/item/clothing/suit/storage/marine/veteran/dutch, /obj/item/clothing/suit/armor/vest/dutch)
 
 
@@ -541,7 +545,7 @@
 	worn_state = "van_bandolier"
 	item_state = "van_bandolier_clothes"
 	flags_cold_protection = ICE_PLANET_min_cold_protection_temperature
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 
 //===========================//HELGHAST - MERCENARY\\================================\\
 //=====================================================================\\
@@ -568,7 +572,7 @@
 	icon_state = "mercenary_miner_uniform"
 	worn_state = "mercenary_miner_uniform"
 
-/obj/item/clothing/under/marine/veteran/mercenary/engineer
+/obj/item/clothing/under/marine/veteran/mercenary/support
 	name = "\improper Mercenary engineer fatigues"
 	desc = "A blue suit with yellow accents, used by engineers. There is an unknown symbol is emblazed on the suit."
 	icon_state = "mercenary_engineer_uniform"
@@ -592,67 +596,81 @@
 	icon_state = "redshirt2"
 	item_state = "r_suit"
 	worn_state = "redshirt2"
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 
 /obj/item/clothing/under/souto
 	name = "\improper Souto Man's cargo pants"
 	desc = "The white cargo pants worn by the one and only Souto man. As cool as an ice cold can of Souto Grape!"
 	icon_state = "souto_man"
 	worn_state = "souto_man"
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 
 /obj/item/clothing/under/colonist
 	name = "colonist uniform"
 	desc = "A stylish gray-green jumpsuit - standard issue for colonists."
 	icon_state = "colonist"
 	worn_state = "colonist"
-	has_sensor = 0
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_COLONIST
 
 /obj/item/clothing/under/colonist/clf
 	name = "\improper Colonial Liberation Front uniform"
 	desc = "A stylish grey-green jumpsuit - standard issue for colonists. This version appears to have the symbol of the Colonial Liberation Front emblazoned in select areas."
 	icon_state = "clf_uniform"
 	worn_state = "clf_uniform"
+	sensor_faction = FACTION_CLF
 
 /obj/item/clothing/under/colonist/ua_civvies
 	name = "gray utilities"
 	desc = "A stylish gray jumpsuit - standard issue for UA civilian support personnel."
 	icon_state = "ua_civvies"
 	worn_state = "ua_civvies"
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_MARINE
 
 /obj/item/clothing/under/colonist/wy_davisone
 	name = "brown utilities"
 	desc = "A stylish brown jumpsuit - standard issue for UA civilian support personnel."
 	icon_state = "wy_davisone"
 	worn_state = "wy_davisone"
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_MARINE
 
 /obj/item/clothing/under/colonist/wy_joliet_shopsteward
 	name = "stewart utilities"
 	desc = "A stylish brown vest and shorts - uniforms like this are often worn by clerks and shop stewarts."
 	icon_state = "wy_joliet_shopsteward"
 	worn_state = "wy_joliet_shopsteward"
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_MARINE
 
 /obj/item/clothing/under/tshirt
 	name = "T-shirt parent object"
-	has_sensor = 0
+	has_sensor = UNIFORM_NO_SENSORS
 
 /obj/item/clothing/under/tshirt/w_br
 	name = "white T-shirt and brown pants"
 	desc = "A confortable white T-shirt and brown jeans."
 	icon_state = "tshirt_w_br"
 	worn_state = "tshirt_w_br"
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_MARINE
 
 /obj/item/clothing/under/tshirt/gray_blu
 	name = "gray T-shirt and jeans"
 	desc = "A confortable gray T-shirt and blue jeans."
 	icon_state = "tshirt_gray_blu"
 	worn_state = "tshirt_gray_blu"
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_MARINE
 
 /obj/item/clothing/under/tshirt/r_bla
 	name = "red T-shirt and black pants"
 	desc = "A confortable red T-shirt and black jeans."
 	icon_state = "tshirt_r_bla"
 	worn_state = "tshirt_r_bla"
+	has_sensor = UNIFORM_HAS_SENSORS
+	sensor_faction = FACTION_MARINE
 
 /obj/item/clothing/under/CM_uniform
 	name = "\improper Colonial Marshal uniform"
@@ -711,11 +729,11 @@
 	flags_jumpsuit = FALSE
 
 /obj/item/clothing/under/rank/ro_suit
-	name = "requisition officer suit."
+	name = "requisition officer suit"
 	desc = "A nicely-fitting military suit for a requisition officer. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
 	icon_state = "RO_jumpsuit"
 	worn_state = "RO_jumpsuit"
-	flags_jumpsuit = FALSE
+	flags_jumpsuit = UNIFORM_SLEEVE_ROLLABLE
 
 /obj/item/clothing/under/rank/synthetic
 	name = "\improper USCM Support Uniform"

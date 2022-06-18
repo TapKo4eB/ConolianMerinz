@@ -70,9 +70,10 @@
 /obj/structure/machinery/bot/mulebot/Initialize(mapload, ...)
 	. = ..()
 	botcard = new(src)
-	var/datum/job/J = RoleAuthority ? RoleAuthority.roles_by_path[/datum/job/logistics/tech/cargo] : new /datum/job/logistics/tech/cargo
-	botcard.access = J.get_access()
-//	botcard.access += access_robotics //Why --Ikki
+	if(RoleAuthority)
+		var/datum/job/ctequiv = RoleAuthority.roles_by_name[JOB_CARGO_TECH]
+		if(ctequiv) botcard.access = ctequiv.get_access()
+
 	cell = new(src)
 	cell.charge = 2000
 	cell.maxcharge = 2000
@@ -87,8 +88,6 @@
 	if(!suffix)
 		suffix = "#[count]"
 	name = "Mulebot ([suffix])"
-
-	verbs -= /atom/movable/verb/pull
 
 
 // set up the wire colours in random order

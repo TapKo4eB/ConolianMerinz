@@ -25,7 +25,10 @@
 	var/air_properties_vary_with_direction = 0
 	var/turf/filler //Fixes double door opacity issue
 	/// Stops it being forced open through normal means (Hunters/Zombies/Aliens).
-	var/heavy
+	var/heavy = FALSE
+	/// Resistance to masterkey
+	var/masterkey_resist = FALSE
+	var/masterkey_mod = 0.1
 
 
 	//Multi-tile doors

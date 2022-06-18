@@ -1,7 +1,7 @@
 GLOBAL_LIST_EMPTY(command_apc_list)
 
 /obj/vehicle/multitile/apc
-	name = "\improper M577 Armored Personnel Carrier"
+	name = "M577 Armored Personnel Carrier"
 	desc = "An M577 Armored Personnel Carrier. An armored transport with four big wheels. Entrances on the sides and back."
 
 	icon = 'icons/obj/vehicles/apc.dmi'
@@ -80,7 +80,7 @@ GLOBAL_LIST_EMPTY(command_apc_list)
 /obj/vehicle/multitile/apc/load_role_reserved_slots()
 	var/datum/role_reserved_slots/RRS = new
 	RRS.category_name = "Crewmen"
-	RRS.roles = list(JOB_CREWMAN, JOB_UPP_CREWMAN)
+	RRS.roles = list(JOB_CREWMAN, JOB_WO_CREWMAN, JOB_UPP_CREWMAN, JOB_PMC_CREWMAN)
 	RRS.total = 2
 	role_reserved_slots += RRS
 
@@ -213,6 +213,9 @@ GLOBAL_LIST_EMPTY(command_apc_list)
 	FPW.origins = list(-2, 0)
 
 	add_hardpoint(new /obj/item/hardpoint/locomotion/apc_wheels)
+
+/obj/vehicle/multitile/apc/plain_no_fpw
+	interior_map = "apc_no_fpw"
 
 /obj/vehicle/multitile/apc/plain_no_fpw/load_hardpoints(var/obj/vehicle/multitile/R)
 	add_hardpoint(new /obj/item/hardpoint/locomotion/apc_wheels)

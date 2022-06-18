@@ -230,27 +230,12 @@ CULT
 	if(!can_deploy_droppod(T))
 		return
 
+	to_chat(H, SPAN_WARNING("No droppods currently available."))
+	return
+
+/* // FULL IMPLEM OF DROPPODS FOR REUSE
 	var/list/list_of_techs = list()
-
-	for(var/i in GLOB.unlocked_droppod_techs)
-		var/datum/tech/tech_to_use = i
-		list_of_techs += list("[tech_to_use.name]" = tech_to_use)
-
-	if(!list_of_techs.len)
-		to_chat(H, SPAN_WARNING("No droppods currently available."))
-		return
-
-	var/input = tgui_input_list(H, "Choose a tech to deploy at this location", "Tech deployment", list_of_techs)
-
 	if(!can_deploy_droppod(T))
-		return
-
-	if(!input)
-		return
-
-	var/datum/tech/tech_to_deploy = list_of_techs[input]
-
-	if(!tech_to_deploy)
 		return
 
 	var/area/turf_area = get_area(T)
@@ -273,6 +258,7 @@ CULT
 		to_chat(M, SPAN_BLUE("<b>SUPPLY DROP REQUEST:</b> Droppod requested at LONGITUDE: [obfuscate_x(T.x)], LATITUDE: [obfuscate_y(T.y)]. ETA [Floor(land_time*0.1)] seconds."))
 
 	RegisterSignal(assigned_droppod, COMSIG_PARENT_QDELETING, .proc/handle_droppod_deleted)
+*/
 
 /datum/action/human_action/activable/droppod/proc/handle_droppod_deleted(var/obj/structure/droppod/tech/T)
 	SIGNAL_HANDLER
@@ -513,7 +499,7 @@ CULT
 	if(!istype(chosen))
 		return
 
-	if(chosen.faction != FACTION_MARINE || (chosen.skills && skillcheck(chosen, SKILL_POLICE, 2)) || (chosen in converted))
+	if(skillcheck(chosen, SKILL_POLICE, SKILL_POLICE_MAX) || (chosen in converted))
 		to_chat(H, SPAN_WARNING("You can't convert [chosen]!"))
 		return
 
@@ -544,16 +530,35 @@ CULT
 	var/datum/equipment_preset/other/mutineer/XC = new()
 
 	XC.load_status(H)
-	to_chat(H, SPAN_HIGHDANGER("<hr>You are now a Mutineer!"))
-	to_chat(H, SPAN_DANGER("Please check the rules to see what you can and can't do as a mutineer.<hr>"))
-
 	for(var/datum/action/human_action/activable/mutineer/mutineer_convert/converted in H.actions)
 		for(var/mob/living/carbon/human/chosen in converted.converted)
 			XC.load_status(chosen)
-			to_chat(chosen, SPAN_HIGHDANGER("<hr>You are now a Mutineer!"))
-			to_chat(chosen, SPAN_DANGER("Please check the rules to see what you can and can't do as a mutineer.<hr>"))
-
 		converted.remove_from(H)
 
 	message_staff("[key_name_admin(H)] has begun the mutiny.")
 	remove_from(H)
+
+
+/datum/action/human_action/cancel_view // cancel-camera-view, but a button
+	name = "Cancel View"
+	action_icon_state = "cancel_view"
+
+/datum/action/human_action/cancel_view/give_to(user)
+	. = ..()
+	RegisterSignal(user, COMSIG_MOB_RESET_VIEW, .proc/remove_from) // will delete the button even if you reset view by resisting or the verb
+
+/datum/action/human_action/cancel_view/remove_from(mob/L)
+	. = ..()
+	UnregisterSignal(L, COMSIG_MOB_RESET_VIEW)
+
+/datum/action/human_action/cancel_view/action_activate()
+	if(!can_use_action())
+		return
+
+	var/mob/living/carbon/human/H = owner
+
+	H.cancel_camera()
+	H.reset_view()
+	H.client.change_view(world_view_size, target)
+	H.client.pixel_x = 0
+	H.client.pixel_y = 0

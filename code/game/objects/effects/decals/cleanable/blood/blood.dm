@@ -23,14 +23,17 @@
 	for(var/datum/disease/D in viruses)
 		D.cure(0)
 	viruses = null
-	..()
-	return QDEL_HINT_IWILLGC
+	return ..()
 
 /obj/effect/decal/cleanable/blood/Initialize(mapload, b_color)
 	. = ..()
 	if(b_color)
 		basecolor = b_color
 	update_icon()
+
+	if(SSticker.mode && MODE_HAS_TOGGLEABLE_FLAG(MODE_BLOOD_OPTIMIZATION))
+		amount = 0
+		return
 
 	if(drying_time)
 		if(mapload) // Don't use timer at all in mapload - as deleting long running timers during MC init causes issues (see /tg/ issue #56292)
@@ -46,12 +49,19 @@
 	if(!amount || !ishuman(AM))
 		return
 
+	if(SSticker.mode && MODE_HAS_TOGGLEABLE_FLAG(MODE_BLOOD_OPTIMIZATION))
+		return
+
 	var/mob/living/carbon/human/H = AM
 	H.add_blood(basecolor, BLOOD_FEET)
 
 	var/dry_time_left = 0
 	if(drying_time)
 		dry_time_left = max(0, drying_time - (world.time - dry_start_time))
+
+	if(GLOB.perf_flags & PERF_TOGGLE_NOBLOODPRINTS)
+		return
+
 	if(!H.bloody_footsteps)
 		H.AddElement(/datum/element/bloody_feet, dry_time_left, H.shoes, amount, basecolor)
 	else

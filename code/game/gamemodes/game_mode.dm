@@ -14,11 +14,11 @@
 var/global/datum/entity/statistic/round/round_statistics
 var/global/list/datum/entity/player_entity/player_entities = list()
 var/global/cas_tracking_id_increment = 0	//this var used to assign unique tracking_ids to tacbinos and signal flares
-
 /datum/game_mode
 	var/name = "invalid"
 	var/config_tag = null
-	var/votable = 1
+	var/votable = TRUE
+	var/vote_cycle = null
 	var/probability = 0
 	var/list/datum/mind/modePlayer = new
 	var/required_players = 0
@@ -27,13 +27,22 @@ var/global/cas_tracking_id_increment = 0	//this var used to assign unique tracki
 	var/force_end_at = 0
 	var/xeno_evo_speed = 0 // if not 0 - gives xeno an evo boost/nerf
 	var/is_in_endgame = FALSE //Set it to TRUE when we trigger DELTA alert or dropship crashes
+	/// When set and this gamemode is selected, the taskbar icon will change to the png selected here
+	var/taskbar_icon = 'icons/taskbar/gml_distress.png'
 	var/obj/structure/machinery/computer/shuttle_control/active_lz = null
 
 	var/datum/entity/statistic/round/round_stats = null
 
 	var/list/roles_to_roll
 
+	var/corpses_to_spawn = 0
+
 	var/hardcore = FALSE
+
+/datum/game_mode/New()
+	..()
+	if(taskbar_icon)
+		GLOB.available_taskbar_icons |= taskbar_icon
 
 /datum/game_mode/proc/announce() //to be calles when round starts
 	to_world("<B>Notice</B>: [src] did not define announce()")
@@ -60,10 +69,17 @@ var/global/cas_tracking_id_increment = 0	//this var used to assign unique tracki
 /datum/game_mode/proc/pre_setup()
 	SHOULD_CALL_PARENT(TRUE)
 	setup_structures()
+	if(corpses_to_spawn)
+		generate_corpses()
 	SEND_GLOBAL_SIGNAL(COMSIG_GLOB_MODE_PRESETUP)
 	return 1
 
+///Triggered partway through the first drop, based on DROPSHIP_DROP_MSG_DELAY. Marines are underway but haven't yet landed.
 /datum/game_mode/proc/ds_first_drop(var/datum/shuttle/ferry/marine/m_shuttle)
+	return
+
+///Triggered when the dropship first lands.
+/datum/game_mode/proc/ds_first_landed(var/datum/shuttle/ferry/marine/m_shuttle)
 	return
 
 /// Spawn structures relevant to the game mode setup, done before actual game setup. By default try to setup everything.
@@ -170,9 +186,9 @@ var/global/cas_tracking_id_increment = 0	//this var used to assign unique tracki
 	var/ban_check = role
 	switch(role)
 		if(JOB_XENOMORPH)
-			ban_check = "Alien"
+			ban_check = JOB_XENOMORPH
 		if(JOB_XENOMORPH_QUEEN)
-			ban_check = "Queen"
+			ban_check = JOB_XENOMORPH_QUEEN
 
 	//Assemble a list of active players without jobbans.
 	for(var/mob/new_player/player in GLOB.player_list)
@@ -214,6 +230,21 @@ var/global/cas_tracking_id_increment = 0	//this var used to assign unique tracki
 		if(player.mind && (player.job in ROLES_COMMAND ))
 			heads += player.mind
 	return heads
+
+
+/datum/game_mode/proc/generate_corpses()
+	var/list/obj/effect/landmark/corpsespawner/gamemode_spawn_corpse = GLOB.corpse_spawns.Copy()
+	while(corpses_to_spawn--)
+		if(!length(gamemode_spawn_corpse))
+			break
+		var/obj/effect/landmark/corpsespawner/spawner = pick(gamemode_spawn_corpse)
+		var/turf/spawnpoint = get_turf(spawner)
+		if(spawnpoint)
+			var/mob/living/carbon/human/M = new /mob/living/carbon/human(spawnpoint)
+			M.create_hud() //Need to generate hud before we can equip anything apparently...
+			arm_equipment(M, spawner.equip_path, TRUE, FALSE)
+		gamemode_spawn_corpse.Remove(spawner)
+
 
 //////////////////////////
 //Reports player logouts//

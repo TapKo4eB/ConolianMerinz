@@ -5,7 +5,7 @@
 	var/display_name = ""
 	var/tier = 0
 	var/dead_icon = "Drone Dead"
-	var/language = "Xenomorph"
+	var/language = LANGUAGE_XENOMORPH
 
 	var/melee_damage_lower = 10
 	var/melee_damage_upper = 20
@@ -24,7 +24,7 @@
 	var/evolution_threshold = 0 //Threshold to next evolution
 
 	var/list/evolves_to = list() //This is where you add castes to evolve into. "Seperated", "by", "commas"
-	var/deevolves_to // what caste to de-evolve to.
+	var/list/deevolves_to = list()  // what caste or castes to de-evolve to.
 	var/is_intelligent = 0 //If they can use consoles, etc. Set on Queen
 	var/caste_desc = null
 
@@ -60,7 +60,10 @@
 	var/build_time_mult = BUILD_TIME_MULT_XENO // Default build time and build distance
 	var/max_build_dist = 0
 
-	//Carrier vars
+	// Carrier vars //
+
+	/// if a hugger is held in hand, won't attempt to leap and kill itself
+	var/hugger_nurturing = FALSE
 	var/huggers_max = 0
 	var/throwspeed = 0
 	var/hugger_delay = 0
@@ -119,7 +122,7 @@
 				evolution_threshold = 500
 			//Other tiers (T3, Queen, etc.) can't evolve anyway
 
-	resin_build_order = GLOB.resin_build_order_default
+	resin_build_order = GLOB.resin_build_order_drone
 
 /client/var/cached_xeno_playtime
 
@@ -168,9 +171,9 @@
 	var/mob/living/carbon/Xenomorph/Queen/living_xeno_queen
 	var/egg_planting_range = 15
 	var/slashing_allowed = XENO_SLASH_ALLOWED //This initial var allows the queen to turn on or off slashing. Slashing off means harm intent does much less damage.
-	var/construction_allowed = XENO_QUEEN //Who can place construction nodes for special structures
+	var/construction_allowed = NORMAL_XENO //Who can place construction nodes for special structures
 	var/destruction_allowed = XENO_LEADER //Who can destroy special structures
-	var/unnesting_allowed = FALSE
+	var/unnesting_allowed = TRUE
 	var/hive_orders = "" //What orders should the hive have
 	var/color = null
 	var/ui_color = null // Color for hive status collapsible buttons and xeno count list
@@ -222,7 +225,7 @@
 	//List of how many maximum of each special structure you can have
 	var/list/hive_structures_limit = list(
 		XENO_STRUCTURE_CORE = 1,
-		XENO_STRUCTURE_PYLON = 8,
+		XENO_STRUCTURE_CLUSTER = 8,
 		XENO_STRUCTURE_POOL = 1,
 		XENO_STRUCTURE_EGGMORPH = 6,
 		XENO_STRUCTURE_EVOPOD = 2,
@@ -231,7 +234,7 @@
 
 	var/global/list/hive_structure_types = list(
 		XENO_STRUCTURE_CORE = /datum/construction_template/xenomorph/core,
-		XENO_STRUCTURE_PYLON = /datum/construction_template/xenomorph/pylon,
+		XENO_STRUCTURE_CLUSTER = /datum/construction_template/xenomorph/cluster,
 		XENO_STRUCTURE_POOL = /datum/construction_template/xenomorph/pool,
 		XENO_STRUCTURE_EGGMORPH = /datum/construction_template/xenomorph/eggmorph,
 		XENO_STRUCTURE_EVOPOD = /datum/construction_template/xenomorph/evopod,
@@ -242,15 +245,21 @@
 	var/list/list/hive_constructions = list() //Stringref list of structures that are being built
 
 	var/datum/hive_status_ui/hive_ui
+	var/datum/mark_menu_ui/mark_ui
 	var/datum/hive_faction_ui/faction_ui
 
 	var/list/tunnels = list()
 
 	var/list/allies = list()
 
+	var/list/resin_marks = list()
+
+	var/list/banished_ckeys = list()
+
 /datum/hive_status/New()
 	mutators.hive = src
 	hive_ui = new(src)
+	mark_ui = new(src)
 	faction_ui = new(src)
 	internal_faction = name
 
@@ -292,7 +301,7 @@
 	// So don't even bother trying updating UI here without large refactors
 
 // Removes the xeno from the hive
-/datum/hive_status/proc/remove_xeno(var/mob/living/carbon/Xenomorph/X, var/hard=FALSE)
+/datum/hive_status/proc/remove_xeno(var/mob/living/carbon/Xenomorph/X, var/hard=FALSE, light_mode = FALSE)
 	if(!X || !istype(X))
 		return
 
@@ -322,9 +331,9 @@
 	else if(X.tier == 3)
 		tier_3_xenos -= X
 
-	// At least UI updates when xenos are removed are safe
-	hive_ui.update_xeno_counts()
-	hive_ui.xeno_removed(X)
+	if(!light_mode)
+		hive_ui.update_xeno_counts()
+		hive_ui.xeno_removed(X)
 
 /datum/hive_status/proc/set_living_xeno_queen(var/mob/living/carbon/Xenomorph/Queen/M)
 	if(M == null)
@@ -379,19 +388,23 @@
 	xeno.hud_update() // To add leader star
 	open_xeno_leader_positions -= leader_num
 
+	give_action(xeno, /datum/action/xeno_action/activable/info_marker)
+
 	hive_ui.update_xeno_keys()
 	return TRUE
 
-/datum/hive_status/proc/remove_hive_leader(var/mob/living/carbon/Xenomorph/xeno)
+/datum/hive_status/proc/remove_hive_leader(var/mob/living/carbon/Xenomorph/xeno, light_mode = FALSE)
 	if(!istype(xeno) || !IS_XENO_LEADER(xeno))
 		return FALSE
 
 	var/leader_num = GET_XENO_LEADER_NUM(xeno)
 
 	xeno_leader_list[leader_num] = null
-	xeno.hive_pos = NORMAL_XENO
-	xeno.handle_xeno_leader_pheromones()
-	xeno.hud_update() // To remove leader star
+
+	if(!light_mode) // Don't run side effects during deletions. Better yet, replace all this by signals someday
+		xeno.hive_pos = NORMAL_XENO
+		xeno.handle_xeno_leader_pheromones()
+		xeno.hud_update() // To remove leader star
 
 	// Need to maintain ascending order of open_xeno_leader_positions
 	for (var/i in 1 to queen_leader_limit)
@@ -399,7 +412,15 @@
 			open_xeno_leader_positions.Insert(i, leader_num)
 			break
 
-	hive_ui.update_xeno_keys()
+	if(!light_mode)
+		hive_ui.update_xeno_keys()
+
+	for(var/obj/effect/alien/resin/marker/leaderless_mark in resin_marks) //no resin_mark limit abuse
+		if(leaderless_mark.createdby == xeno.nicknumber)
+			qdel(leaderless_mark)
+
+	remove_action(xeno, /datum/action/xeno_action/activable/info_marker)
+
 	return TRUE
 
 /datum/hive_status/proc/replace_hive_leader(var/mob/living/carbon/Xenomorph/original, var/mob/living/carbon/Xenomorph/replacement)
@@ -413,10 +434,12 @@
 	original.hive_pos = NORMAL_XENO
 	original.handle_xeno_leader_pheromones()
 	original.hud_update() // To remove leader star
+	remove_action(original, /datum/action/xeno_action/activable/info_marker)
 
 	replacement.hive_pos = XENO_LEADER_HIVE_POS(leader_num)
 	replacement.handle_xeno_leader_pheromones()
 	replacement.hud_update() // To add leader star
+	give_action(replacement, /datum/action/xeno_action/activable/info_marker)
 
 	hive_ui.update_xeno_keys()
 
@@ -729,11 +752,15 @@
 				continue
 			hive_structures[name_ref] -= S
 			qdel(S)
-	for(var/i in totalXenos)
-		var/mob/living/carbon/Xenomorph/xeno = i
+	for(var/mob/living/carbon/Xenomorph/xeno as anything in totalXenos)
 		if(get_area(xeno) != hijacked_dropship && xeno.loc && is_ground_level(xeno.loc.z))
-			to_chat(xeno, SPAN_XENOANNOUNCE("The Queen has left without you, you quickly find a hiding place to enter hibernation as you lose touch with the hive mind."))
-			qdel(xeno)
+			if(xeno.hunter_data.hunted && !isXenoQueen(xeno))
+				to_chat(xeno, SPAN_XENOANNOUNCE("The Queen has left without you, seperating you from her hive! You must defend yourself from the headhunter before you can enter hibernation..."))
+				xeno.set_hive_and_update(XENO_HIVE_FORSAKEN)
+			else
+				to_chat(xeno, SPAN_XENOANNOUNCE("The Queen has left without you, you quickly find a hiding place to enter hibernation as you lose touch with the hive mind."))
+				qdel(xeno)
+			stored_larva++
 	for(var/i in GLOB.alive_mob_list)
 		var/mob/living/potential_host = i
 		if(!(potential_host.status_flags & XENO_HOST))
@@ -744,8 +771,9 @@
 		if(A && A.hivenumber != hivenumber)
 			continue
 		for(var/obj/item/alien_embryo/embryo in potential_host)
-			qdel(embryo)
-		potential_host.death(create_cause_data("larva suicide"))
+			embryo.hivenumber = XENO_HIVE_FORSAKEN
+		potential_host.update_med_icon()
+	hijack_pooled_surge = TRUE
 
 /datum/hive_status/proc/free_respawn(var/client/C)
 	stored_larva++
@@ -786,11 +814,11 @@
 
 /datum/hive_status/corrupted/add_xeno(mob/living/carbon/Xenomorph/X)
 	. = ..()
-	X.add_language("English")
+	X.add_language(LANGUAGE_ENGLISH)
 
 /datum/hive_status/corrupted/remove_xeno(mob/living/carbon/Xenomorph/X, hard)
 	. = ..()
-	X.remove_language("English")
+	X.remove_language(LANGUAGE_ENGLISH)
 
 /datum/hive_status/alpha
 	name = "Alpha Hive"
@@ -834,6 +862,19 @@
 	prefix = "Feral "
 	color = "#828296"
 	ui_color = "#828296"
+
+	construction_allowed = XENO_QUEEN
+	dynamic_evolution = FALSE
+	allow_no_queen_actions = TRUE
+	allow_queen_evolve = FALSE
+	ignore_slots = TRUE
+
+/datum/hive_status/forsaken
+	name = "Forsaken Hive"
+	hivenumber = XENO_HIVE_FORSAKEN
+	prefix = "Forsaken "
+	color = "#cc8ec4"
+	ui_color = "#cc8ec4"
 
 	dynamic_evolution = FALSE
 	allow_no_queen_actions = TRUE
@@ -910,3 +951,69 @@
 			return TRUE
 
 	return ..()
+
+//Xeno Resin Mark Shit, the very best place for it too :0)
+/datum/xeno_mark_define
+	var/name = "xeno_declare"
+	var/icon_state = "empty"
+	var/desc = "Xenos make psychic markers with this meaning as positional lasting communication to eachother"
+
+/datum/xeno_mark_define/attack
+	name = "Attack"
+	desc = "Attack the enemy here!"
+	icon_state = "attack"
+
+/datum/xeno_mark_define/defend
+	name = "Defend"
+	desc = "Defend the hive here!"
+	icon_state = "defend"
+
+/datum/xeno_mark_define/flank
+	name = "Flank"
+	desc = "Flank the enemy here!"
+	icon_state = "flank"
+
+/datum/xeno_mark_define/hold
+	name = "Hold"
+	desc = "Hold this area!"
+	icon_state = "hold"
+
+/datum/xeno_mark_define/nest
+	name = "Nest"
+	desc = "Nest enemies here!"
+	icon_state = "nest"
+
+/datum/xeno_mark_define/rally
+	name = "Rally"
+	desc = "Group up here!"
+	icon_state = "rally"
+
+/datum/xeno_mark_define/help
+	name = "Help"
+	desc = "Need help here!"
+	icon_state = "help"
+
+/datum/xeno_mark_define/missing
+	name = "Missing Enemy"
+	desc = "The enemy is missing!"
+	icon_state = "enemy_missing"
+
+/datum/xeno_mark_define/danger
+	name = "Danger Warning"
+	desc = "Caution, danger here!"
+	icon_state = "danger"
+
+/datum/xeno_mark_define/fire
+	name = "Fire Warning"
+	desc = "Caution, fire here!"
+	icon_state = "warn_fire"
+
+/datum/xeno_mark_define/explosive
+	name = "Explosives Warning"
+	desc = "Caution, explosives here!"
+	icon_state = "warn_explosive"
+
+/datum/xeno_mark_define/structure
+	name = "Structures Warning"
+	desc = "Caution, structures here!"
+	icon_state = "warn_structure"

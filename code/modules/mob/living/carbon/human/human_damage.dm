@@ -78,21 +78,23 @@
 /mob/living/carbon/human/getBruteLoss(var/organic_only=0)
 	var/amount = 0
 	for(var/obj/limb/O in limbs)
-		if(!(organic_only && O.status & LIMB_ROBOT))
+		if(!(organic_only && O.status & (LIMB_ROBOT|LIMB_SYNTHSKIN)))
 			amount += O.brute_dam
 	return amount
 
 /mob/living/carbon/human/getFireLoss(var/organic_only=0)
 	var/amount = 0
 	for(var/obj/limb/O in limbs)
-		if(!(organic_only && O.status & LIMB_ROBOT))
+		if(!(organic_only && O.status & (LIMB_ROBOT|LIMB_SYNTHSKIN)))
 			amount += O.burn_dam
 	return amount
 
 
 /mob/living/carbon/human/adjustBruteLoss(var/amount)
-	if(species.brute_mod && amount > 0)
-		amount = amount*species.brute_mod
+	if(amount > 0)
+		var/brute_mod = get_brute_mod()
+		if(brute_mod)
+			amount *= brute_mod
 
 	if(amount > 0)
 		take_overall_damage(amount, 0)
@@ -101,8 +103,10 @@
 
 
 /mob/living/carbon/human/adjustFireLoss(var/amount)
-	if(species && species.burn_mod && amount > 0)
-		amount = amount*species.burn_mod
+	if(amount > 0)
+		var/burn_mod = get_burn_mod()
+		if(burn_mod)
+			amount *= burn_mod
 
 	if(amount > 0)
 		take_overall_damage(0, amount)
@@ -111,8 +115,10 @@
 
 
 /mob/living/carbon/human/proc/adjustBruteLossByPart(var/amount, var/organ_name, var/obj/damage_source = null)
-	if(species && species.brute_mod && amount > 0)
-		amount = amount*species.brute_mod
+	if(amount > 0)
+		var/brute_mod = get_brute_mod()
+		if(brute_mod)
+			amount *= brute_mod
 
 	for(var/X in limbs)
 		var/obj/limb/O = X
@@ -121,14 +127,16 @@
 				O.take_damage(amount, 0, sharp=is_sharp(damage_source), edge=has_edge(damage_source), used_weapon=damage_source)
 			else
 				//if you don't want to heal robot limbs, they you will have to check that yourself before using this proc.
-				O.heal_damage(-amount, 0, O.status & LIMB_ROBOT)
+				O.heal_damage(-amount, 0, O.status & (LIMB_ROBOT|LIMB_SYNTHSKIN))
 			break
 
 
 
 /mob/living/carbon/human/proc/adjustFireLossByPart(var/amount, var/organ_name, var/obj/damage_source = null)
-	if(species && species.burn_mod && amount > 0)
-		amount = amount*species.burn_mod
+	if(amount > 0)
+		var/burn_mod = get_burn_mod()
+		if(burn_mod)
+			amount *= burn_mod
 
 	for(var/X in limbs)
 		var/obj/limb/O = X
@@ -137,7 +145,7 @@
 				O.take_damage(0, amount, sharp=is_sharp(damage_source), edge=has_edge(damage_source), used_weapon=damage_source)
 			else
 				//if you don't want to heal robot limbs, they you will have to check that yourself before using this proc.
-				O.heal_damage(0, -amount, O.status & LIMB_ROBOT)
+				O.heal_damage(0, -amount, O.status & (LIMB_ROBOT|LIMB_SYNTHSKIN))
 			break
 
 
@@ -166,7 +174,7 @@
 		if(prob(mut_prob))
 			var/list/obj/limb/candidates = list()
 			for(var/obj/limb/O in limbs)
-				if(O.status & (LIMB_ROBOT|LIMB_DESTROYED|LIMB_MUTATED)) continue
+				if(O.status & (LIMB_ROBOT|LIMB_DESTROYED|LIMB_MUTATED|LIMB_SYNTHSKIN)) continue
 				candidates |= O
 			if(candidates.len)
 				var/obj/limb/O = pick(candidates)
@@ -411,21 +419,35 @@ This function restores all limbs.
 	if(!organ)
 		return FALSE
 
+	var/list/damage_data = list(
+		"bonus_damage" = 0,
+		"damage" = damage
+	)
+	SEND_SIGNAL(src, COMSIG_BONUS_DAMAGE, damage_data)
+	damage += damage_data["bonus_damage"]
+
 	switch(damagetype)
 		if(BRUTE)
 			damageoverlaytemp = 20
-			if(species.brute_mod && !force)
-				damage = damage * species.brute_mod
+			if(!force)
+				var/brute_mod = get_brute_mod()
+				if(brute_mod)
+					damage *= brute_mod
 			if(organ.take_damage(damage, 0, sharp, edge, used_weapon, no_limb_loss = no_limb_loss, attack_source = firer))
 				UpdateDamageIcon()
 		if(BURN)
 			damageoverlaytemp = 20
-			if(species.burn_mod && !force)
-				damage = damage * species.burn_mod
+			if(!force)
+				var/burn_mod = get_burn_mod()
+				if(burn_mod)
+					damage *= burn_mod
 			if(organ.take_damage(0, damage, sharp, edge, used_weapon, no_limb_loss = no_limb_loss, attack_source = firer))
 				UpdateDamageIcon()
 
 	pain.apply_pain(damage, damagetype)
+
+	if(damagetype != HALLOSS && damage > 0)
+		life_damage_taken_total += damage
 
 	if(permanent_kill)
 		status_flags |= PERMANENTLY_DEAD

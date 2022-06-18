@@ -1,6 +1,6 @@
 /datum/xeno_mutator/acider
 	name = "STRAIN: Runner - Acider"
-	description = "You exchange all your abilities for a new organ that is filled with volatile and explosive acid. You can force your body to explode, covering everything with acid, but that process takes 20 seconds and is noticable to people around you."
+	description = "You exchange all your abilities for a new organ that is filled with volatile and explosive acid. Your slashes apply acid to living lifeforms that slowly burns them, and you gain powerful acid to melt items and defenses. You can force your body to explode, covering everything with acid, but that process takes 20 seconds and is noticable to people around you."
 	flavor_description = "Burn their walls, maim their face!"
 	cost = MUTATOR_COST_EXPENSIVE
 	individual_only = TRUE
@@ -141,8 +141,9 @@
 		addtimer(CALLBACK(bound_xeno.hive, /datum/hive_status.proc/free_respawn, bound_xeno.client), 5 SECONDS)
 	bound_xeno.gib()
 
-/mob/living/carbon/Xenomorph/Runner/can_ventcrawl()
+/mob/living/carbon/Xenomorph/Runner/ventcrawl_carry()
 	var/datum/behavior_delegate/runner_acider/BD = behavior_delegate
-	if (!istype(BD) || !BD.caboom_trigger)
-		return ..()
-	return FALSE
+	if(istype(BD) && BD.caboom_trigger)
+		to_chat(src, SPAN_XENOWARNING("You cannot ventcrawl when you are about to explode!"))
+		return FALSE
+	return ..()

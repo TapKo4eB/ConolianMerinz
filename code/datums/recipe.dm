@@ -529,10 +529,18 @@
 /datum/recipe/fortunecookie
 	reagents = list("sugar" = 5)
 	items = list(
-		/obj/item/reagent_container/food/snacks/doughslice,
-		/obj/item/reagent_container/food/snacks/doughslice,
+		/obj/item/reagent_container/food/snacks/doughslice
 	)
 	result = /obj/item/reagent_container/food/snacks/fortunecookie
+
+/datum/recipe/fortunecookiefilled
+	reagents = list("sugar" = 5)
+	items = list(
+		/obj/item/reagent_container/food/snacks/doughslice,
+		/obj/item/paper
+	)
+	result = /obj/item/reagent_container/food/snacks/fortunecookie/prefilled
+
 	//Old fortune cookie code has been deleted from here and moved to fortunecookie.dm
 
 /datum/recipe/meatsteak
@@ -1152,6 +1160,25 @@
 		/obj/item/reagent_container/food/snacks/stuffing,
 	)
 	result = /obj/item/reagent_container/food/snacks/tofurkey
+
+/datum/recipe/cheesewheel/mature
+	items = list(
+		/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/immature
+	)
+	result = /obj/item/reagent_container/food/snacks/sliceable/cheesewheel/mature
+
+/datum/recipe/cheesewheel/verymature
+	items = list(
+		/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/mature
+	)
+	result = /obj/item/reagent_container/food/snacks/sliceable/cheesewheel/verymature
+
+/datum/recipe/cheesewheel/extramature
+	reagents = list("sugar" = 5, "milk" = 5, "sodiumchloride" = 1, "leporazine" = 10)
+	items = list(
+		/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/verymature
+	)
+	result = /obj/item/reagent_container/food/snacks/sliceable/cheesewheel/extramature
 
 //////////////////////////////////////////
 // bs12 food port stuff

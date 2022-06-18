@@ -61,13 +61,10 @@
 	dat += "<table id='marine_list' border='2px' style='width: 100%; border-collapse: collapse;' align='center'><tr>"
 	dat += "<th>Name</th><th>Squad</th><th>Role</th><th>State</th><th>Location</th><th>Distance</th></tr>"
 	for(var/datum/squad/S in RoleAuthority.squads)
-		var/leader_text = ""
-		var/spec_text = ""
-		var/medic_text = ""
-		var/engi_text = ""
-		var/smart_text = ""
-		var/marine_text = ""
-		var/misc_text = ""
+		var/list/squad_roles = ROLES_MARINES.Copy()
+		for(var/i in squad_roles)
+			squad_roles[i] = ""
+		var/misc_roles = ""
 
 		for(var/X in S.marines_list)
 			if(!X)
@@ -97,8 +94,11 @@
 					if(ID.rank)
 						role = ID.rank
 
-				if(M_turf && (M_turf.z == user_turf.z))
-					dist = "[get_dist(H, user)] ([dir2text_short(get_dir(user, H))])"
+				if(M_turf)
+					var/area/mob_area = M_turf.loc
+					var/area/user_area = user_turf.loc
+					if(M_turf.z == user_turf.z && mob_area.fake_zlevel == user_area.fake_zlevel)
+						dist = "[get_dist(H, user)] ([dir2text_short(get_dir(user, H))])"
 
 				if(H.assigned_squad)
 					squad = H.assigned_squad.name
@@ -107,28 +107,22 @@
 					if(CONSCIOUS)
 						mob_state = "Conscious"
 					if(UNCONSCIOUS)
-						mob_state = "<b>Unconscious</b>"
-					else
+						if(H.health < 0)
+							mob_state = "<b>Critical</b>"
+						else
+							mob_state = "Unconscious"
+					if(DEAD)
 						mob_state = "<b>Dead</b>"
 
 			var/marine_infos = "<tr><td>[mob_name]</a></td><td>[squad]</td><td>[role]</td><td>[mob_state]</td><td>[area_name]</td><td>[dist]</td></tr>"
-			switch(role)
-				if(JOB_SQUAD_LEADER)
-					leader_text += marine_infos
-				if(JOB_SQUAD_SPECIALIST)
-					spec_text += marine_infos
-				if(JOB_SQUAD_MEDIC)
-					medic_text += marine_infos
-				if(JOB_SQUAD_ENGI)
-					engi_text += marine_infos
-				if(JOB_SQUAD_SMARTGUN)
-					smart_text += marine_infos
-				if(JOB_SQUAD_MARINE)
-					marine_text += marine_infos
-				else
-					misc_text += marine_infos
+			if(role in squad_roles)
+				squad_roles[role] += marine_infos
+			else
+				misc_roles += marine_infos
 
-		dat += leader_text + spec_text + medic_text + engi_text + smart_text + marine_text + misc_text
+		for(var/i in squad_roles)
+			dat += squad_roles[i]
+		dat += misc_roles
 
 	dat += "</table>"
 	dat += "<br><hr>"

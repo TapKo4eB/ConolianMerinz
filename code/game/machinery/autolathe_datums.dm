@@ -62,13 +62,18 @@
 	path = /obj/item/tool/wrench
 	category = "Tools"
 
+/datum/autolathe/recipe/mop
+	name = "mop"
+	path = /obj/item/tool/mop
+	category = "Tools"
+
 /datum/autolathe/recipe/radio_headset
 	name = "radio headset"
 	path = /obj/item/device/radio/headset
 	category = "General"
 
 /datum/autolathe/recipe/radio_bounced
-	name = "station bounced radio"
+	name = "shortwave radio"
 	path = /obj/item/device/radio/off
 	category = "General"
 
@@ -306,6 +311,11 @@
 	path = /obj/item/explosive/warhead/mortar
 	category = "Explosives"
 
+/datum/autolathe/recipe/armylathe/mortar_camera_warhead
+	name = "80mm Mortar Camera Warhead"
+	path = /obj/item/explosive/warhead/mortar/camera
+	category = "Explosives"
+
 /datum/autolathe/recipe/armylathe/flamer_tank
 	name = "Custom M240A1 Fuel Tank"
 	path = /obj/item/ammo_magazine/flamer_tank/custom
@@ -380,6 +390,14 @@ datum/autolathe/recipe/medilathe/autoinjector/s30x6
 /datum/autolathe/recipe/medilathe/bonesetter
 	name = "bonesetter"
 	path = /obj/item/tool/surgery/bonesetter
+
+/datum/autolathe/recipe/medilathe/bonegel
+	name = "bone gel"
+	path = /obj/item/tool/surgery/bonegel
+
+/datum/autolathe/recipe/medilathe/fixovein
+	name = "FixOVein"
+	path = /obj/item/tool/surgery/FixOVein
 
 /datum/autolathe/recipe/medilathe/cryobag
 	name = "stasis bag"

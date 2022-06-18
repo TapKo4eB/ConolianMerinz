@@ -1,7 +1,7 @@
 /datum/equipment_preset/dust_raider
 	name = "Dust Raider"
 	idtype = /obj/item/card/id/dogtag
-	languages = list("English")
+	languages = list(LANGUAGE_ENGLISH)
 	faction = FACTION_MARINE
 
 
@@ -22,10 +22,10 @@
 	flags = EQUIPMENT_PRESET_EXTRA
 
 	access = list(ACCESS_MARINE_PREP)
-	assignment = "Squad Marine"
-	rank = "Squad Marine"
-	paygrade = "E2"
-	role_comm_title = "Pfc"
+	assignment = "Squad Rifleman"
+	rank = "Squad Rifleman"
+	paygrade = "ME2"
+	role_comm_title = "RFN"
 	skills = /datum/skills/pfc/crafty
 
 /datum/equipment_preset/dust_raider/private/load_gear(mob/living/carbon/human/H)
@@ -46,7 +46,7 @@
 	access = list(ACCESS_MARINE_PREP)
 	assignment = "Squad Leader"
 	rank = "Squad Leader"
-	paygrade = "E6"
+	paygrade = "ME5"
 	role_comm_title = "SL"
 	skills = /datum/skills/SL
 
@@ -75,23 +75,22 @@
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_SMARTPREP)
 	assignment = "Squad Smartgunner"
 	rank = "Squad Smartgunner"
-	paygrade = "E4"
+	paygrade = "ME3"
 	role_comm_title = "SG"
 	skills = /datum/skills/smartgunner
 
 /datum/equipment_preset/dust_raider/smartgunner/load_gear(mob/living/carbon/human/H)
 	//TODO: add backpacks and satchels
 	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine(H), WEAR_BODY)
-	H.equip_to_slot_or_del(new /obj/item/storage/backpack/marine(H), WEAR_BACK)
 	H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/marine/smartgunner(H), WEAR_JACKET)
-	H.equip_to_slot_or_del(new /obj/item/smartgun_powerpack(H), WEAR_R_HAND)
-	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/night/m56_goggles(H), WEAR_IN_BACK)
+	H.equip_to_slot_or_del(new /obj/item/smartgun_powerpack(H), WEAR_BACK)
 	H.equip_to_slot_or_del(new /obj/item/weapon/gun/smartgun(H), WEAR_J_STORE)
 	add_common_wo_equipment(H)
 	//Backup SMG Weapon
 	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/smartgunner/full(H), WEAR_WAIST)
 	H.equip_to_slot_or_del(new /obj/item/clothing/head/helmet/marine(H), WEAR_HEAD)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/magazine/large/pmc_m39(H), WEAR_L_STORE)
+	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/night/m56_goggles(H), WEAR_EYES)
 
 //*****************************************************************************************************/
 
@@ -100,9 +99,9 @@
 	flags = EQUIPMENT_PRESET_EXTRA
 
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_ENGPREP, ACCESS_CIVILIAN_ENGINEERING)
-	assignment = "Squad Engineer"
-	rank = "Squad Engineer"
-	paygrade = "E3"
+	assignment = "Squad Combat Technician"
+	rank = "Squad Combat Technician"
+	paygrade = "ME3"
 	role_comm_title = "Eng"
 	skills = /datum/skills/combat_engineer
 
@@ -125,14 +124,14 @@
 //*****************************************************************************************************/
 
 /datum/equipment_preset/dust_raider/medic
-	name = "Dust Raider Medic"
+	name = "Dust Raider Hospital Corpsman"
 	flags = EQUIPMENT_PRESET_EXTRA
 
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_MEDPREP, ACCESS_MARINE_MEDBAY)
-	assignment = "Squad Medic"
-	rank = "Squad Medic"
-	paygrade = "E3"
-	role_comm_title = "Med"
+	assignment = "Squad Hospital Corpsman"
+	rank = "Squad Hospital Corpsman"
+	paygrade = "ME3"
+	role_comm_title = "HM"
 	skills = /datum/skills/combat_medic
 
 /datum/equipment_preset/dust_raider/medic/load_gear(mob/living/carbon/human/H)
@@ -146,6 +145,8 @@
 	H.equip_to_slot_or_del(new /obj/item/storage/firstaid/regular(H), WEAR_IN_BACK)
 	H.equip_to_slot_or_del(new /obj/item/storage/firstaid/adv(H), WEAR_IN_BACK)
 	H.equip_to_slot_or_del(new /obj/item/device/defibrillator(H), WEAR_IN_BACK)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/surgical_line(H), WEAR_IN_JACKET)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/synthgraft(H), WEAR_IN_JACKET)
 	H.equip_to_slot_or_del(new /obj/item/storage/belt/medical/lifesaver/full(H), WEAR_WAIST)
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/hud/health(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medkit/full(H), WEAR_L_STORE)
@@ -159,9 +160,9 @@
 	flags = EQUIPMENT_PRESET_EXTRA
 
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_SPECPREP)
-	assignment = "Squad Specialist"
-	rank = "Squad Specialist"
-	paygrade = "E5"
+	assignment = "Squad Weapons Specialist"
+	rank = "Squad Weapons Specialist"
+	paygrade = "ME3"
 	role_comm_title = "Spc"
 	skills = /datum/skills/specialist
 

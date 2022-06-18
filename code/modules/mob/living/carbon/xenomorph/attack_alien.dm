@@ -19,8 +19,8 @@
 			if(on_fire)
 				extinguish_mob(M)
 			else
-				M.visible_message(SPAN_NOTICE("[M] caresses [src] with its scythe-like arm."), \
-				SPAN_NOTICE("You caress [src] with your scythe-like arm."), null, 5, CHAT_TYPE_XENO_FLUFF)
+				M.visible_message(SPAN_NOTICE("[M] caresses [src] with its claws."), \
+				SPAN_NOTICE("You caress [src] with your claws."), null, 5, CHAT_TYPE_XENO_FLUFF)
 
 		if(INTENT_GRAB)
 			if(M == src || anchored || buckled)
@@ -95,7 +95,7 @@
 
 			var/armor_block = getarmor(affecting, ARMOR_MELEE)
 
-			if(isYautja(src) && check_zone(M.zone_selected) == "head")
+			if(wear_mask && check_zone(M.zone_selected) == "head")
 				if(istype(wear_mask, /obj/item/clothing/mask/gas/yautja))
 					var/knock_chance = 1
 					if(M.frenzy_aura > 0)
@@ -108,7 +108,10 @@
 						M.visible_message(SPAN_DANGER("The [M] smashes off [src]'s [wear_mask.name]!"), \
 						SPAN_DANGER("You smash off [src]'s [wear_mask.name]!"), null, 5)
 						drop_inv_item_on_ground(wear_mask)
-						emote("roar")
+						if(isYautja(src))
+							emote("roar")
+						else
+							emote("scream")
 						return XENO_ATTACK_ACTION
 
 			var/n_damage = armor_damage_reduction(GLOB.marine_melee, damage, armor_block)
@@ -132,6 +135,17 @@
 			M.visible_message(SPAN_DANGER("[M] slashes [src]!"), \
 			SPAN_DANGER("You slash [src]!"), null, null, CHAT_TYPE_XENO_COMBAT)
 
+			var/splatter_dir = get_dir(M.loc, src.loc)
+
+			if(isHumanStrict(src))
+				new /obj/effect/temp_visual/dir_setting/bloodsplatter/human(src.loc, splatter_dir)
+			if(isYautja(src))
+				new /obj/effect/temp_visual/dir_setting/bloodsplatter/yautjasplatter(src.loc, splatter_dir)
+			if(isXeno(src))
+				new /obj/effect/temp_visual/dir_setting/bloodsplatter/xenosplatter(src.loc, splatter_dir)
+			if(isSynth(src))
+				new /obj/effect/temp_visual/dir_setting/bloodsplatter/synthsplatter(src.loc, splatter_dir)
+
 			last_damage_data = create_cause_data(initial(M.name), M)
 
 			//Logging, including anti-rulebreak logging
@@ -139,7 +153,7 @@
 				if(HAS_TRAIT(src, TRAIT_NESTED)) //Host was buckled to nest while infected, this is a rule break
 					attack_log += text("\[[time_stamp()]\] <font color='orange'><B>was slashed by [key_name(M)] while they were infected and nested</B></font>")
 					M.attack_log += text("\[[time_stamp()]\] <font color='red'><B>slashed [key_name(src)] while they were infected and nested</B></font>")
-					msg_admin_ff("[key_name(M)] slashed [key_name(src)] while they were infected and nested.") //This is a blatant rulebreak, so warn the admins
+					message_staff("[key_name(M)] slashed [key_name(src)] while they were infected and nested.") //This is a blatant rulebreak, so warn the admins
 				else //Host might be rogue, needs further investigation
 					attack_log += text("\[[time_stamp()]\] <font color='orange'>was slashed by [key_name(M)] while they were infected</font>")
 					M.attack_log += text("\[[time_stamp()]\] <font color='red'>slashed [key_name(src)] while they were infected</font>")
@@ -215,8 +229,8 @@
 
 	switch(M.a_intent)
 		if(INTENT_HELP)
-			M.visible_message(SPAN_NOTICE("[M] caresses [src] with its scythe-like arm."), \
-			SPAN_NOTICE("You caress [src] with your scythe-like arm."), null, 5, CHAT_TYPE_XENO_FLUFF)
+			M.visible_message(SPAN_NOTICE("[M] caresses [src] with its claws."), \
+			SPAN_NOTICE("You caress [src] with your claws."), null, 5, CHAT_TYPE_XENO_FLUFF)
 
 		if(INTENT_GRAB)
 			if(M == src || anchored || buckled)
@@ -332,7 +346,7 @@
 //Breaking barricades
 /obj/structure/barricade/attack_alien(mob/living/carbon/Xenomorph/M)
 	M.animation_attack_on(src)
-	take_damage( rand(M.melee_damage_lower, M.melee_damage_upper) )
+	take_damage( rand(M.melee_damage_lower, M.melee_damage_upper) * brute_multiplier)
 	if(barricade_hitsound)
 		playsound(src, barricade_hitsound, 25, 1)
 	if(health <= 0)
@@ -497,18 +511,6 @@
 		M.visible_message(SPAN_DANGER("[M] smashes [src]!"), \
 			SPAN_DANGER("You smash [src]!"), null, 5, CHAT_TYPE_XENO_COMBAT)
 		shatter()
-	return XENO_ATTACK_ACTION
-
-//Foamed metal
-/obj/structure/foamedmetal/attack_alien(mob/living/carbon/Xenomorph/M)
-	M.animation_attack_on(src)
-	if(prob(33))
-		M.visible_message(SPAN_DANGER("[M] slices [src] apart!"), \
-			SPAN_DANGER("You slice [src] apart!"), null, 5, CHAT_TYPE_XENO_COMBAT)
-		qdel(src)
-	else
-		M.visible_message(SPAN_DANGER("[M] tears some shreds off [src]!"), \
-			SPAN_DANGER("You tear some shreds off [src]!"), null, 5, CHAT_TYPE_XENO_COMBAT)
 	return XENO_ATTACK_ACTION
 
 //Prying open doors
@@ -727,6 +729,8 @@
 			message = "We have wrested away remote control of the metal crawler! Rejoice!"
 		else
 			message = "We have wrested away remote control of the metal bird! Rejoice!"
+			if(!GLOB.resin_lz_allowed)
+				set_lz_resin_allowed(TRUE)
 
 		to_chat(M, SPAN_XENONOTICE("You interact with the machine and disable remote control."))
 		xeno_message(SPAN_XENOANNOUNCE("[message]"),3,M.hivenumber)
@@ -771,7 +775,7 @@
 	attack_hand(M)
 	if(!shuttle.iselevator)
 		if(shuttle_tag != "Ground Transport 1")
-			shuttle.door_override(M)
+			shuttle.door_override(M, shuttle_tag)
 		if(onboard || shuttle_tag == "Ground Transport 1") //This is the shuttle's onboard console or the control console for the CORSAT monorail
 			shuttle.hijack(M, shuttle_tag)
 	return XENO_ATTACK_ACTION
@@ -790,7 +794,7 @@
 				return XENO_NO_DELAY_ACTION
 
 		var/datum/shuttle/ferry/marine/shuttle = shuttle_controller.shuttles[shuttle_tag]
-		shuttle.door_override(M)
+		shuttle.door_override(M, shuttle_tag)
 		xeno_attack_delay(M)
 
 		if(do_after(usr, 50, INTERRUPT_ALL, BUSY_ICON_HOSTILE))
@@ -801,26 +805,29 @@
 
 //APCs.
 /obj/structure/machinery/power/apc/attack_alien(mob/living/carbon/Xenomorph/M)
+	if(stat & BROKEN)
+		to_chat(M, SPAN_XENONOTICE("[src] is already broken!"))
+		return XENO_NO_DELAY_ACTION
+	else if(beenhit >= XENO_HITS_TO_CUT_WIRES && M.mob_size < MOB_SIZE_BIG)
+		to_chat(M, SPAN_XENONOTICE("You aren't big enough to further damage [src]."))
+		return XENO_NO_DELAY_ACTION
 	M.animation_attack_on(src)
 	M.visible_message(SPAN_DANGER("[M] slashes [src]!"), \
 	SPAN_DANGER("You slash [src]!"), null, 5)
 	playsound(loc, "alien_claw_metal", 25, 1)
-	var/allcut = 1
-	for(var/wire = 1; wire < length(get_wire_descriptions()); wire++)
-		if(!isWireCut(wire))
-			allcut = 0
-			break
-
-	if(beenhit >= pick(3, 4) && wiresexposed != 1)
-		wiresexposed = 1
-		update_icon()
-		visible_message(SPAN_DANGER("[src]'s cover swings open, exposing the wires!"), null, null, 5)
-
-	else if(wiresexposed == 1 && allcut == 0)
+	if (beenhit >= XENO_HITS_TO_CUT_WIRES)
+		set_broken()
+		visible_message(SPAN_DANGER("[src]'s electronics are destroyed!"), null, null, 5)
+	else if(wiresexposed)
 		for(var/wire = 1; wire < length(get_wire_descriptions()); wire++)
 			cut(wire, M)
 		update_icon()
+		beenhit = XENO_HITS_TO_CUT_WIRES
 		visible_message(SPAN_DANGER("[src]'s wires snap apart in a rain of sparks!"), null, null, 5)
+	else if(beenhit >= pick(XENO_HITS_TO_EXPOSE_WIRES_MIN, XENO_HITS_TO_EXPOSE_WIRES_MAX))
+		wiresexposed = TRUE
+		update_icon()
+		visible_message(SPAN_DANGER("[src]'s cover swings open, exposing the wires!"), null, null, 5)
 	else
 		beenhit += 1
 	return XENO_ATTACK_ACTION
@@ -840,7 +847,7 @@
 		to_chat(M, "It's already damaged.")
 		return XENO_NO_DELAY_ACTION
 	M.animation_attack_on(src)
-	M.visible_message("[M] slashes away at [src]!","You slash and claw at the bright light!", null, null, 5, CHAT_TYPE_XENO_COMBAT)
+	M.visible_message("[M] slashes away at [src]!","You slash and claw at the bright light!", max_distance = 5, message_flags = CHAT_TYPE_XENO_COMBAT)
 	health  = max(health - rand(M.melee_damage_lower, M.melee_damage_upper), 0)
 	if(!health)
 		playsound(src, "shatter", 70, 1)

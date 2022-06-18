@@ -4,9 +4,9 @@
 	spawn_positions = 5
 	allow_additional = 1
 	scaled = 1
-	flags_startup_parameters = ROLE_ADD_TO_DEFAULT|ROLE_ADD_TO_MODE
-	gear_preset = "USCM Staff Officer (SO)"
-	entry_message_body = "Your job is to monitor the marines, man the CIC, and listen to your superior officers. You are in charge of logistics and the overwatch system. You are also in line to take command after the executive officer."
+	flags_startup_parameters = ROLE_ADD_TO_DEFAULT
+	gear_preset = /datum/equipment_preset/uscm_ship/so
+	entry_message_body = "Your job is to monitor the Marines, man the CIC, and listen to your superior officers. You are in charge of logistics and the overwatch system. You are also in line to take command after other eligible superior commissioned officers."
 
 /datum/job/command/bridge/set_spawn_positions(var/count)
 	spawn_positions = so_slot_formula(count)
@@ -28,7 +28,8 @@
 
 AddTimelock(/datum/job/command/bridge, list(
 	JOB_SQUAD_LEADER = 1 HOURS,
-	JOB_HUMAN_ROLES = 15 HOURS
+	JOB_HUMAN_ROLES = 15 HOURS,
+	JOB_POLICE_ROLES = 1 HOURS
 ))
 
 /obj/effect/landmark/start/bridge

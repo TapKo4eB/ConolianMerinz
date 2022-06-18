@@ -18,8 +18,11 @@
 	if(SSticker.mode && SSticker.mode.xenomorphs.len) //Send to only xenos in our gamemode list. This is faster than scanning all mobs
 		for(var/datum/mind/L in SSticker.mode.xenomorphs)
 			var/mob/living/carbon/M = L.current
-			if(M && istype(M) && !M.stat && M.client && M.ally_of_hivenumber(hivenumber)) //Only living and connected xenos
+			if(M && istype(M) && !M.stat && M.client && (!hivenumber || M.ally_of_hivenumber(hivenumber))) //Only living and connected xenos
 				to_chat(M, SPAN_XENODANGER("<span class=\"[fontsize_style]\"> [message]</span>"))
+
+/proc/xeno_message_all(var/message = null, var/size = 3)
+	xeno_message(message, size)
 
 //Adds stuff to your "Status" pane -- Specific castes can have their own, like carrier hugger count
 //Those are dealt with in their caste files.
@@ -79,39 +82,21 @@
 		. += statdata
 
 	. += ""
-	//Very weak <= 1.0, weak <= 2.0, no modifier 2-3, strong <= 3.5, very strong <= 4.5
-	var/msg_holder = "-"
-
-	if(frenzy_aura)
-		switch(frenzy_aura)
-			if(-INFINITY to 0.9) msg_holder = "Very Weak"
-			if(1.0 to 1.9) msg_holder = "Weak"
-			if(2.0 to 2.9) msg_holder = "Moderate"
-			if(3.0 to 3.9) msg_holder = "Strong"
-			if(4.0 to INFINITY) msg_holder = "Very Strong"
-	. += "Frenzy: [msg_holder]"
-	msg_holder = "-"
-
-	if(warding_aura)
-		switch(warding_aura)
-			if(-INFINITY to 0.9) msg_holder = "Very Weak"
-			if(1.0 to 1.9) msg_holder = "Weak"
-			if(2.0 to 2.9) msg_holder = "Moderate"
-			if(3.0 to 3.9) msg_holder = "Strong"
-			if(4.0 to INFINITY) msg_holder = "Very Strong"
-	. += "Warding: [msg_holder]"
-	msg_holder = "-"
-
-	if(recovery_aura)
-		switch(recovery_aura)
-			if(-INFINITY to 0.9) msg_holder = "Very Weak"
-			if(1.0 to 1.9) msg_holder = "Weak"
-			if(2.0 to 2.9) msg_holder = "Moderate"
-			if(3.0 to 3.9) msg_holder = "Strong"
-			if(4.0 to INFINITY) msg_holder = "Very Strong"
-	. += "Recovery: [msg_holder]"
-
-	. += ""
+	if(!ignores_pheromones)
+		//Very weak <= 1.0, weak <= 2.0, no modifier 2-3, strong <= 3.5, very strong <= 4.5
+		var/msg_holder = "-"
+		if(frenzy_aura)
+			msg_holder = get_pheromone_aura_strength(frenzy_aura)
+		. += "Frenzy: [msg_holder]"
+		msg_holder = "-"
+		if(warding_aura)
+			msg_holder = get_pheromone_aura_strength(warding_aura)
+		. += "Warding: [msg_holder]"
+		msg_holder = "-"
+		if(recovery_aura)
+			msg_holder = get_pheromone_aura_strength(recovery_aura)
+		. += "Recovery: [msg_holder]"
+		. += ""
 
 	if(hive)
 		if(!hive.living_xeno_queen)
@@ -148,13 +133,14 @@
 //A simple handler for checking your state. Used in pretty much all the procs.
 /mob/living/carbon/Xenomorph/proc/check_state(var/permissive = 0)
 	if(!permissive)
-		if(is_mob_incapacitated() || lying || buckled)
+		if(is_mob_incapacitated() || lying || buckled || evolving || !isturf(loc))
 			to_chat(src, SPAN_WARNING("You cannot do this in your current state."))
 			return FALSE
-		else if(!(caste_type == XENO_CASTE_QUEEN) && observed_xeno)
+		else if(caste_type != XENO_CASTE_QUEEN && observed_xeno)
 			to_chat(src, SPAN_WARNING("You cannot do this in your current state."))
+			return FALSE
 	else
-		if(is_mob_incapacitated() || buckled)
+		if(is_mob_incapacitated() || buckled || evolving)
 			to_chat(src, SPAN_WARNING("You cannot do this in your current state."))
 			return FALSE
 
@@ -371,14 +357,15 @@
 			A.forceMove(get_true_turf(src))
 
 /mob/living/carbon/Xenomorph/proc/toggle_nightvision()
-	if(see_invisible == SEE_INVISIBLE_MINIMUM)
-		see_invisible = SEE_INVISIBLE_LEVEL_TWO //Turn it off.
-		see_in_dark = 4
-		sight |= SEE_MOBS
+	see_in_dark = 12
+	sight |= SEE_MOBS
+	if(lighting_alpha == LIGHTING_PLANE_ALPHA_VISIBLE)
+		lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
+	else if(lighting_alpha == LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE)
+		lighting_alpha = LIGHTING_PLANE_ALPHA_INVISIBLE
 	else
-		see_invisible = SEE_INVISIBLE_MINIMUM
-		see_in_dark = 8
-		sight |= SEE_MOBS
+		lighting_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
+	update_sight()
 
 /mob/living/carbon/Xenomorph/proc/regurgitate(mob/living/victim, stuns = FALSE)
 	if(stomach_contents.len)
@@ -494,6 +481,7 @@
 
 /mob/living/carbon/Xenomorph/proc/nocrit(var/wowave)
 	if(SSticker?.mode?.hardcore)
+		nocrit = TRUE
 		if(wowave < 15)
 			maxHealth = ((maxHealth+abs(crit_health))*(wowave/15)*(3/4))+((maxHealth)*1/4) //if it's wo we give xeno's less hp in lower rounds. This makes help the marines feel good.
 			health	= ((health+abs(crit_health))*(wowave/15)*(3/4))+((health)*1/4) //if it's wo we give xeno's less hp in lower rounds. This makes help the marines feel good.
@@ -561,7 +549,7 @@
 	if(L.status & LIMB_DESTROYED)
 		return FALSE
 
-	if(L.status & LIMB_ROBOT)
+	if(L.status & (LIMB_ROBOT|LIMB_SYNTHSKIN))
 		L.take_damage(rand(30,40), 0, 0) // just do more damage
 		visible_message(SPAN_XENOWARNING("You hear [M]'s [L.display_name] being pulled beyond its load limits!"), \
 		SPAN_XENOWARNING("[M]'s [L.display_name] begins to tear apart!"))
@@ -618,8 +606,7 @@
 	if (!.)
 		TC.tackle_reset_id = addtimer(CALLBACK(src, .proc/reset_tackle, M), 4 SECONDS, TIMER_UNIQUE | TIMER_STOPPABLE)
 	else
-		qdel(TC)
-		LAZYREMOVE(tackle_counter, M)
+		reset_tackle(M)
 
 /mob/living/carbon/Xenomorph/proc/tackle_handle_lying_changed(mob/M)
 	SIGNAL_HANDLER
@@ -652,3 +639,35 @@
 
 /mob/living/carbon/Xenomorph/get_role_name()
 	return caste_type
+
+/proc/get_pheromone_aura_strength(var/aura)
+	switch(aura)
+		if(-INFINITY to 0.9)
+			return "Very Weak"
+		if(1.0 to 1.9)
+			return "Weak"
+		if(2.0 to 2.9)
+			return "Moderate"
+		if(3.0 to 3.9)
+			return "Strong"
+		if(4.0 to INFINITY)
+			return "Very Strong"
+
+/mob/living/carbon/Xenomorph/proc/start_tracking_resin_mark(obj/effect/alien/resin/marker/target)
+	if(!target)
+		to_chat(src, SPAN_XENONOTICE("This resin mark no longer exists!."))
+		return
+	target.xenos_tracking |= src
+	tracked_marker = target
+	to_chat(src, SPAN_XENONOTICE("You start tracking the [target.mark_meaning.name] resin mark."))
+	to_chat(src, SPAN_INFO("shift click the compass to watch the mark, alt click to stop tracking"))
+
+/mob/living/carbon/Xenomorph/proc/stop_tracking_resin_mark(destroyed) //tracked_marker shouldnt be nulled outside this PROC!! >:C
+	var/obj/screen/mark_locator/ML = hud_used.locate_marker
+	ML.overlays.Cut()
+	if(destroyed)
+		to_chat(src, SPAN_XENONOTICE("The [tracked_marker.mark_meaning.name] resin mark has ceased to exist."))
+	else
+		to_chat(src, SPAN_XENONOTICE("You stop tracking the [tracked_marker.mark_meaning.name] resin mark."))
+	tracked_marker.xenos_tracking -= src
+	tracked_marker = null

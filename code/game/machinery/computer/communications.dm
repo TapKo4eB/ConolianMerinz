@@ -49,9 +49,14 @@
 	var/stat_msg2
 	processing = TRUE
 
-/obj/structure/machinery/computer/communications/New()
-	..()
+/obj/structure/machinery/computer/communications/Initialize()
+	. = ..()
 	start_processing()
+	SSmapview.map_machines += src
+
+/obj/structure/machinery/computer/communications/Destroy()
+	SSmapview.map_machines -= src
+	return ..()
 
 /obj/structure/machinery/computer/communications/process()
 	if(..() && state != STATE_STATUSDISPLAY)
@@ -62,10 +67,10 @@
 		close_browser(current_mapviewer, "marineminimap")
 		current_mapviewer = null
 		return
-	if(!istype(marine_mapview_overlay_5))
-		overlay_marine_mapview()
-	current_mapviewer << browse_rsc(marine_mapview_overlay_5, "marine_minimap.png")
-	show_browser(current_mapviewer, "<img src=marine_minimap.png>", "Marine Minimap", "marineminimap", "size=[(map_sizes[1][1]*2)+50]x[(map_sizes[1][2]*2)+50]", closeref = src)
+	if(!populated_mapview_type_updated[TACMAP_DEFAULT])
+		overlay_tacmap(TACMAP_DEFAULT)
+	current_mapviewer << browse_rsc(populated_mapview_types[TACMAP_DEFAULT], "marine_minimap.png")
+	show_browser(current_mapviewer, "<img src=marine_minimap.png>", "Marine Minimap", "marineminimap", "size=[(map_sizes[1]*2)+50]x[(map_sizes[2]*2)+50]", closeref = src)
 
 /obj/structure/machinery/computer/communications/Topic(href, href_list)
 	if (href_list["close"] && current_mapviewer)
@@ -141,11 +146,7 @@
 				cooldown_message = world.time
 
 		if("award")
-			if(usr.job != "Commanding Officer")
-				to_chat(usr, SPAN_WARNING("Only the Commanding Officer can award medals."))
-				return
-			if(give_medal_award(loc))
-				visible_message(SPAN_NOTICE("[src] prints a medal."))
+			print_medal(usr, src)
 
 		if("evacuation_start")
 			if(state == STATE_EVACUATION)

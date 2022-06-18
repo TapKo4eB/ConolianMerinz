@@ -49,7 +49,9 @@ var/list/admin_verbs_ban = list(
 var/list/admin_verbs_sounds = list(
 	/client/proc/play_web_sound,
 	/client/proc/play_sound,
-	/client/proc/cmd_admin_vox_panel,
+	/client/proc/stop_web_sound,
+	/client/proc/stop_sound,
+	/client/proc/cmd_admin_vox_panel
 )
 var/list/admin_verbs_fun = list(
 	/client/proc/enable_event_mob_verbs,
@@ -63,14 +65,17 @@ var/list/admin_verbs_fun = list(
 	/client/proc/rerun_decorators,
 	/client/proc/toogle_door_control,
 	/client/proc/map_template_load,
+	/client/proc/load_event_level,
 	/client/proc/cmd_fun_fire_ob,
 	/client/proc/map_template_upload,
-	/client/proc/enable_podlauncher
+	/client/proc/enable_podlauncher,
+	/client/proc/change_taskbar_icon
 )
 var/list/admin_verbs_spawn = list(
 	/datum/admins/proc/spawn_atom,
 	/client/proc/game_panel,
-	/client/proc/create_humans
+	/client/proc/create_humans,
+	/client/proc/create_xenos
 )
 var/list/admin_verbs_server = list(
 	/datum/admins/proc/startnow,
@@ -110,8 +115,6 @@ var/list/admin_verbs_debug = list(
 	/client/proc/bulk_fetcher,
 	/client/proc/debug_game_history,
 	/client/proc/construct_env_dmm,
-	/client/proc/enter_tree,
-	/client/proc/set_tree_points
 )
 
 var/list/admin_verbs_debug_advanced = list(
@@ -135,8 +138,8 @@ var/list/debug_verbs = list(
 )
 
 var/list/admin_verbs_possess = list(
-	/proc/possess,
-	/proc/release
+	/client/proc/possess,
+	/client/proc/release
 )
 var/list/admin_verbs_permissions = list(
 	/client/proc/ToRban
@@ -155,15 +158,20 @@ var/list/admin_mob_event_verbs_hideable = list(
 	/client/proc/cmd_admin_change_their_hivenumber,
 	/client/proc/cmd_assume_direct_control,
 	/client/proc/free_mob_for_ghosts,
-	/proc/possess,
-	/proc/release,
+	/client/proc/possess,
+	/client/proc/release,
     /client/proc/cmd_admin_grantfullaccess,
     /client/proc/cmd_admin_grantallskills
 )
 
 //verbs which can be hidden - needs work
-var/list/admin_mob_verbs_hideable = list(
-	/client/proc/hide_admin_mob_verbs,
+var/list/admin_verbs_hideable = list(
+	/client/proc/release,
+	/client/proc/possess,
+	/client/proc/proccall_atom,
+	/client/proc/jump_to_object,
+	/client/proc/jumptomob,
+	/client/proc/hide_admin_verbs,
 	/client/proc/cmd_admin_change_their_name,
 	/client/proc/cmd_admin_changekey,
 	/client/proc/cmd_admin_subtle_message,
@@ -180,6 +188,7 @@ var/list/admin_mob_verbs_hideable = list(
 var/list/admin_verbs_teleport = list(
 	/client/proc/teleport_panel,			/*teleport panel, for jumping to things/places and getting things/places */
 	/client/proc/jumptocoord,
+	/client/proc/jumptooffsetcoord,
 	/client/proc/jumptomob,
 	/client/proc/jump_to_object,
 	/client/proc/jump_to_turf,
@@ -205,12 +214,23 @@ var/list/admin_verbs_mod = list(
 	/client/proc/chem_panel,			/*chem panel, allows viewing, editing and creation of reagent and chemical_reaction datums*/
 	/client/proc/vehicle_panel,
 	/client/proc/in_view_panel,
+	/client/proc/toggle_lz_resin,
+	/client/proc/toggle_ob_spawn,
+	/client/proc/toggle_sniper_upgrade,
+	/client/proc/toggle_attack_dead,
+	/client/proc/toggle_strip_drag,
+	/client/proc/toggle_uniform_strip,
+	/client/proc/toggle_strong_defibs,
+	/client/proc/toggle_blood_optimization,
+	/client/proc/toggle_combat_cas,
+	/client/proc/toggle_lz_protection,
 	/client/proc/rejuvenate_all_in_view,
 	/client/proc/rejuvenate_all_humans_in_view,
 	/client/proc/rejuvenate_all_revivable_humans_in_view,
 	/client/proc/rejuvenate_all_xenos_in_view,
 	/datum/admins/proc/togglesleep,
 	/datum/admins/proc/sleepall,
+	/datum/admins/proc/wakeall,
 	/datum/admins/proc/togglejoin,
 	/client/proc/jump_to_object,
 	/client/proc/jumptomob,
@@ -229,18 +249,24 @@ var/list/admin_verbs_mod = list(
 	/client/proc/cmd_admin_xeno_report,  //Allows creation of IC reports by the Queen Mother
 	/datum/admins/proc/viewUnheardAhelps,
 	/client/proc/view_faxes,
+	/client/proc/create_custom_paper,
 	/client/proc/cmd_admin_change_their_name,
 	/client/proc/cmd_admin_changekey,
 	/client/proc/cmd_admin_subtle_message,
 	/client/proc/cmd_admin_pm_context,
 	/client/proc/cmd_admin_check_contents,
 	/datum/admins/proc/show_player_panel,
-	/datum/admins/proc/remove_marine_techtree_leader,
-	/client/proc/hide_admin_mob_verbs,
+	/client/proc/hide_admin_verbs,
 	/client/proc/clear_mutineers,
 	/client/proc/cmd_admin_create_AI_report,  //Allows creation of IC reports by the ships AI utilizing Almayer General channel. Relies on ARES being intact and tcomms being powered.
 	/client/proc/cmd_admin_create_AI_shipwide_report,  //Allows creation of IC reports by the ships AI utilizing announcement code. Will be shown to every conscious human on Almayer z-level regardless of ARES and tcomms status.
-	/client/proc/cmd_admin_create_predator_report //Predator ship AI report
+	/client/proc/cmd_admin_create_predator_report, //Predator ship AI report
+	/client/proc/cmd_admin_create_centcom_report, //Messages from USCM command/other factions
+	/client/proc/cmd_admin_world_narrate	/*sends text to all players with no padding*/
+)
+
+var/list/roundstart_mod_verbs = list(
+	/client/proc/toggle_ob_spawn
 )
 
 /client/proc/add_admin_verbs()
@@ -302,7 +328,7 @@ var/list/admin_verbs_mod = list(
 		admin_verbs_spawn,
 		admin_verbs_teleport,
 		admin_mob_event_verbs_hideable,
-		admin_mob_verbs_hideable,
+		admin_verbs_hideable,
 		debug_verbs,
 	))
 
@@ -503,6 +529,7 @@ var/list/admin_verbs_mod = list(
 	set desc = "Tells everyone about a random statistic in the round."
 	set category = "OOC"
 
+	message_staff("[key_name(usr)] announced a random fact.")
 	SSticker.mode?.declare_random_fact()
 
 

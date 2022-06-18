@@ -246,9 +246,10 @@
 
 	if(oldname)
 		//update the datacore records! This is goig to be a bit costly.
+		var/mob_ref = WEAKREF(src)
 		for(var/list/L in list(GLOB.data_core.general, GLOB.data_core.medical, GLOB.data_core.security, GLOB.data_core.locked))
 			for(var/datum/data/record/R in L)
-				if(R.fields["name"] == oldname)
+				if(R.fields["ref"] == mob_ref)
 					R.fields["name"] = newname
 					break
 
@@ -403,13 +404,10 @@
 		else
 			names.Add(name)
 			namecounts[name] = 1
-		if (M.real_name && M.real_name != M.name)
-			name += " \[[M.real_name]\]"
-		if (M.stat == 2)
-			name += " \[dead\]"
-		if(istype(M, /mob/dead/observer/))
+		if(isobserver(M))
 			name += " \[ghost\]"
-
+		else if(M.stat == DEAD)
+			name += " \[dead\]"
 		creatures[name] = M
 	return creatures
 
@@ -685,7 +683,7 @@
 
 	if(key)
 		if(include_link && C)
-			. += "<a href='?priv_msg=\ref[C]'>"
+			. += "<a href='?priv_msg=[C.ckey]'>"
 
 		. += key
 
@@ -836,14 +834,22 @@
 		flick(flick_anim, animation)
 
 //Will return the contents of an atom recursivly to a depth of 'searchDepth'
-/atom/proc/GetAllContents(searchDepth = 5)
-	var/list/toReturn = list()
-
-	for(var/atom/part in contents)
+/atom/proc/GetAllContents(searchDepth = 5, list/toReturn = list())
+	for(var/atom/part as anything in contents)
 		toReturn += part
 		if(part.contents.len && searchDepth)
-			toReturn += part.GetAllContents(searchDepth - 1)
+			part.GetAllContents(searchDepth - 1, toReturn)
+	return toReturn
 
+/// Returns list of contents of a turf recursively, much like GetAllContents
+/// We only get containing atoms in the turf, excluding multitiles bordering on it
+/turf/proc/GetAllTurfStrictContents(searchDepth = 5, list/toReturn = list())
+	for(var/atom/part as anything in contents)
+		if(part.loc != src) // That's a multitile atom, and it's not actually here stricto sensu
+			continue
+		toReturn += part
+		if(part.contents.len && searchDepth)
+			part.GetAllContents(searchDepth - 1, toReturn)
 	return toReturn
 
 //Step-towards method of determining whether one atom can see another. Similar to viewers()
@@ -883,6 +889,7 @@ var/global/image/emote_indicator_tailswipe
 var/global/image/action_red_power_up
 var/global/image/action_green_power_up
 var/global/image/action_blue_power_up
+var/global/image/action_purple_power_up
 
 /proc/get_busy_icon(busy_type)
 	if(busy_type == BUSY_ICON_GENERIC)
@@ -932,19 +939,24 @@ var/global/image/action_blue_power_up
 		return emote_indicator_tailswipe
 	else if(busy_type == ACTION_RED_POWER_UP)
 		if(!action_red_power_up)
-			action_red_power_up = image('icons/effects/effects.dmi', null,"anger", "pixel_x" = 14)
+			action_red_power_up = image('icons/effects/effects.dmi', null, "anger", "pixel_x" = 16)
 			action_red_power_up.layer = FLY_LAYER
 		return action_red_power_up
 	else if(busy_type == ACTION_GREEN_POWER_UP)
 		if(!action_green_power_up)
-			action_green_power_up = image('icons/effects/effects.dmi', null,"vitality", "pixel_x" = 14)
+			action_green_power_up = image('icons/effects/effects.dmi', null, "vitality", "pixel_x" = 16)
 			action_green_power_up.layer = FLY_LAYER
 		return action_green_power_up
 	else if(busy_type == ACTION_BLUE_POWER_UP)
 		if(!action_blue_power_up)
-			action_blue_power_up = image('icons/effects/effects.dmi', null,"shock", "pixel_x" = 14)
+			action_blue_power_up = image('icons/effects/effects.dmi', null, "shock", "pixel_x" = 16)
 			action_blue_power_up.layer = FLY_LAYER
 		return action_blue_power_up
+	else if(busy_type == ACTION_PURPLE_POWER_UP)
+		if(!action_purple_power_up)
+			action_purple_power_up = image('icons/effects/effects.dmi', null, "pain", "pixel_x" = 16)
+			action_purple_power_up.layer = FLY_LAYER
+		return action_purple_power_up
 
 
 /*
@@ -1010,7 +1022,7 @@ var/global/image/action_blue_power_up
 	var/cur_target_zone_sel
 	if(has_target && istype(T))
 		cur_target_zone_sel = T.zone_selected
-	var/delayfraction = round(delay/numticks)
+	var/delayfraction = Ceiling(delay/numticks)
 	var/user_orig_loc = L.loc
 	var/user_orig_turf = get_turf(L)
 	var/target_orig_loc
@@ -1022,11 +1034,11 @@ var/global/image/action_blue_power_up
 	var/obj/target_holding
 	if(has_target && istype(T))
 		target_holding = T.get_active_hand()
-	var/expected_total_time = delayfraction*(numticks+1)
+	var/expected_total_time = delayfraction*numticks
 	var/time_remaining = expected_total_time
 
 	. = TRUE
-	for(var/i = 0 to numticks)
+	for(var/i in 1 to numticks)
 		sleep(delayfraction)
 		time_remaining -= delayfraction
 		if(!istype(L) || has_target && !istype(target)) // Checks if L exists and is not dead and if the target exists and is not destroyed
@@ -1693,7 +1705,7 @@ var/list/WALLITEMS = list(
 
 //used to check if a mob can examine an object
 /atom/proc/can_examine(var/mob/user)
-	if(!user.client || user.client.eye != user)
+	if(!user.client)
 		return FALSE
 	if(isRemoteControlling(user))
 		return TRUE
@@ -1707,7 +1719,8 @@ var/list/WALLITEMS = list(
 			var/mob/living/carbon/human/H = user
 			if(H.selected_ability)
 				return FALSE
-	user.face_atom(src)
+	if(user.client.eye == user)
+		user.face_atom(src)
 	return TRUE
 
 //datum may be null, but it does need to be a typed var

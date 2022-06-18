@@ -61,7 +61,7 @@
 	switch(state)
 		if(STATE_DEFAULT)
 			dat += "Alert Level: <A href='?src=\ref[src];operation=changeseclevel'>[get_security_level()]</A><BR>"
-			dat += "<BR><A HREF='?src=\ref[src];operation=ship_announce'>[is_announcement_active ? "Make a ship announcement" : "*Unavaliable*"]</A>"
+			dat += "<BR><A HREF='?src=\ref[src];operation=ship_announce'>[is_announcement_active ? "Make a ship announcement" : "*Unavailable*"]</A>"
 			dat += GLOB.admins.len > 0 ? "<BR><A HREF='?src=\ref[src];operation=messageUSCM'>Send a message to USCM</A>" : "<BR>USCM communication offline"
 			dat += "<BR><A HREF='?src=\ref[src];operation=award'>Award a medal</A>"
 			dat += "<BR><hr>"
@@ -310,11 +310,7 @@
 			message_staff("[key_name_admin(usr)] has changed the security level to [get_security_level()].")
 
 		if("award")
-			if(usr.job != "Commanding Officer")
-				to_chat(usr, SPAN_WARNING("Only the Commanding Officer can award medals."))
-				return
-			if(give_medal_award(loc))
-				visible_message(SPAN_NOTICE("[src] prints a medal."))
+			print_medal(usr, src)
 
 	updateUsrDialog()
 

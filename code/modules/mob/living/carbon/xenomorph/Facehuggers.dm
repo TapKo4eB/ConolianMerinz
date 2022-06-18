@@ -331,6 +331,11 @@
 	if(stat != CONSCIOUS || isnull(loc)) //Make sure we're conscious and not idle or dead.
 		return
 
+	if(isXeno(loc))
+		var/mob/living/carbon/Xenomorph/X = loc
+		if(X.caste.hugger_nurturing) // caste can prevent hugger death
+			return
+
 	leap_at_nearest_target()
 	jumps_left--
 	if(!jumps_left)
@@ -441,7 +446,7 @@
 	if(head && !(head.flags_item & NODROP))
 		var/obj/item/clothing/head/D = head
 		if(istype(D))
-			if(D.anti_hug > 1)
+			if(D.anti_hug >= 1)
 				visible_message(SPAN_DANGER("[hugger] smashes against [src]'s [D.name]!"))
 				D.anti_hug = max(0, --D.anti_hug)
 				if(prob(15)) // 15% chance the hugger will go idle after ripping off a helmet. Otherwise it will keep going.
@@ -469,7 +474,7 @@
 			if(FH.stat != DEAD)
 				return FALSE
 
-		if(W.anti_hug > 1)
+		if(W.anti_hug >= 1)
 			visible_message(SPAN_DANGER("[hugger] smashes against [src]'s [W.name]!"))
 			W.anti_hug = max(0, --W.anti_hug)
 			if(prob(15)) //15% chance the hugger will go idle after ripping off a mask. Otherwise it will keep going.

@@ -34,6 +34,9 @@
 #define XENO_HITS_TO_DESTROY_R_WINDOW_FRAME	5
 #define XENO_HITS_TO_DESTROY_BOLTED_DOOR	10
 #define XENO_HITS_TO_DESTROY_WELDED_DOOR	15
+#define XENO_HITS_TO_EXPOSE_WIRES_MIN		3
+#define XENO_HITS_TO_EXPOSE_WIRES_MAX		4
+#define XENO_HITS_TO_CUT_WIRES				10
 
 #define XENO_ACTION_CLICK  0 // Just select the action (base). Toggles can use this too
 #define XENO_ACTION_ACTIVATE 1 // Actually use the action SHOULD ONLY BE USED ON ACTIVABLE ACTIONS OR ELSE WILL NOT WORK
@@ -52,8 +55,6 @@
 
 #define ACID_SPRAY_LINE 0
 #define ACID_SPRAY_CONE 1
-
-#define XENOZOOM_NO_MOVEMENT_HANDLER 69420
 
 #define WARDEN_HEAL_SHIELD 0
 #define WARDEN_HEAL_HP 1
@@ -111,9 +112,9 @@
 
 #define XVX_UNIVERSAL_DAMAGEMULT 1.5 // Use to unilaterally buff every caste's DAMAGE against other xenos.
 
-#define XVX_SLASH_DAMAGEMULT 1.5 * XVX_UNIVERSAL_DAMAGEMULT // Applies to any abilities that uses brute damage or slash damage
-#define XVX_ACID_DAMAGEMULT 1.75 * XVX_UNIVERSAL_DAMAGEMULT // Applies to any abilities that apply acid damage (not including projectiles)
-#define XVX_PROJECTILE_DAMAGEMULT 1.75 * XVX_UNIVERSAL_DAMAGEMULT // Applies to any abilities that use projectiles
+#define XVX_SLASH_DAMAGEMULT 1 * XVX_UNIVERSAL_DAMAGEMULT // 1.5 | Applies to any abilities that uses brute damage or slash damage
+#define XVX_ACID_DAMAGEMULT 1.75 * XVX_UNIVERSAL_DAMAGEMULT // 2.625 | Applies to any abilities that apply acid damage (not including projectiles)
+#define XVX_PROJECTILE_DAMAGEMULT 1.75 * XVX_UNIVERSAL_DAMAGEMULT // 2.625 | Applies to any abilities that use projectiles
 
 #define XVX_STUN_LENGTHMULT 1.25
 
@@ -284,12 +285,15 @@
 // Cost to make things, add +XENO_RESIN_BASE_COST to them all for actual cost
 #define XENO_RESIN_BASE_COST 25
 #define XENO_RESIN_WALL_COST 95
+#define XENO_RESIN_WALL_QUEEN_COST 120
 #define XENO_RESIN_WALL_THICK_COST 145
 #define XENO_RESIN_WALL_REFLECT_COST 145
 #define XENO_RESIN_WALL_MOVABLE_COST 145
 #define XENO_RESIN_DOOR_COST 95
+#define XENO_RESIN_DOOR_QUEEN_COST 100
 #define XENO_RESIN_DOOR_THICK_COST 120
 #define XENO_RESIN_MEMBRANE_COST 70
+#define XENO_RESIN_MEMBRANE_QUEEN_COST 80
 #define XENO_RESIN_MEMBRANE_THICK_COST 95
 #define XENO_RESIN_NEST_COST 70
 #define XENO_RESIN_STICKY_COST 30
@@ -531,6 +535,7 @@
 #define XENO_STRUCTURE_BUILD_TIME           20
 
 #define XENO_STRUCTURE_CORE                 "hive core"
+#define XENO_STRUCTURE_CLUSTER              "hive cluster"
 #define XENO_STRUCTURE_PYLON                "hive pylon"
 #define XENO_STRUCTURE_POOL                 "spawn pool"
 #define XENO_STRUCTURE_EGGMORPH             "egg morpher"
@@ -564,6 +569,8 @@
 //XENO CASTES
 #define XENO_CASTE_LARVA             "Bloody Larva"
 #define XENO_CASTE_PREDALIEN_LARVA   "Predalien Larva"
+#define XENO_T0_CASTES               list(XENO_CASTE_LARVA, XENO_CASTE_PREDALIEN_LARVA)
+
 //t1
 #define XENO_CASTE_DRONE             "Drone"
 #define XENO_CASTE_RUNNER            "Runner"
@@ -589,6 +596,8 @@
 #define XENO_CASTE_PREDALIEN         "Predalien"
 #define XENO_SPECIAL_CASTES          list(XENO_CASTE_QUEEN, XENO_CASTE_PREDALIEN)
 
+#define ALL_XENO_CASTES list(XENO_CASTE_LARVA, XENO_CASTE_PREDALIEN_LARVA, XENO_CASTE_DRONE, XENO_CASTE_RUNNER, XENO_CASTE_SENTINEL, XENO_CASTE_DEFENDER, XENO_CASTE_BURROWER, XENO_CASTE_CARRIER, XENO_CASTE_HIVELORD, XENO_CASTE_LURKER, XENO_CASTE_WARRIOR, XENO_CASTE_SPITTER, XENO_CASTE_BOILER, XENO_CASTE_PRAETORIAN, XENO_CASTE_CRUSHER, XENO_CASTE_RAVAGER, XENO_CASTE_QUEEN, XENO_CASTE_PREDALIEN)
+
 // Checks if two hives are allied to each other.
 // PARAMETERS:
 // source_hive 	integer	 the hive to check the alliance of
@@ -603,3 +612,22 @@
 #define FIRE_IMMUNITY_XENO_FRENZY	(1<<2)
 
 #define TRAPPER_VIEWRANGE 13
+
+#define SECRETE_RESIN_INTERRUPT -1
+#define SECRETE_RESIN_FAIL 0
+#define SECRETE_RESIN_SUCCESS 1
+
+//preferences-related defines
+
+#define XENO_VISION_LEVEL_NO_NVG		"No Night Vision"
+#define XENO_VISION_LEVEL_MID_NVG		"Half Night Vision"
+#define XENO_VISION_LEVEL_FULL_NVG		"Full Night Vision"
+
+
+// drone fruits
+
+#define XENO_FRUIT_LESSER "Lesser Resin Fruit"
+#define XENO_FRUIT_GREATER "Greater Resin Fruit"
+#define XENO_FRUIT_UNSTABLE "Unstable Resin Fruit"
+#define XENO_FRUIT_SPORE "Spore Resin Fruit"
+#define XENO_FRUIT_SPEED "Alacrit Resin Fruit"

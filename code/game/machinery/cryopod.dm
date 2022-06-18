@@ -8,7 +8,7 @@
 
 //Used for logging people entering cryosleep and important items they are carrying.
 GLOBAL_LIST_EMPTY(frozen_crew)
-GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list(), SQUAD_NAME_3 = list(), SQUAD_NAME_4 = list(), "MP" = list(), "REQ" = list(), "Eng" = list(), "Med" = list(), "Yautja" = list()))
+GLOBAL_LIST_INIT(frozen_items, list(SQUAD_MARINE_1 = list(), SQUAD_MARINE_2 = list(), SQUAD_MARINE_3 = list(), SQUAD_MARINE_4 = list(), "MP" = list(), "REQ" = list(), "Eng" = list(), "Med" = list(), "Yautja" = list()))
 
 //Main cryopod console.
 
@@ -34,16 +34,16 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 	cryotype = "Eng"
 
 /obj/structure/machinery/computer/cryopod/alpha
-	cryotype = SQUAD_NAME_1
+	cryotype = SQUAD_MARINE_1
 
 /obj/structure/machinery/computer/cryopod/bravo
-	cryotype = SQUAD_NAME_2
+	cryotype = SQUAD_MARINE_2
 
 /obj/structure/machinery/computer/cryopod/charlie
-	cryotype = SQUAD_NAME_3
+	cryotype = SQUAD_MARINE_3
 
 /obj/structure/machinery/computer/cryopod/delta
-	cryotype = SQUAD_NAME_4
+	cryotype = SQUAD_MARINE_4
 
 /obj/structure/machinery/computer/cryopod/yautja
 	cryotype = "Yautja"
@@ -182,6 +182,7 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 /obj/structure/machinery/cryopod/Initialize()
 	. = ..()
 	announce = new /obj/item/device/radio/intercom(src)
+	flags_atom |= USES_HEARING
 
 
 //Lifted from Unity stasis.dm and refactored. ~Zuhayr
@@ -216,14 +217,15 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 	if(ishuman(occupant))
 		var/mob/living/carbon/human/H = occupant
 		switch(H.job)
-			if("Military Police","Chief MP")
+			if(JOB_POLICE_CADET, JOB_POLICE, JOB_WARDEN, JOB_CHIEF_POLICE)
 				dept_console = GLOB.frozen_items["MP"]
-			if("Doctor","Researcher","Chief Medical Officer")
+			if("Nurse", "Doctor","Researcher","Chief Medical Officer")
 				dept_console = GLOB.frozen_items["Med"]
-			if("Ordnance Techician","Chief Engineer")
+			if("Maintenance Technician", "Ordnance Technician","Chief Engineer")
 				dept_console = GLOB.frozen_items["Eng"]
 			if("Predator")
 				dept_console = GLOB.frozen_items["Yautja"]
+		H.species.handle_cryo(H)
 
 	var/list/deleteempty = list(/obj/item/storage/backpack/marine/satchel)
 
@@ -316,7 +318,7 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 		var/mob/living/carbon/human/H = occupant
 		if(H.assigned_squad)
 			var/datum/squad/S = H.assigned_squad
-			if(H.job == JOB_SQUAD_SPECIALIST)
+			if(GET_MAPPED_ROLE(H.job) == JOB_SQUAD_SPECIALIST)
 				//we make the set this specialist took if any available again
 				if(H.skills)
 					var/set_name
@@ -339,19 +341,20 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 	SSticker.mode.latejoin_tally-- //Cryoing someone out removes someone from the Marines, blocking further larva spawns until accounted for
 
 	//Handle job slot/tater cleanup.
-	RoleAuthority.free_role(RoleAuthority.roles_for_mode[occupant.job], TRUE)
+	RoleAuthority.free_role(GET_MAPPED_ROLE(occupant.job), TRUE)
 
+	var/occupant_ref = WEAKREF(occupant)
 	//Delete them from datacore.
 	for(var/datum/data/record/R in GLOB.data_core.medical)
-		if((R.fields["name"] == occupant.real_name))
+		if((R.fields["ref"] == occupant_ref))
 			GLOB.data_core.medical -= R
 			qdel(R)
 	for(var/datum/data/record/T in GLOB.data_core.security)
-		if((T.fields["name"] == occupant.real_name))
+		if((T.fields["ref"] == occupant_ref))
 			GLOB.data_core.security -= T
 			qdel(T)
 	for(var/datum/data/record/G in GLOB.data_core.general)
-		if((G.fields["name"] == occupant.real_name))
+		if((G.fields["ref"] == occupant_ref))
 			GLOB.data_core.general -= G
 			qdel(G)
 
@@ -433,19 +436,25 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 		to_chat(usr, SPAN_WARNING("You can't drag people out of hypersleep!"))
 		return
 
-	icon_state = "body_scanner_0"
+	if (alert(usr, "Would you like eject out of the hypersleep chamber?", "Confirm", "Yes", "No") == "Yes")
+		visible_message(SPAN_WARNING ("The hypersleep chamber's casket starts moving!"))
+		to_chat(usr, SPAN_NOTICE ("You get out of the hypersleep chamber."))
+		go_out() //Not adding a delay for this because for some reason it refuses to work. Not a big deal imo
+		add_fingerprint(usr)
 
-	//Eject any items that aren't meant to be in the pod.
-	var/list/items = src.contents
-	if(occupant) items -= occupant
-	if(announce) items -= announce
+		var/mob/living/M = usr
+		var/area/location = get_area(src) //Logs the exit
+		message_staff("[key_name_admin(M)], [M.job], has left [src] at [location].")
 
-	for(var/obj/item/W in items)
-		W.forceMove(get_turf(src))
+		var/list/items = src.contents //-Removes items from the chamber
+		if(occupant) items -= occupant
+		if(announce) items -= announce
 
-	go_out()
-	add_fingerprint(usr)
+		for(var/obj/item/W in items)
+			W.forceMove(get_turf(src))
 
+	else
+		return
 
 /obj/structure/machinery/cryopod/verb/move_inside()
 	set name = "Enter Pod"
@@ -491,7 +500,7 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 	time_entered = world.time
 	start_processing()
 	var/area/location = get_area(src)
-	if(M.job != JOB_SQUAD_MARINE)
+	if(M.job != GET_MAPPED_ROLE(JOB_SQUAD_MARINE))
 		message_staff("[key_name_admin(M)], [M.job], has entered a [src] at [location] after playing for [duration2text(world.time - M.life_time_start)].")
 
 	playsound(src, 'sound/machines/hydraulics_3.ogg', 30)
@@ -513,3 +522,12 @@ GLOBAL_LIST_INIT(frozen_items, list(SQUAD_NAME_1 = list(), SQUAD_NAME_2 = list()
 	else
 		..(sourcemob, message, verb, language, italics)
 #endif // ifdef OBJECTS_PROXY_SPEECH
+
+//clickdrag code - "resist to get out" code is in living_verbs.dm
+/obj/structure/machinery/cryopod/MouseDrop_T(mob/target, mob/user)
+	. = ..()
+	var/mob/living/H = user
+	if(!istype(H) || target != user) //cant make others get in. they need to be willing so this is superflous to enable
+		return
+
+	move_inside(target)

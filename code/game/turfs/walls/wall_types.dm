@@ -49,6 +49,7 @@
 	name = "reinforced hull"
 	desc = "A reinforced metal wall used to seperate rooms and make up the ship."
 	damage_cap = HEALTH_WALL_REINFORCED
+	icon_state = "reinforced"
 
 /turf/closed/wall/almayer/outer
 	name = "outer hull"
@@ -504,6 +505,11 @@
 /turf/closed/wall/strata_ice/ex_act(severity)
 	return
 
+/turf/closed/wall/strata_ice/dirty
+	icon_state = "strata_ice_dirty"
+	desc = "Columns and crags stacked atop one another. They defiantly push towards the heavens, but are stopped short by dripping frigid excess."
+	walltype = WALL_STRATA_ICE_DIRTY
+
 /turf/closed/wall/strata_ice/jungle
 	name = "jungle vegetation"
 	icon = 'icons/turf/walls/jungle_veg.dmi'
@@ -521,12 +527,25 @@
 	damage_cap = HEALTH_WALL_REINFORCED
 	max_temperature = 28000
 
-/turf/closed/wall/strata_outpost_bare
+/turf/closed/wall/strata_outpost
 	name = "bare outpost walls"
 	icon = 'icons/turf/walls/strata_outpost.dmi'
 	icon_state = "strata_bare_outpost_"
 	desc = "A thick and chunky metal wall. The surface is barren and imposing."
 	walltype = WALL_STRATA_OUTPOST_BARE
+
+/turf/closed/wall/strata_outpost/reinforced
+	name = "ribbed outpost walls"
+	icon_state = "strata_ribbed_outpost_"
+	desc = "A thick and chunky metal wall covered in jagged ribs."
+	walltype = WALL_STRATA_OUTPOST_RIBBED
+	damage_cap = HEALTH_WALL_REINFORCED
+	max_temperature = 28000
+
+/turf/closed/wall/strata_outpost/reinforced/hull
+	hull = 1
+	icon_state = "strata_hull"
+	desc = "A thick and chunky metal wall that is, just by virtue of its placement and imposing presence, entirely indestructible."
 
 //SOLARIS RIDGE TILESET//
 
@@ -1086,15 +1105,16 @@
 
 		var/obj/item/projectile/new_proj = new(src, construction_data ? construction_data : create_cause_data(initial(name)))
 		new_proj.generate_bullet(P.ammo, special_flags = P.projectile_override_flags|AMMO_HOMING)
-		new_proj.damage = original_damage
+		new_proj.damage = original_damage * 0.5 // don't make it too punishing
+		new_proj.accuracy = HIT_ACCURACY_TIER_7 // 35% chance to hit something
 
 		// Move back to who fired you.
 		RegisterSignal(new_proj, COMSIG_BULLET_PRE_HANDLE_TURF, .proc/bullet_ignore_turf)
 		new_proj.permutated |= src
-		new_proj.accuracy = HIT_ACCURACY_TIER_MAX // Basically guaranteed chance of hitting who fired it
 
-		new_proj.fire_at(P.firer, P.firer, src, reflect_range,
-			speed = P.ammo.shell_speed, is_shrapnel = TRUE)
+		var/angle = Get_Angle(src, P.firer) + rand(30, -30)
+		var/atom/target = get_angle_target_turf(src, angle, get_dist(src, P.firer))
+		new_proj.fire_at(target, P.firer, src, reflect_range, speed = P.ammo.shell_speed, is_shrapnel = TRUE)
 
 		return TRUE
 	else

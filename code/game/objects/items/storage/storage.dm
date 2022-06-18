@@ -9,16 +9,17 @@
 	name = "storage"
 	icon = 'icons/obj/items/storage.dmi'
 	w_class = SIZE_MEDIUM
-	var/list/can_hold = new/list() //List of objects which this item can store (if set, it can't store anything else)
-	var/list/cant_hold = new/list() //List of objects which this item can't store (in effect only if can_hold isn't set)
-	var/list/bypass_w_limit = new/list() //a list of objects which this item can store despite not passing the w_class limit
-	var/list/click_border_start = new/list() //In slotless storage, stores areas where clicking will refer to the associated item
+	var/list/can_hold = new/list() 					//List of objects which this item can store (if set, it can't store anything else)
+	var/list/cant_hold = new/list() 				//List of objects which this item can't store (in effect only if can_hold isn't set)
+	var/list/bypass_w_limit = new/list() 			//a list of objects which this item can store despite not passing the w_class limit
+	var/list/click_border_start = new/list() 		//In slotless storage, stores areas where clicking will refer to the associated item
 	var/list/click_border_end = new/list()
-	var/max_w_class = SIZE_SMALL //Max size of objects that this object can store (in effect only if can_hold isn't set)
-	var/max_storage_space = 14 //The sum of the storage costs of all the items in this storage item.
-	var/storage_slots = 7 //The number of storage slots in this container.
+	var/list/hearing_items							//A list of items that use hearing for the purpose of performance
+	var/max_w_class = SIZE_SMALL 					//Max size of objects that this object can store (in effect only if can_hold isn't set)
+	var/max_storage_space = 14 						//The sum of the storage costs of all the items in this storage item.
+	var/storage_slots = 7 							//The number of storage slots in this container.
 	var/obj/screen/storage/boxes = null
-	var/obj/screen/storage/storage_start = null //storage UI
+	var/obj/screen/storage/storage_start = null 	//storage UI
 	var/obj/screen/storage/storage_continue = null
 	var/obj/screen/storage/storage_end = null
 	var/obj/screen/storage/stored_start = null
@@ -26,10 +27,11 @@
 	var/obj/screen/storage/stored_end = null
 	var/obj/screen/close/closer = null
 	var/foldable = null
-	var/use_sound = "rustle"	//sound played when used. null for no sound.
-	var/opened = FALSE //Has it been opened before?
-	var/list/content_watchers //list of mobs currently seeing the storage's contents
+	var/use_sound = "rustle"						//sound played when used. null for no sound.
+	var/opened = FALSE 								//Has it been opened before?
+	var/list/content_watchers 						//list of mobs currently seeing the storage's contents
 	var/storage_flags = STORAGE_FLAGS_DEFAULT
+	var/has_gamemode_skin = FALSE					///Whether to use map-variant skins.
 
 
 /obj/item/storage/MouseDrop(obj/over_object as obj)
@@ -49,25 +51,28 @@
 		if(!usr.is_mob_restrained() && !usr.stat)
 			switch(over_object.name)
 				if("r_hand")
-					usr.drop_inv_item_on_ground(src)
-					usr.put_in_r_hand(src)
+					if(usr.drop_inv_item_on_ground(src))
+						usr.put_in_r_hand(src)
 				if("l_hand")
-					usr.drop_inv_item_on_ground(src)
-					usr.put_in_l_hand(src)
+					if(usr.drop_inv_item_on_ground(src))
+						usr.put_in_l_hand(src)
 			add_fingerprint(usr)
 
 /obj/item/storage/clicked(var/mob/user, var/list/mods)
 	if(!mods["shift"] && mods["middle"] && CAN_PICKUP(user, src))
-		open(user)
-		return
+		handle_mmb_open(user)
+		return TRUE
 
 	//Allow alt-clicking to remove items directly from storage.
 	//Does so by passing the alt mod back to do_click(), which eventually delivers it to attack_hand().
 	//This ensures consistent click behaviour between alt-click and left-mouse drawing.
 	if(mods["alt"]  && loc == user && !user.get_active_hand())
-		return
+		return FALSE
 
-	. = ..()
+	return ..()
+
+/obj/item/storage/proc/handle_mmb_open(var/mob/user)
+	open(user)
 
 /obj/item/storage/proc/return_inv()
 	RETURN_TYPE(/list)
@@ -174,6 +179,7 @@
 			ND.sample_object.screen_loc = "[cx]:16,[cy]:16"
 			ND.sample_object.maptext = "<font color='white'>[(ND.number > 1)? "[ND.number]" : ""]</font>"
 			ND.sample_object.layer = ABOVE_HUD_LAYER
+			ND.sample_object.plane = ABOVE_HUD_PLANE
 			cx++
 			if (cx > (4+cols))
 				cx = 4
@@ -183,6 +189,7 @@
 			O.mouse_opacity = 2 //So storage items that start with contents get the opacity trick.
 			O.screen_loc = "[cx]:[16+O.hud_offset],[cy]:16"
 			O.layer = ABOVE_HUD_LAYER
+			O.plane = ABOVE_HUD_PLANE
 			cx++
 			if (cx > (4+cols))
 				cx = 4
@@ -265,6 +272,7 @@ var/list/global/item_storage_box_cache = list()
 
 		O.screen_loc = "4:[round((startpoint+endpoint)/2)+(2+O.hud_offset)],2:16"
 		O.layer = ABOVE_HUD_LAYER
+		O.plane = ABOVE_HUD_PLANE
 
 	src.closer.screen_loc = "4:[storage_width+19],2:16"
 	return
@@ -423,10 +431,11 @@ var/list/global/item_storage_box_cache = list()
 
 	return 1
 
-//This proc handles items being inserted. It does not perform any checks of whether an item can or can't be inserted. That's done by can_be_inserted()
-//The stop_warning parameter will stop the insertion message from being displayed. It is intended for cases where you are inserting multiple items at once,
-//such as when picking up all the items on a tile with one click.
-//user can be null, it refers to the potential mob doing the insertion.
+/**Handler for inserting items. It does not perform any checks of whether an item can or can't be inserted into the storage item.
+That's done by can_be_inserted(). Its checks are whether the item exists, is an item, and (if it's held by a mob) the mob can drop it.
+The stop_warning parameter will stop the insertion message from being displayed. It is intended for cases where you are inserting multiple
+items at once, such as when picking up all the items on a tile with one click.
+user can be null, it refers to the potential mob doing the insertion.**/
 /obj/item/storage/proc/handle_item_insertion(obj/item/W, prevent_warning = 0, mob/user)
 	if(!istype(W))
 		return FALSE
@@ -435,6 +444,15 @@ var/list/global/item_storage_box_cache = list()
 			return FALSE
 	else
 		W.forceMove(src)
+
+	_item_insertion(W, prevent_warning, user)
+	return TRUE
+
+/**Inserts the item. Separate proc because handle_item_insertion isn't guaranteed to insert
+and it therefore isn't safe to override it before calling parent. Updates icon when done.
+Can be called directly but only if the item was spawned inside src - handle_item_insertion is safer.
+W is always an item. stop_warning prevents messaging. user may be null.**/
+/obj/item/storage/proc/_item_insertion(obj/item/W, prevent_warning = 0, mob/user)
 	W.on_enter_storage(src)
 	if(user)
 		if (user.client && user.s_active != src)
@@ -451,12 +469,17 @@ var/list/global/item_storage_box_cache = list()
 	if (storage_slots)
 		W.mouse_opacity = 2 //not having to click the item's tiny sprite to take it out of the storage.
 	update_icon()
+
+///Call this proc to handle the removal of an item from the storage item. The item will be moved to the atom sent as new_target.
+/obj/item/storage/proc/remove_from_storage(obj/item/W as obj, atom/new_location)
+	if(!istype(W))
+		return FALSE
+
+	_item_removal(W, new_location)
 	return TRUE
 
-//Call this proc to handle the removal of an item from the storage item. The item will be moved to the atom sent as new_target
-/obj/item/storage/proc/remove_from_storage(obj/item/W as obj, atom/new_location)
-	if(!istype(W)) return 0
-
+///Separate proc because remove_from_storage isn't guaranteed to finish. Can be called directly if the target atom exists and is an item. Updates icon when done.
+/obj/item/storage/proc/_item_removal(obj/item/W as obj, atom/new_location)
 	for(var/mob/M in can_see_content())
 		if(M.client)
 			M.client.screen -= W
@@ -464,12 +487,17 @@ var/list/global/item_storage_box_cache = list()
 	if(new_location)
 		if(ismob(new_location))
 			W.layer = ABOVE_HUD_LAYER
+			W.plane = ABOVE_HUD_PLANE
 			W.pickup(new_location)
 		else
 			W.layer = initial(W.layer)
 		W.forceMove(new_location)
 	else
-		W.forceMove(get_turf(src))
+		var/turf/T = get_turf(src)
+		if(T)
+			W.forceMove(T)
+		else
+			W.moveToNullspace()
 
 	orient2hud()
 	for(var/mob/M in can_see_content())
@@ -479,7 +507,6 @@ var/list/global/item_storage_box_cache = list()
 	W.on_exit_storage(src)
 	update_icon()
 	W.mouse_opacity = initial(W.mouse_opacity)
-	return 1
 
 //This proc is called when you want to place an item into the storage item.
 /obj/item/storage/attackby(obj/item/W as obj, mob/user as mob)
@@ -489,11 +516,14 @@ var/list/global/item_storage_box_cache = list()
 		to_chat(user, SPAN_NOTICE(" You're a robot. No."))
 		return //Robots can't interact with storage items.
 
+	return attempt_item_insertion(W, FALSE, user)
+
+/obj/item/storage/proc/attempt_item_insertion(obj/item/W as obj, prevent_warning = FALSE, mob/user as mob)
 	if(!can_be_inserted(W))
 		return
 
 	W.add_fingerprint(user)
-	return handle_item_insertion(W, FALSE, user)
+	return handle_item_insertion(W, prevent_warning, user)
 
 /obj/item/storage/attack_hand(mob/user, mods)
 	if (loc == user)
@@ -574,45 +604,37 @@ var/list/global/item_storage_box_cache = list()
 	user.visible_message(SPAN_NOTICE("[user] empties \the [src]."),
 		SPAN_NOTICE("You empty \the [src]."))
 
-
-///Despite the name, this is called by the *recipient*. Meant for topping things up with known items -- doesn't run checks on a transferred item beyond whether there's room for it. This one is for ammo.
 /obj/item/storage/proc/dump_ammo_to(obj/item/ammo_magazine/ammo_dumping, mob/user, var/amount_to_dump = 5) //amount_to_dump should never actually need to be used as default value
 	if(user.action_busy)
 		return
 
 	if(ammo_dumping.flags_magazine & AMMUNITION_HANDFUL_BOX)
-		if(!can_hold_type(/obj/item/ammo_magazine/handful))
-			to_chat(user, SPAN_WARNING("[src] cannot hold loose handfuls."))
-			return
 		var/handfuls = round(ammo_dumping.current_rounds / amount_to_dump, 1) //The number of handfuls, we round up because we still want the last one that isn't full
-		if(ammo_dumping.current_rounds <= 0)
+		if(ammo_dumping.current_rounds != 0)
+			if(contents.len < storage_slots)
+				to_chat(user, SPAN_NOTICE("You start refilling [src] with [ammo_dumping]."))
+				if(!do_after(user, 1.5 SECONDS, INTERRUPT_ALL, BUSY_ICON_GENERIC)) return
+				for(var/i = 1 to handfuls)
+					if(contents.len < storage_slots)
+						//Hijacked from /obj/item/ammo_magazine/proc/create_handful because it had to be handled differently
+						//All this because shell types are instances and not their own objects :)
+
+						var/obj/item/ammo_magazine/handful/new_handful = new /obj/item/ammo_magazine/handful
+						var/transferred_handfuls = min(ammo_dumping.current_rounds, amount_to_dump)
+						new_handful.generate_handful(ammo_dumping.default_ammo, ammo_dumping.caliber, amount_to_dump, transferred_handfuls, ammo_dumping.gun_type)
+						ammo_dumping.current_rounds -= transferred_handfuls
+						handle_item_insertion(new_handful, TRUE,user)
+						update_icon(-transferred_handfuls)
+					else
+						break
+				playsound(user.loc, "rustle", 15, TRUE, 6)
+				ammo_dumping.update_icon()
+			else
+				to_chat(user, SPAN_WARNING("[src] is full."))
+		else
 			to_chat(user, SPAN_WARNING("[ammo_dumping] is empty."))
-			return
-		if(!has_room(null, SIZE_SMALL)) //SIZE_SMALL = shell handful W_class.
-			to_chat(user, SPAN_WARNING("[src] is full."))
-			return
-
-		to_chat(user, SPAN_NOTICE("You start refilling [src] with [ammo_dumping]."))
-		if(!do_after(user, 1.5 SECONDS, INTERRUPT_ALL, BUSY_ICON_GENERIC))
-			return
-		for(var/i = 1 to handfuls)
-			if(!has_room(null, SIZE_SMALL))
-				break
-			//Hijacked from /obj/item/ammo_magazine/proc/create_handful because it had to be handled differently
-			//All this because shell types are instances and not their own objects :)
-			var/obj/item/ammo_magazine/handful/new_handful = new /obj/item/ammo_magazine/handful
-			var/transferred_handfuls = min(ammo_dumping.current_rounds, amount_to_dump)
-			new_handful.generate_handful(ammo_dumping.default_ammo, ammo_dumping.caliber, amount_to_dump, transferred_handfuls, ammo_dumping.gun_type)
-			ammo_dumping.current_rounds -= transferred_handfuls
-			handle_item_insertion(new_handful, TRUE, user)
-			ammo_dumping.update_icon(-transferred_handfuls)
-
-		playsound(user.loc, "rustle", 15, TRUE, 6)
-		ammo_dumping.update_icon()
 	return TRUE
 
-
-///Despite the name, this is called by the *recipient*. Meant for topping things up with known items -- doesn't run checks on a transferred item beyond whether there's room for it. This one is for storage items.
 /obj/item/storage/proc/dump_into(obj/item/storage/M, mob/user)
 	if(user.action_busy)
 		return
@@ -635,7 +657,6 @@ var/list/global/item_storage_box_cache = list()
 
 	playsound(user.loc, "rustle", 15, TRUE, 6)
 	return TRUE
-
 
 /obj/item/storage/Initialize()
 	. = ..()
@@ -669,6 +690,11 @@ var/list/global/item_storage_box_cache = list()
 
 	closer = new
 	closer.master = src
+
+	if(has_gamemode_skin)
+		select_gamemode_skin(type)
+
+	post_skin_selection()
 
 	fill_preset_inventory()
 
@@ -732,11 +758,10 @@ var/list/global/item_storage_box_cache = list()
 	if(isturf(target) && get_dist(src, target) <= 1 && storage_flags & STORAGE_CLICK_EMPTY)
 		empty(user, target)
 
-/obj/item/storage/hear_talk(mob/M as mob, text)
-	for (var/atom/A in src)
-		if(istype(A,/obj/))
-			var/obj/O = A
-			O.hear_talk(M, text)
+/obj/item/storage/hear_talk(mob/living/M as mob, msg, var/verb="says", var/datum/language/speaking, var/italics = 0)
+	// Whatever is stored in /storage/ substypes should ALWAYS be an item
+	for (var/obj/item/I as anything in hearing_items)
+		I.hear_talk(M, msg, verb, speaking, italics)
 
 /obj/item/proc/get_storage_cost() //framework for adjusting storage costs
 	if (storage_cost)
@@ -745,6 +770,10 @@ var/list/global/item_storage_box_cache = list()
 		return w_class
 
 /obj/item/storage/proc/fill_preset_inventory()
+	return
+
+///Things to be done after selecting a map skin (if any) and before adding inventory and updating icon for the first time. Most likely saving basic icon state.
+/obj/item/storage/proc/post_skin_selection()
 	return
 
 /**Returns the storage depth of an atom. This is the number of items the atom is nested in before reaching the designated container, counted inclusively.

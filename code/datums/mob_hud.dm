@@ -7,17 +7,18 @@ var/list/datum/mob_hud/huds = list(
 	MOB_HUD_MEDICAL_BASIC = new /datum/mob_hud/medical/basic(),
 	MOB_HUD_MEDICAL_ADVANCED = new /datum/mob_hud/medical/advanced(),
 	MOB_HUD_MEDICAL_OBSERVER = new /datum/mob_hud/medical/observer(),
-	MOB_HUD_XENO_INFECTION = new /datum/mob_hud/xeno_infection(), \
+	MOB_HUD_XENO_INFECTION = new /datum/mob_hud/xeno_infection(),
 	MOB_HUD_XENO_STATUS = new /datum/mob_hud/xeno(),
-	MOB_HUD_SQUAD = new /datum/mob_hud/squad(),
 	MOB_HUD_XENO_HOSTILE = new /datum/mob_hud/xeno_hostile(),
-	MOB_HUD_HUNTER_CLAN = new /datum/mob_hud/hunter_clan(),
-	MOB_HUD_SQUAD_OBSERVER	= new /datum/mob_hud/squad/observer(),
-	MOB_HUD_FACTION_UPP	= new /datum/mob_hud/faction/upp(),
+	MOB_HUD_FACTION_USCM = new /datum/mob_hud/faction(),
+	MOB_HUD_FACTION_OBSERVER = new /datum/mob_hud/faction/observer(),
+	MOB_HUD_FACTION_UPP = new /datum/mob_hud/faction/upp(),
 	MOB_HUD_FACTION_WY = new /datum/mob_hud/faction/wy(),
 	MOB_HUD_FACTION_RESS = new /datum/mob_hud/faction/ress(),
 	MOB_HUD_FACTION_CLF = new /datum/mob_hud/faction/clf(),
+	MOB_HUD_FACTION_PMC = new /datum/mob_hud/faction/pmc(),
 	MOB_HUD_HUNTER = new /datum/mob_hud/hunter_hud(),
+	MOB_HUD_HUNTER_CLAN = new /datum/mob_hud/hunter_clan()
 	)
 
 /datum/mob_hud
@@ -98,7 +99,10 @@ var/list/datum/mob_hud/huds = list(
 	if(!istype(U))
 		return FALSE
 
-	if(U.sensor_mode <= 2 || U.has_sensor == 0)
+	if(H.species && HAS_TRAIT(H, TRAIT_FOREIGN_BIO))
+		return FALSE
+
+	if(U.sensor_mode <= SENSOR_MODE_DAMAGE || U.has_sensor == UNIFORM_NO_SENSORS)
 		return FALSE
 
 	return TRUE
@@ -157,24 +161,14 @@ var/list/datum/mob_hud/huds = list(
 /datum/mob_hud/security/advanced
 	hud_icons = list(ID_HUD, WANTED_HUD)
 
-
-/datum/mob_hud/squad
-	hud_icons = list(SQUAD_HUD, ORDER_HUD)
-
-/datum/mob_hud/squad/observer
-	hud_icons = list(SQUAD_HUD, ORDER_HUD, HUNTER_CLAN)
-
 //Factions
 /datum/mob_hud/faction
-	hud_icons = list(FACTION_HUD)
-	var/faction_to_check = FACTION_UPP
+	hud_icons = list(FACTION_HUD, ORDER_HUD)
+	var/faction_to_check = FACTION_MARINE
 
 /datum/mob_hud/faction/add_to_single_hud(mob/user, mob/target)
 	var/faction = target.faction
-	if(isobserver(target))
-		faction = faction_to_check
-
-	if(faction == faction_to_check)
+	if(faction == faction_to_check || isobserver(user) || isYautja(user))
 		..()
 
 /datum/mob_hud/faction/upp
@@ -188,6 +182,12 @@ var/list/datum/mob_hud/huds = list(
 
 /datum/mob_hud/faction/clf
 	faction_to_check = FACTION_CLF
+
+/datum/mob_hud/faction/pmc
+	faction_to_check = FACTION_PMC
+
+/datum/mob_hud/faction/observer
+	hud_icons = list(FACTION_HUD, ORDER_HUD, HUNTER_CLAN)
 
 ///////// MOB PROCS //////////////////////////////:
 
@@ -268,8 +268,13 @@ var/list/datum/mob_hud/huds = list(
 	if(stat == DEAD)
 		holder.icon_state = "[health_hud_type]0"
 	else
-		var/amount = round(health*100/maxHealth, 10)
-		if(!amount) amount = 1 //don't want the 'zero health' icon when we still have 4% of our health
+		var/amount = health > 0 ? round(health * 100 / maxHealth, 10) : CEILING(health, 10)
+		if(health < 0)
+			amount = round((health / (crit_health - warding_aura * 20)) * -100, 10)
+		else
+			amount = CEILING((health / maxHealth) * 100, 10)
+		if(!amount)
+			amount = -1 //don't want the 'zero health' icon when we are crit
 		holder.icon_state = "[health_hud_type][amount]"
 
 /mob/living/carbon/Xenomorph/proc/overlay_shields()
@@ -329,7 +334,9 @@ var/list/datum/mob_hud/huds = list(
 
 /mob/living/carbon/human/med_hud_set_status()
 	var/image/holder = hud_list[STATUS_HUD]
+	holder.overlays.Cut()
 	var/image/holder2 = hud_list[STATUS_HUD_OOC]
+	holder2.overlays.Cut()
 	var/image/holder3 = hud_list[STATUS_HUD_XENO_INFECTION]
 	var/image/holder4 = hud_list[STATUS_HUD_XENO_CULTIST]
 
@@ -340,9 +347,23 @@ var/list/datum/mob_hud/huds = list(
 	holder4.icon_state = "hudblank"
 
 	if(species && species.flags & IS_SYNTHETIC)
-		holder.icon_state = "hudsynth"
-		holder2.icon_state = "hudsynth"
-		holder3.icon_state = "hudsynth"
+		holder3.icon_state = "hudsynth" // xenos have less awareness of synth status
+		if(stat != DEAD)
+			holder.icon_state = "hudsynth"
+			holder2.icon_state = "hudsynth"
+		else
+			if(!client)
+				var/mob/dead/observer/G = get_ghost(FALSE, TRUE)
+				if(!G)
+					holder.icon_state = "hudsynthdnr"
+					holder2.icon_state = "hudsynthdnr"
+				else if(!G.client)
+					holder.overlays += image('icons/mob/hud/hud.dmi', "hudnosynthclient")
+					holder2.overlays += image('icons/mob/hud/hud.dmi', "hudnosynthclient")
+			else
+				holder.icon_state = "hudsynthdead"
+				holder2.icon_state = "hudsynthdead"
+			return
 	else
 		var/revive_enabled = stat == DEAD && check_tod() && is_revivable()
 		if(stat == DEAD)
@@ -378,24 +399,34 @@ var/list/datum/mob_hud/huds = list(
 
 		if(stat == DEAD)
 			if(revive_enabled)
-				var/mob/dead/observer/G = get_ghost()
-				if(client || istype(G))
-					if(world.time > timeofdeath + revive_grace_period - 1 MINUTES)
-						holder.icon_state = "huddeadalmost"
+				if(!client)
+					var/mob/dead/observer/G = get_ghost(FALSE, TRUE)
+					if(!G)
+						holder.icon_state = "huddeaddnr"
 						if(!holder2_set)
-							holder2.icon_state = "huddeadalmost"
+							holder2.icon_state = "huddeaddnr"
 							holder3.icon_state = "huddead"
 							holder2_set = 1
-					else
-						holder.icon_state = "huddeaddefib"
-						if(!holder2_set)
-							holder2.icon_state = "huddeaddefib"
-							holder3.icon_state = "huddead"
-							holder2_set = 1
-				else
-					holder.icon_state = "huddeaddnr"
+						return
+					else if(!G.client)
+						holder.overlays += image('icons/mob/hud/hud.dmi', "hudnoclient")
+						holder2.overlays += image('icons/mob/hud/hud.dmi', "hudnoclient")
+				if(world.time > timeofdeath + revive_grace_period - 1 MINUTES)
+					holder.icon_state = "huddeadalmost"
 					if(!holder2_set)
-						holder2.icon_state = "huddeaddnr"
+						holder2.icon_state = "huddeadalmost"
+						holder3.icon_state = "huddead"
+						holder2_set = 1
+				else if(world.time > timeofdeath + revive_grace_period - 2.5 MINUTES)
+					holder.icon_state = "huddeadclose"
+					if(!holder2_set)
+						holder2.icon_state = "huddeadclose"
+						holder3.icon_state = "huddead"
+						holder2_set = 1
+				else
+					holder.icon_state = "huddeaddefib"
+					if(!holder2_set)
+						holder2.icon_state = "huddeaddefib"
 						holder3.icon_state = "huddead"
 						holder2_set = 1
 			else
@@ -428,6 +459,12 @@ var/list/datum/mob_hud/huds = list(
 			holder3.icon_state = ""
 
 //xeno status HUD
+
+/mob/living/carbon/Xenomorph/proc/hud_set_marks()
+	if(!client)
+		return
+	for(var/obj/effect/alien/resin/marker/i in hive.resin_marks)
+		client.images |= i.seenMeaning
 
 /mob/living/carbon/Xenomorph/proc/hud_set_plasma()
 	var/image/holder = hud_list[PLASMA_HUD]
@@ -531,41 +568,45 @@ var/list/datum/mob_hud/huds = list(
 
 /mob/living/carbon/human/sec_hud_set_ID()
 	var/image/holder = hud_list[ID_HUD]
-	holder.icon_state = "hudunknown"
+	holder.icon_state = "hudsec_unknown"
 	if(wear_id)
 		var/obj/item/card/id/I = wear_id.GetID()
 		if(I)
-			holder.icon_state = "hud[ckey(I.GetJobName())]"
+			holder.icon_state = "hudsec_[ckey(I.GetJobName())]"
 
 /mob/living/carbon/human/proc/sec_hud_set_security_status()
 	var/image/holder = hud_list[WANTED_HUD]
 	holder.icon_state = "hudblank"
-	var/perpname = name
+	criminal = FALSE
+	var/perpref = null
 	if(wear_id)
 		var/obj/item/card/id/I = wear_id.GetID()
 		if(I)
-			perpname = I.registered_name
+			perpref = I.registered_ref
 
 	if(!GLOB.data_core)
 		return
 
 	for(var/datum/data/record/E in GLOB.data_core.general)
-		if(E.fields["name"] == perpname)
+		if(E.fields["ref"] == perpref)
 			for(var/datum/data/record/R in GLOB.data_core.security)
 				if((R.fields["id"] == E.fields["id"]) && (R.fields["criminal"] == "*Arrest*"))
-					holder.icon_state = "hudwanted"
+					holder.icon_state = "hudsec_wanted"
+					criminal = TRUE
 					break
 				else if((R.fields["id"] == E.fields["id"]) && (R.fields["criminal"] == "Incarcerated"))
-					holder.icon_state = "hudprisoner"
+					holder.icon_state = "hudsec_prisoner"
+					criminal = TRUE
 					break
 				else if((R.fields["id"] == E.fields["id"]) && (R.fields["criminal"] == "Released"))
-					holder.icon_state = "hudreleased"
+					holder.icon_state = "hudsec_released"
+					criminal = FALSE
 					break
 				else if((R.fields["id"] == E.fields["id"]) && (R.fields["criminal"] == "Suspect"))
-					holder.icon_state = "hudsuspect"
+					holder.icon_state = "hudsec_suspect"
 					break
 				else if((R.fields["id"] == E.fields["id"]) && (R.fields["criminal"] == "NJP"))
-					holder.icon_state = "hudnjp"
+					holder.icon_state = "hudsec_njp"
 					break
 //Squad HUD
 
@@ -573,115 +614,16 @@ var/list/datum/mob_hud/huds = list(
 	return
 
 /mob/living/carbon/human/hud_set_squad()
-	var/image/holder = hud_list[SQUAD_HUD]
-
+	var/datum/faction/F = get_faction(faction)
+	var/image/holder = hud_list[F.hud_type]
 	holder.icon_state = "hudblank"
 	holder.overlays.Cut()
 
-	if(faction == FACTION_MUTINEER)
+	if(mob_flags & MUTINEER)
 		holder.icon_state = "hudmutineer"
-		hud_list[SQUAD_HUD] = holder
 		return
 
-	if(assigned_squad)
-		var/squad_clr = squad_colors[assigned_squad.color]
-		var/marine_rk
-		var/obj/item/card/id/I = get_idcard()
-		var/_role
-		if(job)
-			_role = job
-		else if(I)
-			_role = I.rank
-		switch(_role)
-			if(JOB_SQUAD_ENGI) marine_rk = "engi"
-			if(JOB_SQUAD_SPECIALIST) marine_rk = "spec"
-			if(JOB_SQUAD_RTO) marine_rk = "rto"
-			if(JOB_SQUAD_MEDIC) marine_rk = "med"
-			if(JOB_SQUAD_SMARTGUN) marine_rk = "gun"
-			if(JOB_XO) marine_rk = "xo"
-			if(JOB_CO) marine_rk = "co"
-			if(JOB_ADMIRAL) marine_rk = "admiral"
-			if(JOB_PILOT) marine_rk = "po"
-			if(JOB_CREWMAN) marine_rk = "tc"
-		if(assigned_squad.squad_leader == src)
-			marine_rk = "leader"
-			langchat_styles = "langchat_bolded" // bold text for bold leaders
-		else
-			langchat_styles = initial(langchat_styles)
-
-		langchat_color = squad_colors_chat[assigned_squad.color]
-
-		if(marine_rk)
-			var/image/IMG = image('icons/mob/hud/hud.dmi',src, "hudmarinesquad")
-			if(squad_clr)
-				IMG.color = squad_clr
-			else
-				IMG.color = "#5A934A"
-			holder.overlays += IMG
-			holder.overlays += image('icons/mob/hud/hud.dmi',src, "hudmarinesquad[marine_rk]")
-		if(assigned_squad && assigned_fireteam)
-			var/image/IMG2 = image('icons/mob/hud/hud.dmi',src, "hudmarinesquad[assigned_fireteam]")
-			IMG2.color = squad_clr
-			holder.overlays += IMG2
-			if(assigned_squad.fireteam_leaders[assigned_fireteam] == src)
-				var/image/IMG3 = image('icons/mob/hud/hud.dmi',src, "hudmarinesquadftl")
-				IMG3.color = squad_clr
-				holder.overlays += IMG3
-	else
-		var/marine_rk
-		var/border_rk
-		var/obj/item/card/id/ID = get_idcard()
-		var/_role
-		if(mind)
-			_role = job
-		else if(ID)
-			_role = ID.rank
-		switch(_role)
-			if(JOB_XO)
-				marine_rk = "xo"
-				border_rk = "command"
-			if(JOB_CO)
-				marine_rk = "co"
-				border_rk = "command"
-			if(JOB_SO)
-				marine_rk = "so"
-				border_rk = "command"
-			if(JOB_ADMIRAL)
-				marine_rk = "admiral"
-				border_rk = "command"
-			if(JOB_PILOT)
-				marine_rk = "po"
-			if(JOB_CREWMAN)
-				marine_rk = "tc"
-			if("Provost Officer")
-				marine_rk = "pvo"
-			if("Provost Enforcer")
-				marine_rk = "pvo"
-			if("Provost Team Leader")
-				marine_rk = "pvtml"
-			if("Provost Inspector")
-				marine_rk = "pvi"
-				border_rk = "command"
-			if("Provost Advisor")
-				marine_rk = "pva"
-				border_rk = "command"
-			if("Provost Marshal")
-				marine_rk = "pvm"
-				border_rk = "command"
-			if("Provost Sector Marshal")
-				marine_rk = "pvm"
-				border_rk = "command"
-			if("Provost Chief Marshal")
-				marine_rk = "pvm"
-				border_rk = "command"
-		if(marine_rk)
-			var/image/I = image('icons/mob/hud/hud.dmi',src, "hudmarinesquad")
-			I.color = "#5A934A"
-			holder.overlays += I
-			holder.overlays += image('icons/mob/hud/hud.dmi',src, "hudmarinesquad[marine_rk]")
-			if(border_rk)
-				holder.overlays += image('icons/mob/hud/hud.dmi',src, "hudmarineborder[border_rk]")
-	hud_list[SQUAD_HUD] = holder
+	F.modify_hud_holder(holder, src)
 
 /mob/living/carbon/human/yautja/hud_set_squad()
 	set waitfor = FALSE
@@ -716,25 +658,25 @@ var/global/image/hud_icon_hunter_thralled
 	holder.overlays.Cut()
 	if(hunter_data.hunted)
 		if(!hud_icon_hunter_hunted)
-			hud_icon_hunter_hunted = image('icons/mob/hud/hud_icons.dmi', src, "hunter_hunted")
+			hud_icon_hunter_hunted = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_hunted")
 		holder.overlays += hud_icon_hunter_hunted
 
 	if(hunter_data.dishonored)
 		if(!hud_icon_hunter_dishonored)
-			hud_icon_hunter_dishonored = image('icons/mob/hud/hud_icons.dmi', src, "hunter_dishonored")
+			hud_icon_hunter_dishonored = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_dishonored")
 		holder.overlays += hud_icon_hunter_dishonored
 	else if(hunter_data.honored)
 		if(!hud_icon_hunter_honored)
-			hud_icon_hunter_honored = image('icons/mob/hud/hud_icons.dmi', src, "hunter_honored")
+			hud_icon_hunter_honored = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_honored")
 		holder.overlays += hud_icon_hunter_honored
 
 	if(hunter_data.thralled)
 		if(!hud_icon_hunter_thralled)
-			hud_icon_hunter_thralled = image('icons/mob/hud/hud_icons.dmi', src, "hunter_thralled")
+			hud_icon_hunter_thralled = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_thralled")
 		holder.overlays += hud_icon_hunter_thralled
 	else if(hunter_data.gear)
 		if(!hud_icon_hunter_gear)
-			hud_icon_hunter_gear = image('icons/mob/hud/hud_icons.dmi', src, "hunter_gear")
+			hud_icon_hunter_gear = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_gear")
 		holder.overlays += hud_icon_hunter_gear
 
 	hud_list[HUNTER_HUD] = holder
@@ -746,16 +688,16 @@ var/global/image/hud_icon_hunter_thralled
 	holder.pixel_x = -18
 	if(hunter_data.hunted)
 		if(!hud_icon_hunter_hunted)
-			hud_icon_hunter_hunted = image('icons/mob/hud/hud_icons.dmi', src, "hunter_hunted")
+			hud_icon_hunter_hunted = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_hunted")
 		holder.overlays += hud_icon_hunter_hunted
 
 	if(hunter_data.dishonored)
 		if(!hud_icon_hunter_dishonored)
-			hud_icon_hunter_dishonored = image('icons/mob/hud/hud_icons.dmi', src, "hunter_dishonored")
+			hud_icon_hunter_dishonored = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_dishonored")
 		holder.overlays += hud_icon_hunter_dishonored
 	else if(hunter_data.honored)
 		if(!hud_icon_hunter_honored)
-			hud_icon_hunter_honored = image('icons/mob/hud/hud_icons.dmi', src, "hunter_honored")
+			hud_icon_hunter_honored = image('icons/mob/hud/hud_yautja.dmi', src, "hunter_honored")
 		holder.overlays += hud_icon_hunter_honored
 
 	hud_list[HUNTER_HUD] = holder
@@ -774,15 +716,15 @@ var/global/image/hud_icon_hudfocus
 	holder.overlays.Cut()
 	if(mobility_aura)
 		if(!hud_icon_hudmove)
-			hud_icon_hudmove = image('icons/mob/hud/hud.dmi', src, "hudmove")
+			hud_icon_hudmove = image('icons/mob/hud/marine_hud.dmi', src, "hudmove")
 		holder.overlays += hud_icon_hudmove
 	if(protection_aura)
 		if(!hud_icon_hudhold)
-			hud_icon_hudhold = image('icons/mob/hud/hud.dmi', src, "hudhold")
+			hud_icon_hudhold = image('icons/mob/hud/marine_hud.dmi', src, "hudhold")
 		holder.overlays += hud_icon_hudhold
 	if(marksman_aura)
 		if(!hud_icon_hudfocus)
-			hud_icon_hudfocus = image('icons/mob/hud/hud.dmi', src, "hudfocus")
+			hud_icon_hudfocus = image('icons/mob/hud/marine_hud.dmi', src, "hudfocus")
 		holder.overlays += hud_icon_hudfocus
 	hud_list[ORDER_HUD] = holder
 

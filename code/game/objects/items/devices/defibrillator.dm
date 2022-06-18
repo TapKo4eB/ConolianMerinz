@@ -19,6 +19,7 @@
 	var/obj/item/cell/dcell = null
 	var/datum/effect_system/spark_spread/sparks = new
 	var/defib_cooldown = 0 //Cooldown for toggling the defib
+	var/shock_cooldown = 0 //cooldown for shocking someone - separate to toggling
 
 /mob/living/carbon/human/proc/check_tod()
 	if(!undefibbable && world.time <= timeofdeath + revive_grace_period)
@@ -57,12 +58,13 @@
 	maxuses = round(dcell.maxcharge / charge_cost)
 	currentuses = round(dcell.charge / charge_cost)
 	to_chat(user, SPAN_INFO("It has [currentuses] out of [maxuses] uses left in its internal battery."))
-
+	if(MODE_HAS_TOGGLEABLE_FLAG(MODE_STRONG_DEFIBS) || !blocked_by_suit)
+		to_chat(user, SPAN_NOTICE("This defibrillator will ignore worn armor."))
 
 /obj/item/device/defibrillator/attack_self(mob/living/carbon/human/user)
 	..()
 
-	if(defib_cooldown > world.time)
+	if(defib_cooldown > world.time) //cooldown only to prevent spam toggling
 		return
 
 	//Job knowledge requirement
@@ -71,22 +73,26 @@
 			to_chat(user, SPAN_WARNING("You don't seem to know how to use [src]..."))
 			return
 
-	defib_cooldown = world.time + 20 //2 seconds cooldown every time the defib is toggled
+	defib_cooldown = world.time + 10 //1 second cooldown every time the defib is toggled
 	ready = !ready
 	user.visible_message(SPAN_NOTICE("[user] turns [src] [ready? "on and takes the paddles out" : "off and puts the paddles back in"]."),
 	SPAN_NOTICE("You turn [src] [ready? "on and take the paddles out" : "off and put the paddles back in"]."))
+	if(ready)
+		w_class = SIZE_LARGE
+	else
+		w_class = initial(w_class)
 	playsound(get_turf(src), "sparks", 25, 1, 4)
 	update_icon()
 	add_fingerprint(user)
 
-/mob/living/carbon/human/proc/get_ghost()
+/mob/living/carbon/human/proc/get_ghost(var/check_client = TRUE, var/check_can_reenter = TRUE)
 	if(client)
 		return FALSE
 
 	for(var/mob/dead/observer/G in GLOB.observer_list)
 		if(G.mind && G.mind.original == src)
 			var/mob/dead/observer/ghost = G
-			if(ghost && ghost.client && ghost.can_reenter_corpse)
+			if(ghost && (!check_client || ghost.client) && (!check_can_reenter || ghost.can_reenter_corpse))
 				return ghost
 
 /mob/living/carbon/human/proc/is_revivable()
@@ -117,7 +123,7 @@
 		user.visible_message(SPAN_WARNING("[icon2html(src, viewers(src))] \The [src] buzzes: Patient's general condition does not allow reviving."))
 		return
 
-	if(blocked_by_suit && H.wear_suit && (istype(H.wear_suit, /obj/item/clothing/suit/armor) || istype(H.wear_suit, /obj/item/clothing/suit/storage/marine)) && prob(95))
+	if((!MODE_HAS_TOGGLEABLE_FLAG(MODE_STRONG_DEFIBS) && blocked_by_suit) && H.wear_suit && (istype(H.wear_suit, /obj/item/clothing/suit/armor) || istype(H.wear_suit, /obj/item/clothing/suit/storage/marine)) && prob(95))
 		user.visible_message(SPAN_WARNING("[icon2html(src, viewers(src))] \The [src] buzzes: Paddles registering >100,000 ohms, Possible cause: Suit or Armor interfering."))
 		return
 
@@ -128,10 +134,10 @@
 	return TRUE
 
 /obj/item/device/defibrillator/attack(mob/living/carbon/human/H, mob/living/carbon/human/user)
-	if(defib_cooldown > world.time) //Both for pulling the paddles out (2 seconds) and shocking (1 second)
+	if(shock_cooldown > world.time) //cooldown is only for shocking, this is so that you can immediately shock when you take the paddles out - stan_albatross
 		return
 
-	defib_cooldown = world.time + 20 //2 second cooldown before you can try shocking again
+	shock_cooldown = world.time + 20 //2 second cooldown before you can try shocking again
 
 	if(user.action_busy) //Currently deffibing
 		return
@@ -146,7 +152,7 @@
 		return
 
 	var/mob/dead/observer/G = H.get_ghost()
-	if(istype(G))
+	if(istype(G) && G.client)
 		playsound_client(G.client, 'sound/effects/adminhelp_new.ogg')
 		to_chat(G, SPAN_BOLDNOTICE(FONT_SIZE_LARGE("Someone is trying to revive your body. Return to it if you want to be resurrected! \
 			(Verbs -> Ghost -> Re-enter corpse, or <a href='?src=\ref[G];reentercorpse=1'>click here!</a>)")))
@@ -172,7 +178,7 @@
 	user.visible_message(SPAN_NOTICE("[user] shocks [H] with the paddles."),
 		SPAN_HELPFUL("You shock <b>[H]</b> with the paddles."))
 	H.visible_message(SPAN_DANGER("[H]'s body convulses a bit."))
-	defib_cooldown = world.time + 10 //1 second cooldown before you can shock again
+	shock_cooldown = world.time + 10 //1 second cooldown before you can shock again
 
 	var/datum/internal_organ/heart/heart = H.internal_organs_by_name["heart"]
 	if(heart && prob(25))
@@ -200,17 +206,20 @@
 	H.apply_damage(-H.getOxyLoss(), OXY)
 	H.updatehealth() //Needed for the check to register properly
 
-	for(var/datum/reagent/R in H.reagents.reagent_list)
-		var/datum/chem_property/P = R.get_property(PROPERTY_ELECTROGENETIC)//Adrenaline helps greatly at restarting the heart
-		if(P)
-			P.trigger(H)
-			H.reagents.remove_reagent(R.id, 1)
-			break
+	if(!(H.species?.flags & NO_CHEM_METABOLIZATION))
+		for(var/datum/reagent/R in H.reagents.reagent_list)
+			var/datum/chem_property/P = R.get_property(PROPERTY_ELECTROGENETIC)//Adrenaline helps greatly at restarting the heart
+			if(P)
+				P.trigger(H)
+				H.reagents.remove_reagent(R.id, 1)
+				break
 	if(H.health > HEALTH_THRESHOLD_DEAD)
 		user.visible_message(SPAN_NOTICE("[icon2html(src, viewers(src))] \The [src] beeps: Defibrillation successful."))
 		user.track_life_saved(user.job)
 		H.handle_revive()
 		to_chat(H, SPAN_NOTICE("You suddenly feel a spark and your consciousness returns, dragging you back to the mortal plane."))
+		if(H.client?.prefs.toggles_flashing & FLASH_CORPSEREVIVE)
+			window_flash(H.client)
 	else
 		user.visible_message(SPAN_WARNING("[icon2html(src, viewers(src))] \The [src] buzzes: Defibrillation failed. Vital signs are too weak, repair damage and try again.")) //Freak case
 

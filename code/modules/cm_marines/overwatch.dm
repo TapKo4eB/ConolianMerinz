@@ -13,7 +13,7 @@
 	var/datum/squad/current_squad = null
 	var/state = 0
 	var/obj/structure/machinery/camera/cam = null
-	var/list/network = list("overwatch")
+	var/list/network = list(CAMERA_NET_OVERWATCH)
 	var/x_supply = 0
 	var/y_supply = 0
 	var/x_bomb = 0
@@ -24,6 +24,15 @@
 	var/z_hidden = 0 //which z level is ignored when showing marines.
 	var/marine_filter = list() // individual marine hiding control - list of string references
 	var/marine_filter_enabled = TRUE
+	var/faction = FACTION_MARINE
+
+/obj/structure/machinery/computer/overwatch/Initialize()
+	. = ..()
+	SSmapview.map_machines += src
+
+/obj/structure/machinery/computer/overwatch/Destroy()
+	SSmapview.map_machines -= src
+	return ..()
 
 /obj/structure/machinery/computer/overwatch/attackby(var/obj/I as obj, var/mob/user as mob)  //Can't break or disassemble.
 	return
@@ -207,7 +216,12 @@
 				if(current_squad.squad_leader)
 					if(H == current_squad.squad_leader)
 						dist = "<b>N/A</b>"
-						if(H.job != JOB_SQUAD_LEADER)
+						if(current_squad.name == SQUAD_MARSOC)
+							if(H.job == JOB_MARSOC_CMD)
+								act_sl = " (direct command)"
+							else if(H.job != JOB_MARSOC_SL)
+								act_sl = " (acting TL)"
+						else if(H.job != JOB_SQUAD_LEADER)
 							act_sl = " (acting SL)"
 					else if(M_turf && (M_turf.z == SL_z))
 						dist = "[get_dist(H, current_squad.squad_leader)] ([dir2text_short(get_dir(current_squad.squad_leader, H))])"
@@ -232,6 +246,8 @@
 						mob_state = SET_CLASS("DEAD", INTERFACE_RED)
 						dead_text += "<tr><td><A href='?src=\ref[src];operation=use_cam;cam_target=\ref[H]'>[mob_name]</a></td><td>[role][act_sl]</td><td>[mob_state]</td><td>[area_name]</td><td>[dist]</td><td><A class='[is_filtered ? "green" : "red"]' href='?src=\ref[src];operation=filter_marine;squaddie=\ref[H]'>[is_filtered ? "Show" : "Hide"]</a></td></tr>"
 
+				if(!istype(H.head, /obj/item/clothing/head/helmet/marine))
+					mob_state += SET_CLASS(" <b>(NO HELMET)</b>", INTERFACE_ORANGE)
 
 				if(!H.key || !H.client)
 					if(H.stat != DEAD)
@@ -283,11 +299,11 @@
 					misc_text += marine_infos
 
 		dat += "<b>[leader_count ? "Squad Leader Deployed" : SET_CLASS("No Squad Leader Deployed!", INTERFACE_RED)]</b><BR>"
-		dat += "<b>Squad RT Operators: [rto_count ? "[rto_count]" : SET_CLASS("No Squad RT Operators Deployed!", INTERFACE_RED)]</b><BR>"
+		dat += "<b>Squad Radio Telephone Operators: [rto_count ? "[rto_count]" : SET_CLASS("No Squad Radio Telephone Operators Deployed!", INTERFACE_RED)]</b><BR>"
 		dat += "<b>[spec_count ? "Squad Specialist Deployed" : SET_CLASS("No Specialist Deployed!", INTERFACE_RED)]</b><BR>"
 		dat += "<b>[smart_count ? "Squad Smartgunner Deployed" : SET_CLASS("No Smartgunner Deployed!", INTERFACE_RED)]</b><BR>"
-		dat += "<b>Squad Medics: [medic_count] Deployed | Squad Engineers: [engi_count] Deployed</b><BR>"
-		dat += "<b>Squad Marines: [marine_count] Deployed</b><BR>"
+		dat += "<b>Squad Hospital Corpsmen: [medic_count] Deployed | Squad Combat Technicians: [engi_count] Deployed</b><BR>"
+		dat += "<b>Squad Riflemen: [marine_count] Deployed</b><BR>"
 		dat += "<b>Total: [current_squad.marines_list.len] Deployed</b><BR>"
 		dat += "<b>Marines alive: [living_count]</b><BR><BR><BR>"
 		dat += "<center><b>Search:</b> <input type='text' id='filter' value='' onkeyup='updateSearch();' style='width:300px;'></center>"
@@ -364,27 +380,10 @@
 		close_browser(current_mapviewer, "marineminimap")
 		current_mapviewer = null
 		return
-	var/icon/O
-	switch(current_squad.color)
-		if(1)
-			if(!istype(marine_mapview_overlay_1))
-				overlay_marine_mapview(current_squad)
-			O = marine_mapview_overlay_1
-		if(2)
-			if(!istype(marine_mapview_overlay_2))
-				overlay_marine_mapview(current_squad)
-			O = marine_mapview_overlay_2
-		if(3)
-			if(!istype(marine_mapview_overlay_3))
-				overlay_marine_mapview(current_squad)
-			O = marine_mapview_overlay_3
-		if(4)
-			if(!istype(marine_mapview_overlay_4))
-				overlay_marine_mapview(current_squad)
-			O = marine_mapview_overlay_4
+	var/icon/O = overlay_tacmap(TACMAP_DEFAULT)
 	if(O)
 		current_mapviewer << browse_rsc(O, "marine_minimap.png")
-		show_browser(current_mapviewer, "<img src=marine_minimap.png>", "Marine Minimap", "marineminimap", "size=[(map_sizes[1][1]*2)+50]x[(map_sizes[1][2]*2)+50]", closeref = src)
+		show_browser(current_mapviewer, "<img src=marine_minimap.png>", "Marine Minimap", "marineminimap", "size=[(map_sizes[1]*2)+50]x[(map_sizes[2]*2)+50]", closeref = src)
 
 /obj/structure/machinery/computer/overwatch/Topic(href, href_list)
 	if(href_list["close"])
@@ -456,7 +455,7 @@
 				else
 					var/list/squad_list = list()
 					for(var/datum/squad/S in RoleAuthority.squads)
-						if(S.usable && !S.overwatch_officer)
+						if(S.active && !S.overwatch_officer && S.faction == faction && S.name != "Root")
 							squad_list += S.name
 
 					var/name_sel = tgui_input_list(usr, "Which squad would you like to claim for Overwatch?", "Claim Squad", squad_list)
@@ -480,17 +479,17 @@
 						to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Invalid input. Aborting.")]")
 		if("message")
 			if(current_squad && operator == usr)
-				var/input = stripped_input(usr, "Please write a message to announce to the squad:", "Squad Message")
+				var/input = sanitize_control_chars(stripped_input(usr, "Please write a message to announce to the squad:", "Squad Message"))
 				if(input)
 					send_to_squad(input, 1) //message, adds username
-					visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Message sent to all Marines of squad '[current_squad]'.")]")
+					visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Message '[input]' sent to all Marines of squad '[current_squad]'.")]")
 					log_overwatch("[key_name(usr)] sent '[input]' to squad [current_squad].")
 		if("sl_message")
 			if(current_squad && operator == usr)
-				var/input = stripped_input(usr, "Please write a message to announce to the squad leader:", "SL Message")
+				var/input = sanitize_control_chars(stripped_input(usr, "Please write a message to announce to the squad leader:", "SL Message"))
 				if(input)
 					send_to_squad(input, 1, 1) //message, adds usrname, only to leader
-					visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Message sent to Squad Leader [current_squad.squad_leader] of squad '[current_squad]'.")]")
+					visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Message '[input]' sent to Squad Leader [current_squad.squad_leader] of squad '[current_squad]'.")]")
 					log_overwatch("[key_name(usr)] sent '[input]' to Squad Leader [current_squad.squad_leader] of squad [current_squad].")
 		if("check_primary")
 			if(current_squad) //This is already checked, but ehh.
@@ -503,18 +502,18 @@
 					visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Reminding secondary objectives of squad '[current_squad]'.")]")
 					to_chat(usr, "[icon2html(src, usr)] <b>Secondary Objective:</b> [current_squad.secondary_objective]")
 		if("set_primary")
-			var/input = stripped_input(usr, "What will be the squad's primary objective?", "Primary Objective")
+			var/input = sanitize_control_chars(stripped_input(usr, "What will be the squad's primary objective?", "Primary Objective"))
 			if(current_squad && input)
 				current_squad.primary_objective = "[input] ([worldtime2text()])"
-				send_to_squad("Your primary objective has changed. See Status pane for details.")
-				visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Primary objective of squad '[current_squad]' set.")]")
+				send_to_squad("Your primary objective has been changed to '[input]'. See Status pane for details.")
+				visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Primary objective of squad '[current_squad]' set to '[input]'.")]")
 				log_overwatch("[key_name(usr)] set [current_squad]'s primary objective to '[input]'.")
 		if("set_secondary")
-			var/input = stripped_input(usr, "What will be the squad's secondary objective?", "Secondary Objective")
+			var/input = sanitize_control_chars(stripped_input(usr, "What will be the squad's secondary objective?", "Secondary Objective"))
 			if(input)
 				current_squad.secondary_objective = input + " ([worldtime2text()])"
-				send_to_squad("Your secondary objective has changed. See Status pane for details.")
-				visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Secondary objective of squad '[current_squad]' set.")]")
+				send_to_squad("Your secondary objective has been changed to '[input]'. See Status pane for details.")
+				visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("Secondary objective of squad '[current_squad]' set to '[input]'.")]")
 				log_overwatch("[key_name(usr)] set [current_squad]'s secondary objective to '[input]'.")
 		if("supply_x")
 			var/input = input(usr,"What longitude should be targetted? (Increments towards the east)", "X Coordinate", 0) as num
@@ -583,14 +582,14 @@
 		if("dropsupply")
 			if(current_squad)
 				if((current_squad.supply_cooldown + 5000) > world.time)
-					to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Supply drop not yet available!")]")
+					to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Supply drop not yet ready to launch again!")]")
 				else
 					handle_supplydrop()
 		if("dropbomb")
 			if(almayer_orbital_cannon.is_disabled)
-				to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Orbital bombardment disabled!")]")
+				to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Orbital bombardment cannon disabled!")]")
 			else if((almayer_orbital_cannon.last_orbital_firing + 5000) > world.time)
-				to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Orbital bombardment not yet available!")]")
+				to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Orbital bombardment cannon not yet ready to fire again!")]")
 			else
 				handle_bombard(usr)
 		if("back")
@@ -635,11 +634,10 @@
 			return helm.camera
 
 //Sends a string to our currently selected squad.
-/obj/structure/machinery/computer/overwatch/proc/send_to_squad(var/txt = "", var/plus_name = 0, var/only_leader = 0)
-	if(txt == "" || !current_squad || !operator)
+/obj/structure/machinery/computer/overwatch/proc/send_to_squad(var/text = "", var/plus_name = 0, var/only_leader = 0)
+	if(text == "" || !current_squad || !operator)
 		return //Logic
 
-	var/text = strip_html(txt)
 	var/nametext = ""
 	if(plus_name)
 		nametext = "[usr.name] transmits: "
@@ -666,7 +664,7 @@
 	var/ob_type = almayer_orbital_cannon.tray.warhead ? almayer_orbital_cannon.tray.warhead.warhead_kind : "UNKNOWN"
 
 	for(var/datum/squad/S in RoleAuthority.squads)
-		if(!S.usable)
+		if(!S.active)
 			continue
 		for(var/mob/living/carbon/human/M in S.marines_list)
 			if(!is_ground_level(M.z))
@@ -730,8 +728,7 @@
 		H.comm_title = "SL"
 	else //an acting SL
 		H.comm_title = "aSL"
-	if(H.skills)
-		H.skills.set_skill(SKILL_LEADERSHIP, max(SKILL_LEAD_TRAINED, H.skills.get_skill_level(SKILL_LEADERSHIP)))
+	ADD_TRAIT(H, TRAIT_LEADERSHIP, TRAIT_SOURCE_SQUAD_LEADER)
 
 	var/obj/item/device/radio/headset/almayer/marine/R = H.get_type_in_ears(/obj/item/device/radio/headset/almayer/marine)
 	if(R)
@@ -757,8 +754,9 @@
 		to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("[wanted_marine] is missing in action.")]")
 		return
 
+	var/marine_ref = WEAKREF(wanted_marine)
 	for(var/datum/data/record/E in GLOB.data_core.general)
-		if(E.fields["name"] == wanted_marine.real_name)
+		if(E.fields["ref"] == marine_ref)
 			for(var/datum/data/record/R in GLOB.data_core.security)
 				if(R.fields["id"] == E.fields["id"])
 					if(!findtext(R.fields["ma_crim"],"Insubordination."))
@@ -796,10 +794,14 @@
 		to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Transfer aborted. [transfer_marine] isn't wearing an ID.")]")
 		return
 
-	var/new_squad_name = tgui_input_list(usr, "Choose the marine's new squad", "Squad Selection", ROLES_SQUAD_ALL)
-	if(!new_squad_name || S != current_squad)
+	var/list/available_squads = list()
+	for(var/datum/squad/squad as anything in RoleAuthority.squads)
+		if(squad.active && !squad.locked && squad.faction == faction && squad.name != "Root")
+			available_squads += squad
+
+	var/datum/squad/new_squad = tgui_input_list(usr, "Choose the marine's new squad", "Squad Selection", available_squads)
+	if(!new_squad || S != current_squad)
 		return
-	var/datum/squad/new_squad = get_squad_by_name(new_squad_name)
 
 	if(!istype(transfer_marine) || !transfer_marine.mind || transfer_marine.stat == DEAD)
 		to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("[transfer_marine] is KIA.")]")
@@ -832,33 +834,19 @@
 			if(new_squad.num_smartgun == new_squad.max_smartgun)
 				no_place = TRUE
 		if(JOB_SQUAD_RTO)
-			if(new_squad.max_rto >= new_squad.max_rto)
+			if(new_squad.num_rto >= new_squad.max_rto)
 				no_place = TRUE
 
 	if(no_place)
 		to_chat(usr, "[icon2html(src, usr)] [SPAN_WARNING("Transfer aborted. [new_squad] can't have another [transfer_marine.job].")]")
 		return
 
-	if(transfer_marine.assigned_fireteam)
-		if(old_squad.fireteam_leaders["FT[transfer_marine.assigned_fireteam]"] == transfer_marine)
-			old_squad.unassign_ft_leader(transfer_marine.assigned_fireteam, TRUE, FALSE)
-		old_squad.unassign_fireteam(transfer_marine, TRUE)	//reset fireteam assignment
-
-	old_squad.remove_marine_from_squad(transfer_marine)
-	old_squad.update_free_mar()
-	old_squad.update_squad_ui()
-	new_squad.put_marine_in_squad(transfer_marine)
-	new_squad.update_free_mar()
-	new_squad.update_squad_ui()
-
-	for(var/datum/data/record/t in GLOB.data_core.general) //we update the crew manifest
-		if(t.fields["name"] == transfer_marine.real_name)
-			t.fields["squad"] = new_squad.name
-			break
-
-	transfer_marine.hud_set_squad()
-	visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("[transfer_marine] has been transfered from squad '[old_squad]' to squad '[new_squad]'. Logging to enlistment file.")]")
-	to_chat(transfer_marine, "[icon2html(src, transfer_marine)] <font size='3' color='blue'><B>\[Overwatch\]:</b> You've been transfered to [new_squad]!</font>")
+	. = transfer_marine_to_squad(transfer_marine, new_squad, old_squad)
+	if(.)
+		visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("[transfer_marine] has been transfered from squad '[old_squad]' to squad '[new_squad]'. Logging to enlistment file.")]")
+		to_chat(transfer_marine, "[icon2html(src, transfer_marine)] <font size='3' color='blue'><B>\[Overwatch\]:</b> You've been transfered to [new_squad]!</font>")
+	else
+		visible_message("[icon2html(src, viewers(src))] [SPAN_BOLDNOTICE("[transfer_marine] transfer from squad '[old_squad]' to squad '[new_squad]' unsuccessful.")]")
 
 /obj/structure/machinery/computer/overwatch/proc/handle_bombard(mob/user)
 	if(!user)
@@ -886,18 +874,20 @@
 
 	var/turf/T = locate(x_coord, y_coord, z_coord)
 
-	var/area/A = get_area(T)
+	if(isnull(T) || istype(T, /turf/open/space))
+		to_chat(user, "[icon2html(src, user)] [SPAN_WARNING("The target zone appears to be out of bounds. Please check coordinates.")]")
+		return
+
 	if(protected_by_pylon(TURF_PROTECTION_OB, T))
 		to_chat(user, "[icon2html(src, user)] [SPAN_WARNING("The target zone has strong biological protection. The orbital strike cannot reach here.")]")
 		return
+
+	var/area/A = get_area(T)
 
 	if(istype(A) && CEILING_IS_PROTECTED(A.ceiling, CEILING_DEEP_UNDERGROUND))
 		to_chat(user, "[icon2html(src, user)] [SPAN_WARNING("The target zone is deep underground. The orbital strike cannot reach here.")]")
 		return
 
-	if(istype(T, /turf/open/space))
-		to_chat(user, "[icon2html(src, user)] [SPAN_WARNING("The target zone appears to be out of bounds. Please check coordinates.")]")
-		return
 
 	//All set, let's do this.
 	busy = 1
@@ -920,6 +910,8 @@
 	if(!A || !T)
 		return
 
+	var/ob_name = lowertext(almayer_orbital_cannon.tray.warhead.name)
+	announce_dchat("\A [ob_name] targeting [A.name] has been fired!", T)
 	message_staff(FONT_SIZE_HUGE("ALERT: [key_name(user)] fired an orbital bombardment in [A.name] for squad '[current_squad]' (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[T.x];Y=[T.y];Z=[T.z]'>JMP</a>)"))
 	log_attack("[key_name(user)] fired an orbital bombardment in [A.name] for squad '[current_squad]'")
 
@@ -998,6 +990,17 @@
 	icon = 'icons/obj/structures/machinery/computer.dmi'
 	icon_state = "overwatch"
 
+/obj/structure/machinery/computer/overwatch/clf
+	faction = FACTION_CLF
+/obj/structure/machinery/computer/overwatch/upp
+	faction = FACTION_UPP
+/obj/structure/machinery/computer/overwatch/pmc
+	faction = FACTION_PMC
+/obj/structure/machinery/computer/overwatch/twe
+	faction = FACTION_RESS
+/obj/structure/machinery/computer/overwatch/freelance
+	faction = FACTION_FREELANCER
+
 /obj/structure/supply_drop
 	name = "Supply Drop Pad"
 	desc = "Place a crate on here to allow bridge Overwatch officers to drop them on people's heads."
@@ -1007,7 +1010,7 @@
 	unslashable = TRUE
 	unacidable = TRUE
 	layer = 2.1 //It's the floor, man
-	var/squad = SQUAD_NAME_1
+	var/squad = SQUAD_MARINE_1
 	var/sending_package = 0
 
 /obj/structure/supply_drop/Initialize(mapload, ...)
@@ -1020,23 +1023,23 @@
 
 /obj/structure/supply_drop/alpha
 	icon_state = "alphadrop"
-	squad = SQUAD_NAME_1
+	squad = SQUAD_MARINE_1
 
 /obj/structure/supply_drop/bravo
 	icon_state = "bravodrop"
-	squad = SQUAD_NAME_2
+	squad = SQUAD_MARINE_2
 
 /obj/structure/supply_drop/charlie
 	icon_state = "charliedrop"
-	squad = SQUAD_NAME_3
+	squad = SQUAD_MARINE_3
 
 /obj/structure/supply_drop/delta
 	icon_state = "deltadrop"
-	squad = SQUAD_NAME_4
+	squad = SQUAD_MARINE_4
 
 /obj/structure/supply_drop/echo //extra supply drop pad
 	icon_state = "echodrop"
-	squad = SQUAD_NAME_5
+	squad = SQUAD_MARINE_5
 
 #undef HIDE_ALMAYER
 #undef HIDE_GROUND

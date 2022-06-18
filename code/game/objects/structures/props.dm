@@ -177,7 +177,6 @@
 	icon_state = "boulder1"
 	desc = "A large rock. It's not cooking anything."
 	icon = 'icons/obj/structures/props/dam.dmi'
-	density = 0
 	unslashable = TRUE
 	unacidable = TRUE
 /obj/structure/prop/dam/boulder/boulder1
@@ -528,7 +527,7 @@
 /obj/structure/prop/power_transformer
 	name = "power transformer"
 	icon = 'icons/obj/structures/props/power_transformer.dmi'
-	icon_state = "power_transformer"
+	icon_state = "transformer"
 	bound_width = 64
 	bound_height = 64
 	desc = "A passive electrical component that controls where and which circuits power flows into."
@@ -592,6 +591,20 @@
 
 /obj/structure/prop/invuln/lifeboat_hatch_placeholder/terminal
 	icon = 'icons/obj/structures/machinery/bolt_terminal.dmi'
+
+/obj/structure/prop/invuln/dropship_parts	//for TG shuttle system
+	density = TRUE
+
+/obj/structure/prop/invuln/dropship_parts/beforeShuttleMove()	//moves content but leaves the turf behind (for cool space turf)
+	. = ..()
+	if(. & MOVE_AREA)
+		. |= MOVE_CONTENTS
+		. &= ~MOVE_TURF
+
+/obj/structure/prop/invuln/dropship_parts/lifeboat
+	name = "Lifeboat"
+	icon = 'icons/turf/lifeboat.dmi'
+
 
 /obj/structure/prop/brazier
 	name = "brazier"
@@ -698,6 +711,34 @@
 	icon = 'icons/obj/structures/props/ice_colony/Tiger_Rugs.dmi'
 	icon_state = "Bengal" //instanceable, lots of variants!
 
+//HOLIDAY THEMED BULLSHIT
+
+/obj/structure/prop/holidays
+	projectile_coverage = 0
+	density = 0
+	icon = 'icons/obj/structures/props/holiday_props.dmi'
+	desc = "parent object for temporary holiday structures. If you are reading this, go find a mapper and tell them to search up error code: TOO MUCH EGGNOG"//hello future mapper. Next time use the sub types or instance the desc. Thanks -past mapper.
+	layer = 4
+	health = 50
+	anchored = TRUE
+
+/obj/structure/prop/holidays/string_lights
+	name = "M1 pattern festive bulb strings"
+	desc = "Strung from strut to strut, these standard issue M1 pattern 'festive bulb strings' flicker and shimmer to the tune of the output frequency of the Almayer's Engine... or the local power grid. Might want to ask the Bravo's to check which one it is for ya. Ya damn jarhead."
+	icon_state = "string_lights"
+
+
+/obj/structure/prop/holidays/string_lights/corner
+	icon_state = "strings_lights_corner"
+
+/obj/structure/prop/holidays/string_lights/cap
+	icon_state = "string_lights_cap"
+
+/obj/structure/prop/holidays/wreath
+	name = "M1 pattern festive needle torus"
+	desc = "In 2140 after a two different sub levels of the São Luís Bay Underground Habitat burned out (evidence points to a Bladerunner incident, but local police denies such claims) due to actual wreaths made with REAL needles, these have been issued ever since. They're made of ''''''pine'''''' scented poly-kevlon. According to the grunts from the American Corridor, during the SACO riots, protestors would pack these things into pillow cases, forming rudimentary body armor against soft point ballistics."
+	icon_state = "wreath"
+
 
 //INVULNERABLE PROPS
 
@@ -746,8 +787,8 @@
 	icon_state = "fab"
 	density = 1
 	layer = 3
-	bound_width = 64
-	bound_height = 64
+	bound_width = 32
+	bound_height = 32
 
 /obj/structure/prop/invuln/ice_prefab/trim
 	layer = ABOVE_MOB_LAYER
@@ -760,14 +801,104 @@
 	desc = "Windsocks, Air-Con units, solarpanels, oh my!"
 	density = FALSE
 
+
 /obj/structure/prop/invuln/ice_prefab/standalone
 	density = 1
 	icon = 'icons/obj/structures/props/ice_colony/fabs_64.dmi'
 	icon_state = "orange"//instance icons
 	layer = 3
+	bound_width = 64
+	bound_height = 64
 
 /obj/structure/prop/invuln/ice_prefab/standalone/trim
 	icon_state = "orange_trim"//instance icons
 	layer = ABOVE_MOB_LAYER
 	density = 0
 
+/obj/structure/prop/wooden_cross
+	name = "wooden cross"
+	desc = "A wooden grave marker. Is it more respectful because someone made it by hand, or less, because it's crude and misshapen?"
+	icon = 'icons/obj/structures/props/crosses.dmi'
+	icon_state = "cross1"
+	density = FALSE
+	health = 30
+	var/inscription
+	var/obj/item/helmet
+
+/obj/structure/prop/wooden_cross/Destroy()
+	if(helmet)
+		helmet.forceMove(loc)
+		helmet = null
+	return ..()
+
+/obj/structure/prop/wooden_cross/attackby(obj/item/W, mob/living/user)
+	if(istype(W, /obj/item/clothing/head))
+		if(helmet)
+			to_chat(user, SPAN_WARNING("[helmet] is already resting atop [src]!"))
+			return
+		if(!user.drop_inv_item_to_loc(W, src))
+			return
+		helmet = W
+		dir = SOUTH
+		var/image/visual_overlay = W.get_mob_overlay(null, WEAR_HEAD)
+		visual_overlay.pixel_y = -10 //Base image is positioned to go on a human's head.
+		overlays += visual_overlay
+		to_chat(user, SPAN_NOTICE("You set \the [W] atop \the [src]."))
+		return
+
+	if(user.a_intent == INTENT_HARM)
+		..()
+		if(W.force && !(W.flags_item & NOBLUDGEON))
+			playsound(src, 'sound/effects/woodhit.ogg', 25, 1)
+			update_health(W.force)
+		return
+
+	if(W.sharp || W.edge || istype(W, /obj/item/tool/pen) || istype(W, /obj/item/tool/hand_labeler))
+		var/action_msg
+		var/time_multiplier
+		if(W.sharp || W.edge)
+			action_msg = "carve something into"
+			time_multiplier = 3
+		else
+			action_msg = "write something on"
+			time_multiplier = 2
+
+		var/message = sanitize(input(user, "What do you write on [src]?", "Inscription"))
+		if(!message)
+			return
+		user.visible_message(SPAN_NOTICE("[user] begins to [action_msg] [src]."),\
+			SPAN_NOTICE("You begin to [action_msg] [src]."), null, 4)
+
+		if(!do_after(user, length(message) * time_multiplier, INTERRUPT_ALL, BUSY_ICON_GENERIC))
+			to_chat(user, SPAN_WARNING("You were interrupted!"))
+		else
+			user.visible_message(SPAN_NOTICE("[user] uses \his [W.name] to [action_msg] [src]."),\
+				SPAN_NOTICE("You [action_msg] [src] with your [W.name]."), null, 4)
+			if(inscription)
+				inscription += "\n[message]"
+			else
+				inscription = message
+
+/obj/structure/prop/wooden_cross/examine(mob/user)
+	..()
+	to_chat(user, "\"[inscription]\"")
+
+/obj/structure/prop/wooden_cross/attack_hand(mob/user)
+	if(helmet)
+		helmet.forceMove(loc)
+		user.put_in_hands(helmet)
+		to_chat(user, SPAN_NOTICE("You lift \the [helmet] off of \the [src]."))
+		helmet = null
+		overlays.Cut()
+
+/obj/structure/prop/wooden_cross/attack_alien(mob/living/carbon/Xenomorph/M)
+	M.animation_attack_on(src)
+	update_health(rand(M.melee_damage_lower, M.melee_damage_upper))
+	playsound(src, 'sound/effects/woodhit.ogg', 25, 1)
+	if(health <= 0)
+		M.visible_message(SPAN_DANGER("[M] slices [src] apart!"), \
+		SPAN_DANGER("You slice [src] apart!"), null, 5, CHAT_TYPE_XENO_COMBAT)
+	else
+		M.visible_message(SPAN_DANGER("[M] slashes [src]!"), \
+		SPAN_DANGER("You slash [src]!"), null, 5, CHAT_TYPE_XENO_COMBAT)
+	return XENO_ATTACK_ACTION

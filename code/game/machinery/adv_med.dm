@@ -2,7 +2,7 @@
 
 
 /obj/structure/machinery/bodyscanner
-	name = "Body Scanner"
+	name = "body scanner"
 	icon = 'icons/obj/structures/machinery/cryogenics.dmi'
 	icon_state = "body_scanner_0"
 	density = 1
@@ -19,6 +19,7 @@
 /obj/structure/machinery/bodyscanner/Initialize()
 	. = ..()
 	connect_body_scanconsole()
+	flags_atom |= USES_HEARING
 
 
 /obj/structure/machinery/bodyscanner/proc/connect_body_scanconsole()
@@ -74,14 +75,18 @@
 
 
 /obj/structure/machinery/bodyscanner/proc/go_in_bodyscanner(mob/M)
-	M.forceMove(src)
-	occupant = M
-	update_use_power(2)
-	icon_state = "body_scanner_1"
-	//prevents occupant's belonging from landing inside the machine
-	for(var/obj/O in src)
-		O.forceMove(loc)
-	playsound(src, 'sound/machines/scanning_pod1.ogg')
+	if(isXeno(M))
+		return
+	if(do_after(usr, 10, INTERRUPT_NO_NEEDHAND, BUSY_ICON_GENERIC))
+		to_chat(usr, SPAN_NOTICE("You move [M.name] inside \the [src]."))
+		M.forceMove(src)
+		occupant = M
+		update_use_power(2)
+		icon_state = "body_scanner_1"
+		//prevents occupant's belonging from landing inside the machine
+		for(var/obj/O in src)
+			O.forceMove(loc)
+		playsound(src, 'sound/machines/scanning_pod1.ogg')
 
 /obj/structure/machinery/bodyscanner/proc/go_out()
 	if ((!( src.occupant ) || src.locked))
@@ -98,6 +103,15 @@
 
 /obj/structure/machinery/bodyscanner/attack_hand(mob/living/user)
 	go_out()
+
+//clickdrag code - "resist to get out" code is in living_verbs.dm
+/obj/structure/machinery/bodyscanner/MouseDrop_T(mob/target, mob/user)
+	. = ..()
+	var/mob/living/H = user
+	if(!istype(H) || target != user) //cant make others get in. grab-click for this
+		return
+
+	go_in_bodyscanner(target)
 
 /obj/structure/machinery/bodyscanner/attackby(obj/item/I, mob/living/user)
 	var/mob/M
@@ -123,9 +137,11 @@
 	if (M.abiotic())
 		to_chat(user, SPAN_WARNING("Subject cannot have abiotic items on."))
 		return
+	if (isXeno(M))
+		to_chat(user, SPAN_WARNING("An unsupported lifeform was detected, aborting!"))
+		return
 
 	go_in_bodyscanner(M)
-
 	add_fingerprint(user)
 	//G = null
 
@@ -159,7 +175,7 @@
 #endif // ifdef OBJECTS_PROXY_SPEECH
 
 /obj/structure/machinery/body_scanconsole
-	name = "Body Scanner Console"
+	name = "body scanner console"
 	icon = 'icons/obj/structures/machinery/cryogenics.dmi'
 	icon_state = "body_scannerconsole"
 	density = 0
@@ -250,8 +266,9 @@
 	else if (connected) //Is something connected?
 		var/mob/living/carbon/human/H = connected.occupant
 		var/datum/data/record/N = null
+		var/human_ref = WEAKREF(H)
 		for(var/datum/data/record/R in GLOB.data_core.medical)
-			if (R.fields["name"] == H.real_name)
+			if (R.fields["ref"] == human_ref)
 				N = R
 		if(isnull(N))
 			N = create_medical_record(H)
@@ -310,6 +327,7 @@
 		"dexalin_amount" = H.reagents.get_reagent_amount("dexalin"),
 		"bicaridine_amount" = H.reagents.get_reagent_amount("bicaridine"),
 		"dermaline_amount" = H.reagents.get_reagent_amount("dermaline"),
+		"meralyne_amount" = H.reagents.get_reagent_amount("meralyne"),
 		"blood_amount" = H.blood_volume,
 		"disabilities" = H.sdisabilities,
 		"tg_diseases_list" = H.viruses.Copy(),
@@ -372,6 +390,9 @@
 	s_class = occ["dermaline_amount"] < 30 ? INTERFACE_OKAY : INTERFACE_BAD
 	dat += "[SET_CLASS("Dermaline:", INTERFACE_HEADER_COLOR)] [SET_CLASS("[occ["dermaline_amount"]] units:", s_class)]<BR>"
 
+	s_class = occ["meralyne_amount"] < 30 ? INTERFACE_OKAY : INTERFACE_BAD
+	dat += "[SET_CLASS("Meralyne:", INTERFACE_HEADER_COLOR)] [SET_CLASS("[occ["meralyne_amount"]] units:", s_class)]<BR>"
+
 	s_class = occ["bicaridine_amount"] < 30 ? INTERFACE_OKAY : INTERFACE_BAD
 	dat += "[SET_CLASS("Bicaridine:", INTERFACE_HEADER_COLOR)] [SET_CLASS("[occ["bicaridine_amount"]] units", s_class)]<BR>"
 
@@ -422,6 +443,8 @@
 				robot = "Nonfunctional prosthetic<br>"
 			else
 				robot = "Prosthetic<br>"
+		else if(e.status & LIMB_SYNTHSKIN)
+			robot = "Synthskin"
 		if(e.get_incision_depth())
 			open = "Open<br>"
 

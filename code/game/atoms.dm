@@ -1,5 +1,8 @@
 
 /atom
+	var/name_label /// Labels put onto the atom by a hand labeler. usually in the format "[initial(name)] ([name_label])"
+
+	plane = GAME_PLANE
 	layer = TURF_LAYER
 	var/level = 2
 	var/flags_atom = FPRINT
@@ -258,15 +261,6 @@ its easier to just keep the beam vertical.
 
 	return TRUE
 
-//All atoms
-/atom/verb/atom_examine()
-	set name = "Examine"
-	set category = "IC"
-	set src in view(usr.client) //If it can be seen, it can be examined.
-
-	if(!usr) return
-	examine(usr)
-
 /atom/proc/examine(mob/user)
 	to_chat(user, "[icon2html(src, user)] That's \a [src].") //changed to "That's" from "This is" because "This is some metal sheets" sounds dumb compared to "That's some metal sheets" ~Carn
 	if(desc)
@@ -403,7 +397,6 @@ Parameters are passed from New.
 //called if Initialize returns INITIALIZE_HINT_LATELOAD
 /atom/proc/LateInitialize()
 	return
-
 
 /atom/process()
 	return

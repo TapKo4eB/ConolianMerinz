@@ -22,6 +22,7 @@
 #define CAN_BE_DISPENSED_INTO     (1<<14) // Chem dispenser can dispense in this even if it isn't an OPENCONTAINER
 #define INITIALIZED               (1<<15) // Initialized by SSatoms.
 #define ATOM_DECORATED            (1<<16) // Has run Decorate() as part of subsystem init
+#define USES_HEARING		      (1<<17) // Whether or not the object uses hearing
 //==========================================================================================
 
 #define HANDLE_BARRIER_CHANCE 1
@@ -44,6 +45,7 @@
 #define ITEM_OVERRIDE_NORTHFACE	(1<<10) // For backpacks if they should have unique layering functions
 #define CAN_DIG_SHRAPNEL		(1<<11) // whether activating it digs shrapnel out of the user and striking others with medical skills can dig shapnel out of other people.
 #define ANIMATED_SURGICAL_TOOL	(1<<12) // whether it has an animated icon state of "[icon_state]_on" to be used during surgeries.
+#define NOTABLEMERGE			(1<<13) // The item goes on top of tables, instead of into them with the overlay system
 
 //==========================================================================================
 
@@ -90,6 +92,7 @@
 #define BLOCKSHARPOBJ 	(1<<8)  //From /tg: prevents syringes, parapens and hypos if the external suit or helmet (if targeting head) has this flag. Example: space suits, biosuit, bombsuits, thick suits that cover your body.
 #define NOPRESSUREDMAGE (1<<9) //This flag is used on the flags variable for SUIT and HEAD items which stop pressure damage.
 #define BLOCK_KNOCKDOWN (1<<10) //Suits only. Wearing this will stop you from being pushed over.
+#define SMARTGUN_HARNESS (1<<11) // Whether wearing this suit grants you the ability to fire a smartgun
 //SUITS AND HELMETS====================================================================================
 
 
@@ -161,6 +164,7 @@
 #define SLOT_NO_STORE		(1<<12)	//this is to deny items with a w_class of 2 or 1 to fit in pockets.
 #define SLOT_LEGS 			(1<<13)
 #define SLOT_ACCESSORY		(1<<14)
+#define SLOT_SUIT_STORE		(1<<15)	//this allows items to be stored in the suit slot regardless of suit
 //=================================================
 
 //slots
@@ -169,7 +173,6 @@
 #define WEAR_L_EAR			"wear_l_ear"
 #define WEAR_R_EAR			"wear_r_ear"
 #define WEAR_BODY			"w_uniform"
-#define WEAR_LEGS			"legs"
 #define WEAR_FEET			"shoes"
 #define WEAR_HANDS			"gloves"
 #define WEAR_WAIST			"belt"
@@ -197,6 +200,37 @@
 #define WEAR_IN_R_STORE     "in_r_store"
 #define WEAR_IN_SHOES		"in_shoes"
 
+/proc/slotdefine2slotbit(slotdefine)
+	. = NO_FLAGS
+	switch(slotdefine)
+		if(WEAR_ID)
+			. = SLOT_ID
+		if(WEAR_L_EAR, WEAR_R_EAR)
+			. = SLOT_EAR
+		if(WEAR_BODY)
+			. = SLOT_ICLOTHING
+		if(WEAR_FEET)
+			. = SLOT_FEET
+		if(WEAR_HANDS)
+			. = SLOT_HANDS
+		if(WEAR_WAIST)
+			. = SLOT_WAIST
+		if(WEAR_JACKET)
+			. = SLOT_OCLOTHING
+		if(WEAR_EYES)
+			. = SLOT_EYES
+		if(WEAR_FACE)
+			. = SLOT_FACE
+		if(WEAR_HEAD)
+			. = SLOT_HEAD
+		if(WEAR_BACK)
+			. = SLOT_BACK
+		if(WEAR_L_STORE, WEAR_R_STORE)
+			. = SLOT_STORE
+		if(WEAR_ACCESSORY)
+			. = SLOT_ACCESSORY
+		if(WEAR_J_STORE)
+			. = SLOT_SUIT_STORE
 
 //=================================================
 
@@ -257,7 +291,7 @@
 //=================================================
 
 //defense zones for selecting them via the hud.
-#define DEFENSE_ZONES_LIVING list("head","chest","mouth","eyes","groin","l_leg","l_foot","r_leg","r_foot","l_arm","l_hand","r_arm","r_hand")
+#define DEFENSE_ZONES_LIVING list("head","eyes","mouth","chest","groin","l_arm","l_hand","r_arm","r_hand","l_leg","l_foot","r_leg","r_foot")
 
 // bitflags for the percentual amount of protection a piece of clothing which covers the body part offers.
 // Used with human/proc/get_flags_heat_protection() and human/proc/get_flags_cold_protection()
@@ -375,8 +409,9 @@ var/global/list/uniform_categories = list(
 #define STORAGE_CLICK_GATHER				(1<<7)	// Whether it is possible to use this storage object in an inverse way,
 										   			// so you can have the item in your hand and click items on the floor to pick them up
 #define STORAGE_SHOW_FULLNESS				(1<<8)	// Whether our storage object on hud changes color when full
-#define STORAGE_CONTENT_NUM_DISPLAY			(1<<9)		// Whether the storage object groups contents of the same type and displays them as a number. Only works for slot-based storage objects.
-#define STORAGE_GATHER_SIMULTAENOUSLY		(1<<10)		// Whether the storage object can pick up all the items in a tile
+#define STORAGE_CONTENT_NUM_DISPLAY			(1<<9)	// Whether the storage object groups contents of the same type and displays them as a number. Only works for slot-based storage objects.
+#define STORAGE_GATHER_SIMULTAENOUSLY		(1<<10)	// Whether the storage object can pick up all the items in a tile
+#define STORAGE_ALLOW_QUICKDRAW				(1<<11)	// Whether the storage can be drawn with E or Holster verb
 
 #define STORAGE_FLAGS_DEFAULT				(STORAGE_SHOW_FULLNESS|STORAGE_GATHER_SIMULTAENOUSLY|STORAGE_ALLOW_EMPTY)
 #define STORAGE_FLAGS_BOX					(STORAGE_FLAGS_DEFAULT^STORAGE_ALLOW_EMPTY)

@@ -237,6 +237,7 @@
 /area/lv624/lazarus/landing_zones
 	ceiling = CEILING_NONE
 	is_resin_allowed = FALSE
+	is_landing_zone = TRUE
 
 /area/lv624/lazarus/landing_zones/lz1
 	name = "\improper Alamo Landing Zone"
@@ -365,12 +366,12 @@
 /area/lv624/landing/console
 	name = "\improper LZ1 'Nexus'"
 	icon_state = "tcomsatcham"
-	requires_power = 0
+	requires_power = FALSE
 
 /area/lv624/landing/console2
 	name = "\improper LZ2 'Robotics'"
 	icon_state = "tcomsatcham"
-	requires_power = 0
+	requires_power = FALSE
 
 /area/lv624/lazarus/crashed_ship
 	name = "\improper Crashed Ship"

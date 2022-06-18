@@ -135,13 +135,8 @@
 				var/confirm = alert("Are you sure you want to self-destruct the Almayer?", "Self-Destruct", "Yes", "Cancel")
 				if(confirm != "Yes")
 					return
-
-				if(!EvacuationAuthority.initiate_self_destruct(1))
-					to_chat(usr, SPAN_WARNING("You are unable to trigger the self-destruct right now!"))
-					return
-				if(alert("Are you sure you want to destroy the Almayer right now?",, "Yes", "Cancel") == "Cancel") return
-
 				message_staff("[key_name_admin(usr)] forced the self-destrust system, destroying the [MAIN_SHIP_NAME].")
+				EvacuationAuthority.trigger_self_destruct()
 
 			if("toggle_dest")
 				EvacuationAuthority.flags_scuttle ^= FLAGS_SELF_DESTRUCT_DENY
@@ -1033,7 +1028,7 @@
 
 			if(is_alien_whitelisted(M,"Yautja Elder"))
 				M.change_real_name(M, "Elder [y_name]")
-				H.equip_to_slot_or_del(new /obj/item/clothing/suit/armor/yautja/full(H), WEAR_JACKET)
+				H.equip_to_slot_or_del(new /obj/item/clothing/suit/armor/yautja/hunter/full(H), WEAR_JACKET)
 				H.equip_to_slot_or_del(new /obj/item/weapon/melee/twohanded/yautja/glaive(H), WEAR_L_HAND)
 			else
 				M.change_real_name(M, y_name)
@@ -1125,7 +1120,7 @@
 
 	else if(href_list["admincancelpredsd"])
 		if (!check_rights(R_MOD))	return
-		var/obj/item/clothing/gloves/yautja/bracer = locate(href_list["bracer"])
+		var/obj/item/clothing/gloves/yautja/hunter/bracer = locate(href_list["bracer"])
 		var/mob/living/carbon/victim = locate(href_list["victim"])
 		if (!istype(bracer))
 			return
@@ -1178,6 +1173,13 @@
 		H.put_in_hands(snack)
 		message_staff("[key_name(H)] got their [cookie_type], spawned by [key_name(src.owner)]")
 		to_chat(H, SPAN_NOTICE(" Your prayers have been answered!! You received the <b>best cookie</b>!"))
+
+	else if(href_list["adminalert"])
+		if(!check_rights(R_MOD))
+			return
+
+		var/mob/M = locate(href_list["adminalert"])
+		usr.client.cmd_admin_alert_message(M)
 
 	else if(href_list["CentcommReply"])
 		var/mob/living/carbon/human/H = locate(href_list["CentcommReply"])
@@ -1261,9 +1263,9 @@
 		var/send_choice = tgui_input_list(usr, "Send this fax?", "Fax Template", list("Send", "Cancel"))
 		if(send_choice == "Cancel")
 			return
-		fax_contents += fax_message // save a copy
+		GLOB.fax_contents += fax_message // save a copy
 
-		USCMFaxes.Add("<a href='?FaxView=\ref[fax_message]'>\[view reply at [world.timeofday]\]</a>")
+		GLOB.USCMFaxes.Add("<a href='?FaxView=\ref[fax_message]'>\[view reply at [world.timeofday]\]</a>")
 
 		var/customname = input(src.owner, "Pick a title for the report", "Title") as text|null
 
@@ -1295,7 +1297,7 @@
 							P.stamped = new
 						P.stamped += /obj/item/tool/stamp
 						P.overlays += stampoverlay
-						P.stamps += "<HR><i>This paper has been stamped by the High Command Quantum Relay.</i>"
+						P.stamps += "<HR><i>This paper has been stamped by the USCM High Command Quantum Relay.</i>"
 
 				to_chat(src.owner, "Message reply to transmitted successfully.")
 				message_staff("[key_name_admin(src.owner)] replied to a fax message from [key_name_admin(H)]", 1)
@@ -1339,9 +1341,9 @@
 		var/send_choice = tgui_input_list(usr, "Send this fax?", "Fax Confirmation", list("Send", "Cancel"))
 		if(send_choice == "Cancel")
 			return
-		fax_contents += fax_message // save a copy
+		GLOB.fax_contents += fax_message // save a copy
 
-		CLFaxes.Add("<a href='?FaxView=\ref[fax_message]'>\[view reply at [world.timeofday]\]</a>") //Add replies so that mods know what the hell is goin on with the RP
+		GLOB.WYFaxes.Add("<a href='?FaxView=\ref[fax_message]'>\[view reply at [world.timeofday]\]</a>") //Add replies so that mods know what the hell is goin on with the RP
 
 		var/customname = input(src.owner, "Pick a title for the report", "Title") as text|null
 		if(!customname)
@@ -1383,7 +1385,12 @@
 				return
 		to_chat(src.owner, "/red Unable to locate fax!")
 
+	else if(href_list["customise_paper"])
+		if(!check_rights(R_MOD))
+			return
 
+		var/obj/item/paper/sheet = locate(href_list["customise_paper"])
+		usr.client.customise_paper(sheet)
 
 	else if(href_list["jumpto"])
 		if(!check_rights(R_ADMIN))
@@ -1575,6 +1582,12 @@
 
 		create_humans_list(href_list)
 
+	else if(href_list["create_xenos_list"])
+		if(!check_rights(R_SPAWN))
+			return
+
+		create_xenos_list(href_list)
+
 	else if(href_list["events"])
 		if(!check_rights(R_FUN))
 			return
@@ -1645,9 +1658,9 @@
 				player_notes_show(ckey)
 		return
 
-	if(href_list["player_notes_copy"])
-		var/key = href_list["player_notes_copy"]
-		player_notes_copy(key)
+	if(href_list["player_notes_all"])
+		var/key = href_list["player_notes_all"]
+		player_notes_all(key)
 		return
 
 	if(href_list["ccmark"]) // CentComm-mark. We want to let all Admins know that something is "Marked", but not let the player know because it's not very RP-friendly.

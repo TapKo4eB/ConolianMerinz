@@ -3,6 +3,7 @@ Thumbs.db
 *.log
 *.int
 *.rsc
+*.m.dme
 *.rej
 *.dmb
 *.lk
@@ -12,6 +13,7 @@ Thumbs.db
 *.db-wal
 data/
 cfg/
+!cfg/.keep
 tmp/
 dmdoc/
 tools/Runtime Condenser/Input.txt
@@ -24,6 +26,4 @@ maps/**/backup
 *.before
 __pycache__
 test_environment.txt
-*.json
-*.vscode/*
-!/.vscode/extensions.json
+.cache

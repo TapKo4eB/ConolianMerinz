@@ -4,6 +4,8 @@
 	w_class = SIZE_SMALL
 	var/vision_flags = 0
 	var/darkness_view = 0 //Base human is 2
+	/// The amount of nightvision these glasses have. This should be a number between 0 and 1.
+	var/lighting_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
 	var/invisa_view = FALSE
 	var/prescription = FALSE
 	var/toggleable = FALSE
@@ -27,8 +29,9 @@
 		AddElement(/datum/element/poor_eyesight_correction)
 
 /obj/item/clothing/glasses/get_icon_state(mob/user_mob, slot)
-	if(item_state_slots && item_state_slots[slot])
-		return item_state_slots[slot]
+	var/item_state_slot_state = LAZYACCESS(item_state_slots, slot)
+	if(item_state_slot_state)
+		return item_state_slot_state
 	else
 		return icon_state
 
@@ -52,6 +55,7 @@
 
 /obj/item/clothing/glasses/proc/toggle_glasses_effect()
 	active = !active
+	clothing_traits_active = !clothing_traits_active
 	update_icon()
 	if(ishuman(loc))
 		var/mob/living/carbon/human/H = loc
@@ -70,21 +74,27 @@
 				else
 					MH.remove_hud_from(H)
 					playsound(H, 'sound/handling/hud_off.ogg', 25, 1)
+			if(active) //turning it on? then add the traits
+				for(var/trait in clothing_traits)
+					ADD_TRAIT(H, trait, TRAIT_SOURCE_EQUIPMENT(flags_equip_slot))
+			else //turning it off - take away its traits
+				for(var/trait in clothing_traits)
+					REMOVE_TRAIT(H, trait, TRAIT_SOURCE_EQUIPMENT(flags_equip_slot))
 
 	for(var/X in actions)
 		var/datum/action/A = X
 		A.update_button_icon()
 
 /obj/item/clothing/glasses/equipped(mob/user, slot)
-	if(active)
+	if(active && slot == WEAR_EYES)
 		if(!can_use_active_effect(user))
 			toggle_glasses_effect()
 			to_chat(user, SPAN_WARNING("You have no idea what any of the data means and power it off before it makes you nauseated."))
 
-		else if(hud_type && slot == WEAR_EYES)
+		else if(hud_type)
 			var/datum/mob_hud/MH = huds[hud_type]
 			MH.add_hud_to(user)
-	
+	user.update_sight()
 	..()
 
 /obj/item/clothing/glasses/dropped(mob/living/carbon/human/user)
@@ -92,7 +102,10 @@
 		if(src == user.glasses) //dropped is called before the inventory reference is updated.
 			var/datum/mob_hud/H = huds[hud_type]
 			H.remove_hud_from(user)
-	..()
+			user.glasses = null
+			user.update_inv_glasses()
+	user.update_sight()
+	return ..()
 
 /obj/item/clothing/glasses/attack_self(mob/user)
 	..()
@@ -113,10 +126,27 @@
 	toggle_glasses_effect()
 
 /obj/item/clothing/glasses/science
-	name = "weird science goggles"
+	name = "reagent scanner HUD goggles" //science goggles
 	desc = "These goggles are probably of use to someone who isn't holding a rifle and actively seeking to lower their combat life expectancy."
 	icon_state = "purple"
 	item_state = "glasses"
+	deactive_state = "purple_off"
+	actions_types = list(/datum/action/item_action/toggle)
+	toggleable = TRUE
+	flags_inventory = COVEREYES
+	req_skill = SKILL_RESEARCH
+	req_skill_level = SKILL_RESEARCH_TRAINED
+	clothing_traits = list(TRAIT_REAGENT_SCANNER)
+
+/obj/item/clothing/glasses/science/examine(mob/user)
+	. = ..()
+	to_chat(user, SPAN_INFO("While wearing them, you can examine items to see their reagent contents."))
+
+/obj/item/clothing/glasses/kutjevo
+	name = "kutjevo goggles"
+	desc = "Goggles used to shield the eyes of workers on Kutjevo. N95Z Rated Goggles."
+	icon_state = "kutjevo_goggles"
+	item_state = "kutjevo_goggles"
 
 /obj/item/clothing/glasses/eyepatch
 	name = "eyepatch"
@@ -214,6 +244,151 @@
 	toggleable = 1
 	actions_types = list(/datum/action/item_action/toggle)
 
+/obj/item/clothing/glasses/m42c_goggles
+	name = "\improper M42C special operations sight"
+	desc = "A specialized variation of the M42 scout sight system, intended for use with the high-power M42C anti-tank sniper rifle. Allows for highlighted imaging of surroundings, as well as detection of thermal signatures even from a great distance. Click it to toggle."
+	icon = 'icons/obj/items/clothing/glasses.dmi'
+	icon_state = "m56_goggles"
+	deactive_state = "m56_goggles_0"
+	vision_flags = SEE_TURFS|SEE_MOBS
+	darkness_view = 12
+	toggleable = TRUE
+	actions_types = list(/datum/action/item_action/toggle)
+
+/obj/item/clothing/glasses/disco_fever
+	name = "malfunctioning AR visor"
+	desc = "Someone tried to watch a black-market Arcturian blue movie on this augmented-reality headset and now it's useless. Unlike you, Disco will never die.\nThere's some kind of epilepsy warning sticker on the side."
+	icon_state = "discovision"
+	flags_equip_slot = SLOT_EYES|SLOT_FACE
+
+	//These three vars are so that the flashing of the obj and onmob match what the wearer is seeing. They're actually vis_contents rather than overlays,
+	//strictly speaking, since overlays can't be animate()-ed.
+	var/list/onmob_colors
+	var/obj/obj_glass_overlay
+	var/obj/mob_glass_overlay
+
+/obj/item/clothing/glasses/disco_fever/Initialize(mapload, ...)
+	. = ..()
+
+	obj_glass_overlay = new()
+	obj_glass_overlay.vis_flags = VIS_INHERIT_ID|VIS_INHERIT_ICON
+	obj_glass_overlay.icon_state = "discovision_glass"
+	obj_glass_overlay.layer = FLOAT_LAYER
+	vis_contents += obj_glass_overlay
+
+	mob_glass_overlay = new()
+	mob_glass_overlay.icon = icon
+	mob_glass_overlay.vis_flags = VIS_INHERIT_ID|VIS_INHERIT_DIR
+	mob_glass_overlay.icon_state = "discovision_glass_onmob"
+	mob_glass_overlay.layer = FLOAT_LAYER
+
+	//The overlays are painted in shades of pure red. These matrices convert them to various shades of the new colour.
+	onmob_colors = list(
+		"base" = color_matrix_recolor_red("#5D5D5D"),
+		"yellow" = color_matrix_recolor_red("#D4C218"),
+		"green" = color_matrix_recolor_red("#0DB347"),
+		"cyan" = color_matrix_recolor_red("#2AC1DB"),
+		"blue" = color_matrix_recolor_red("#005BF7"),
+		"indigo" = color_matrix_recolor_red("#9608D4"),
+		)
+
+	obj_glass_overlay.color = onmob_colors["base"]
+	mob_glass_overlay.color = onmob_colors["base"]
+
+/obj/item/clothing/glasses/disco_fever/equipped(mob/living/carbon/human/user, slot)
+	. = ..()
+
+	if(!ishuman(user) || slot != WEAR_EYES && slot != WEAR_FACE)
+		return
+
+	RegisterSignal(user, COMSIG_MOB_RECALCULATE_CLIENT_COLOR, .proc/apply_discovision_handler)
+	apply_discovision_handler(user)
+
+	//Add the onmob overlay. Normal onmob images are handled by static overlays.
+	//It's added to the head object so that glasses/mask overlays on the mob render above it, since vis_contents and overlays appear to use different layerings.
+	var/obj/limb/head/user_head = user.get_limb("head")
+	user_head?.vis_contents += mob_glass_overlay
+
+///Ends existing animations in preparation for the funny. Looping animations don't seem to properly end if a new one is started on the same tick.
+/obj/item/clothing/glasses/disco_fever/proc/apply_discovision_handler(mob/user)
+	SIGNAL_HANDLER
+
+	//User client has its looping animation ended by the login matrix update when ghosting.
+	//For some reason the obj overlay doesn't end the loop properly when set to 0 seconds, but as long as the previous loop is ended the new one should
+	//transition smoothly from whatever colour it current has.
+	animate(obj_glass_overlay, color = onmob_colors["base"], time = 0.3 SECONDS)
+	animate(mob_glass_overlay, color = onmob_colors["base"], time = 0.3 SECONDS)
+
+	addtimer(CALLBACK(src, .proc/apply_discovision, user), 0.1 SECONDS)
+
+///Handles disco-vision. Normal client colour matrix handling isn't set up for a continuous animation like this, so this is applied afterwards.
+/obj/item/clothing/glasses/disco_fever/proc/apply_discovision(mob/user)
+	//Caramelldansen HUD overlay.
+	//Use of this filter in armed conflict is in direct contravention of the Geneva Suggestions (2120 revision)
+	//Colours are based on a bit of the music video. Original version was a rainbow with #c20000 and #db6c03 as well.
+
+	//Animate the obj and onmob in sync with the client.
+	for(var/I in list(obj_glass_overlay, mob_glass_overlay))
+		animate(I, color = onmob_colors["indigo"], time = 0.3 SECONDS, loop = -1)
+		animate(color = onmob_colors["base"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["cyan"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["base"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["yellow"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["base"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["green"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["base"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["blue"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["base"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["yellow"], time = 0.3 SECONDS)
+		animate(color = onmob_colors["base"], time = 0.3 SECONDS)
+
+	if(!user.client) //Shouldn't happen but can't hurt to check.
+		return
+
+	var/base_colour
+	if(!user.client.color) //No set client colour.
+		base_colour = color_matrix_saturation(1.35) //Crank up the saturation and get ready to party.
+	else if(istext(user.client.color)) //Hex colour string.
+		base_colour = color_matrix_multiply(color_matrix_from_string(user.client.color), color_matrix_saturation(1.35))
+	else //Colour matrix.
+		base_colour = color_matrix_multiply(user.client.color, color_matrix_saturation(1.35))
+
+	var/list/colours = list(
+		"yellow" = color_matrix_multiply(base_colour, color_matrix_from_string("#d4c218")),
+		"green" = color_matrix_multiply(base_colour, color_matrix_from_string("#2dc404")),
+		"cyan" = color_matrix_multiply(base_colour, color_matrix_from_string("#2ac1db")),
+		"blue" = color_matrix_multiply(base_colour, color_matrix_from_string("#005BF7")),
+		"indigo" = color_matrix_multiply(base_colour, color_matrix_from_string("#b929f7"))
+		)
+
+	//Animate the victim's client.
+	animate(user.client, color = colours["indigo"], time = 0.3 SECONDS, loop = -1)
+	animate(color = base_colour, time = 0.3 SECONDS)
+	animate(color = colours["cyan"], time = 0.3 SECONDS)
+	animate(color = base_colour, time = 0.3 SECONDS)
+	animate(color = colours["yellow"], time = 0.3 SECONDS)
+	animate(color = base_colour, time = 0.3 SECONDS)
+	animate(color = colours["green"], time = 0.3 SECONDS)
+	animate(color = base_colour, time = 0.3 SECONDS)
+	animate(color = colours["blue"], time = 0.3 SECONDS)
+	animate(color = base_colour, time = 0.3 SECONDS)
+	animate(color = colours["yellow"], time = 0.3 SECONDS)
+	animate(color = base_colour, time = 0.3 SECONDS)
+
+/obj/item/clothing/glasses/disco_fever/dropped(mob/living/carbon/human/user)
+	. = ..()
+
+	if(!ishuman(user))
+		return
+
+	UnregisterSignal(user, COMSIG_MOB_RECALCULATE_CLIENT_COLOR)
+
+	animate(obj_glass_overlay, color = onmob_colors["base"], time = 0.3 SECONDS)
+	animate(mob_glass_overlay, color = onmob_colors["base"], time = 0.3 SECONDS)
+
+	user.update_client_color_matrices(0.3 SECONDS)
+	var/obj/limb/head/user_head = user.get_limb("head")
+	user_head?.vis_contents -= mob_glass_overlay
 
 
 //welding goggles

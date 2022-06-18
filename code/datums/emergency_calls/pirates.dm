@@ -9,8 +9,8 @@
 	probability = 0
 	hostility = TRUE
 
-/datum/emergency_call/pirates/create_member(datum/mind/M)
-	var/turf/spawn_loc = get_spawn_point()
+/datum/emergency_call/pirates/create_member(datum/mind/M, var/turf/override_spawn_loc)
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
 	if(!istype(spawn_loc))
 		return //Didn't find a useable spawn point.
@@ -20,11 +20,11 @@
 
 	if(!leader)       //First one spawned is always the leader.
 		leader = H
-		arm_equipment(H, "Fun - Pirate Captain", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/fun/pirate/captain, TRUE, TRUE)
 		to_chat(H, SPAN_ROLE_HEADER("You are the leader of these jolly pirates!"))
 		to_chat(H, SPAN_ROLE_BODY("Loot this place for all its worth! Take everything of value that's not nailed down!"))
 	else
-		arm_equipment(H, "Fun - Pirate", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/fun/pirate, TRUE, TRUE)
 		to_chat(H, SPAN_ROLE_HEADER("You are a jolly pirate! Yarr!"))
 		to_chat(H, SPAN_ROLE_BODY("Loot this place for all its worth! Take everything of value that's not nailed down!"))
 

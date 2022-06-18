@@ -43,10 +43,8 @@
 	name = "Praetorian Warden Behavior Delegate"
 
 	// Config
-	var/internal_hitpoints_max = 325
-	var/internal_hitpoints_per_attack = 75
-	var/percent_hp_to_self_heal = 0.2
-	var/internal_hp_selfheal_size = 50
+	var/internal_hitpoints_max = 350
+	var/internal_hitpoints_per_attack = 50
 	var/internal_hp_per_life = 5
 
 	// State
@@ -54,29 +52,26 @@
 
 /datum/behavior_delegate/praetorian_warden/append_to_stat()
 	. = list()
-	. += "Health Reserves: [internal_hitpoints]/[internal_hitpoints_max]"
+	. += "Energy Reserves: [internal_hitpoints]/[internal_hitpoints_max]"
 
 /datum/behavior_delegate/praetorian_warden/on_life()
-	if ((internal_hitpoints != 0) && bound_xeno.health <= percent_hp_to_self_heal*bound_xeno.maxHealth && !bound_xeno.on_fire)
-		if (internal_hitpoints >= internal_hp_selfheal_size)
-			remove_internal_hitpoints(internal_hp_selfheal_size)
-			bound_xeno.gain_health(internal_hp_selfheal_size)
-		else
-			bound_xeno.gain_health(internal_hitpoints)
-			remove_internal_hitpoints(internal_hitpoints)
+	internal_hitpoints = min(internal_hitpoints_max, internal_hitpoints + internal_hp_per_life)
 
-		to_chat(bound_xeno, SPAN_XENOHIGHDANGER("You feel your resources of health pour through your blood!"))
-	else
-		internal_hitpoints = min(internal_hitpoints_max, internal_hitpoints + internal_hp_per_life)
+	var/mob/living/carbon/Xenomorph/Praetorian/X = bound_xeno
+	var/image/holder = X.hud_list[PLASMA_HUD]
+	holder.overlays.Cut()
 
-/datum/behavior_delegate/praetorian_warden/on_hitby_projectile(ammo)
-	if ((internal_hitpoints != 0) && bound_xeno.health <= percent_hp_to_self_heal*bound_xeno.maxHealth && !bound_xeno.on_fire)
-		if (internal_hitpoints >= internal_hp_selfheal_size)
-			remove_internal_hitpoints(internal_hp_selfheal_size)
-			bound_xeno.gain_health(internal_hp_selfheal_size)
-		else
-			bound_xeno.gain_health(internal_hitpoints)
-			remove_internal_hitpoints(internal_hitpoints)
+	if(X.stat == DEAD)
+		return
+
+	var/percentage_energy = round((internal_hitpoints / internal_hitpoints_max) * 100, 10)
+	if(percentage_energy)
+		holder.overlays += image('icons/mob/hud/hud.dmi', "xenoenergy[percentage_energy]")
+
+/datum/behavior_delegate/praetorian_warden/handle_death(mob/M)
+	var/mob/living/carbon/Xenomorph/Praetorian/X = M
+	var/image/holder = X.hud_list[PLASMA_HUD]
+	holder.overlays.Cut()
 
 /datum/behavior_delegate/praetorian_warden/melee_attack_additional_effects_self()
 	..()

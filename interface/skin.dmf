@@ -26,6 +26,11 @@ menu "menu"
 		category = "&File"
 		saved-params = "is-checked"
 	elem
+		name = "&Options and Messages"
+		command = ".options"
+		category = "&File"
+		saved-params = "is-checked"
+	elem
 		name = "&Quit"
 		command = ".quit"
 		category = "&File"
@@ -130,11 +135,6 @@ menu "menu"
 		category = "&Help"
 		saved-params = "is-checked"
 	elem
-		name = "&Hotkeys"
-		command = "hotkeys-help"
-		category = "&Help"
-		saved-params = "is-checked"
-	elem
 		name = "Volume"
 		command = ""
 		saved-params = "is-checked"
@@ -166,7 +166,7 @@ window "mainwindow"
 		title = "CM-SS13 - USS Almayer"
 		is-maximized = true
 		statusbar = false
-		icon = 'icons\\ss13_64.png'
+		icon = 'icons\\taskbar\\gml_distress.png'
 		macro = "default"
 		menu = "menu"
 	elem "split"

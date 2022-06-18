@@ -58,16 +58,13 @@
 		if(fullness > 540 && world.time < C.overeat_cooldown)
 			to_chat(user, SPAN_WARNING("[user == M ? "You" : "They"] don't feel like eating more right now."))
 			return
+		if(isSynth(C))
+			fullness = 200 //Synths never get full
 
 		if(fullness > 540)
 			C.overeat_cooldown = world.time + OVEREAT_TIME
 
 		if(M == user)//If you're eating it yourself
-			if(istype(M,/mob/living/carbon/human))
-				var/mob/living/carbon/human/H = M
-				if(H.species.flags & IS_SYNTHETIC)
-					to_chat(H, SPAN_DANGER("You have a monitor for a head, where do you think you're going to put that?"))
-					return
 			if (fullness <= 50)
 				to_chat(M, SPAN_WARNING("You hungrily chew out a piece of [src] and gobble it!"))
 			if (fullness > 50 && fullness <= 150)
@@ -79,12 +76,6 @@
 			if (fullness > 540)
 				to_chat(M, SPAN_WARNING("You reluctantly force more of [src] to go down your throat."))
 		else
-			if(istype(M,/mob/living/carbon/human))
-				var/mob/living/carbon/human/H = M
-				if(H.species.flags & IS_SYNTHETIC)
-					to_chat(H, SPAN_DANGER("They have a monitor for a head, where do you think you're going to put that?"))
-					return
-
 			if (fullness <= 540)
 				user.affected_message(M,
 					SPAN_HELPFUL("You <b>start feeding</b> [user == M ? "yourself" : "[M]"] <b>[src]</b>."),
@@ -210,12 +201,6 @@
 	qdel(src)
 
 	return
-
-/obj/item/reagent_container/food/snacks/Destroy()
-	if(contents)
-		for(var/atom/movable/something in contents)
-			something.forceMove(get_turf(src))
-	return ..()
 
 /obj/item/reagent_container/food/snacks/attack_animal(var/mob/M)
 	if(isanimal(M))
@@ -1590,6 +1575,10 @@
 		new monkey_type(T)
 	qdel(src)
 
+/obj/item/reagent_container/food/snacks/monkeycube/extinguish()
+	. = ..()
+	if(!package)
+		Expand()
 
 /obj/item/reagent_container/food/snacks/monkeycube/wrapped
 	desc = "Still wrapped in some paper."
@@ -2441,6 +2430,71 @@
 	filling_color = "#FFF700"
 	bitesize = 2
 
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/immature
+	name = "immature cheese wheel"
+	desc = "A big wheel of supposedly delicious Cheddar, but it hasn't been aged enough and as such tastes rather crap."
+	slice_path = /obj/item/reagent_container/food/snacks/cheesewedge/immature
+
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/immature/Initialize()
+	. = ..()
+	reagents.add_reagent("cheese", 15)
+	reagents.add_reagent("milk", 5)
+	bitesize = 4
+
+/obj/item/reagent_container/food/snacks/cheesewedge/immature
+	name = "immature cheese wedge"
+	desc = "A wedge of immature Cheddar, without any noticeable good taste. The cheese wheel it was cut from can't have gone far. It's so weak you can basically eat it all in one bite."
+	bitesize = 4
+
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/mature
+	name = "mature cheese wheel"
+	desc = "A big wheel of delicious Cheddar, sufficiently aged."
+	slice_path = /obj/item/reagent_container/food/snacks/cheesewedge/mature
+
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/mature/Initialize()
+	. = ..()
+	reagents.add_reagent("cheese", 20)
+	reagents.add_reagent("sodiumchloride", 5)
+	bitesize = 2
+
+/obj/item/reagent_container/food/snacks/cheesewedge/mature
+	name = "mature cheese wedge"
+	desc = "A wedge of mature Cheddar, tastes pretty nice. The cheese wheel it was cut from can't have gone far."
+	bitesize = 2
+
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/verymature
+	name = "aged cheese wheel"
+	desc = "A big wheel of delicious Cheddar, it has been aged for a long time and is pretty strong."
+	slice_path = /obj/item/reagent_container/food/snacks/cheesewedge/verymature
+
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/verymature/Initialize()
+	. = ..()
+	reagents.add_reagent("cheese", 25)
+	bitesize = 2
+
+/obj/item/reagent_container/food/snacks/cheesewedge/verymature
+	name = "aged cheese wedge"
+	desc = "A wedge of very mature Cheddar. This one's been aged for a while. The cheese wheel it was cut from can't have gone far."
+	bitesize = 2
+
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/extramature
+	name = "primordial cheese wheel"
+	desc = "A big wheel of delicious Cheddar, it has been aged for practically aeons. Merely seeing this cheese causes you to break into a cold sweat. Due to its strength, you can't eat in big bites."
+	slice_path = /obj/item/reagent_container/food/snacks/cheesewedge/extramature
+
+/obj/item/reagent_container/food/snacks/sliceable/cheesewheel/extramature/Initialize()
+	. = ..()
+	reagents.add_reagent("cheese", 25)
+	reagents.add_reagent("sugar", 1)
+	reagents.add_reagent("sodiumchloride", 1)
+	reagents.add_reagent("universal enzyme", 1)
+	bitesize = 1
+
+/obj/item/reagent_container/food/snacks/cheesewedge/extramature
+	name = "primordial cheese wedge"
+	desc = "A wedge of extra mature Cheddar. So strong you can barely put more than a few grammes in your mouth at a time. The cheese wheel it was cut from can't have gone far."
+	bitesize = 1
+
 /obj/item/reagent_container/food/snacks/sliceable/birthdaycake
 	name = "Birthday Cake"
 	desc = "Happy Birthday..."
@@ -2849,7 +2903,7 @@
 // Flour + egg = dough
 /obj/item/reagent_container/food/snacks/flour/attackby(obj/item/W as obj, mob/user as mob)
 	if(istype(W,/obj/item/reagent_container/food/snacks/egg))
-		new /obj/item/reagent_container/food/snacks/dough(src)
+		new /obj/item/reagent_container/food/snacks/dough(get_turf(src))
 		to_chat(user, "You make some dough.")
 		qdel(W)
 		qdel(src)
@@ -2857,7 +2911,7 @@
 // Egg + flour = dough
 /obj/item/reagent_container/food/snacks/egg/attackby(obj/item/W as obj, mob/user as mob)
 	if(istype(W,/obj/item/reagent_container/food/snacks/flour))
-		new /obj/item/reagent_container/food/snacks/dough(src)
+		new /obj/item/reagent_container/food/snacks/dough(get_turf(src))
 		to_chat(user, "You make some dough.")
 		qdel(W)
 		qdel(src)
@@ -2876,7 +2930,7 @@
 // Dough + rolling pin = flat dough
 /obj/item/reagent_container/food/snacks/dough/attackby(obj/item/W as obj, mob/user as mob)
 	if(istype(W,/obj/item/tool/kitchen/rollingpin))
-		new /obj/item/reagent_container/food/snacks/sliceable/flatdough(src)
+		new /obj/item/reagent_container/food/snacks/sliceable/flatdough(get_turf(src))
 		to_chat(user, "You flatten the dough.")
 		qdel(src)
 
@@ -2918,21 +2972,21 @@
 /obj/item/reagent_container/food/snacks/bun/attackby(obj/item/W as obj, mob/user as mob)
 	// Bun + meatball = burger
 	if(istype(W,/obj/item/reagent_container/food/snacks/meatball))
-		new /obj/item/reagent_container/food/snacks/monkeyburger(src)
+		new /obj/item/reagent_container/food/snacks/monkeyburger(get_turf(src))
 		to_chat(user, "You make a burger.")
 		qdel(W)
 		qdel(src)
 
 	// Bun + cutlet = hamburger
 	else if(istype(W,/obj/item/reagent_container/food/snacks/cutlet))
-		new /obj/item/reagent_container/food/snacks/monkeyburger(src)
+		new /obj/item/reagent_container/food/snacks/monkeyburger(get_turf(src))
 		to_chat(user, "You make a burger.")
 		qdel(W)
 		qdel(src)
 
 	// Bun + sausage = hotdog
 	else if(istype(W,/obj/item/reagent_container/food/snacks/sausage))
-		new /obj/item/reagent_container/food/snacks/hotdog(src)
+		new /obj/item/reagent_container/food/snacks/hotdog(get_turf(src))
 		to_chat(user, "You make a hotdog.")
 		qdel(W)
 		qdel(src)
@@ -2940,7 +2994,7 @@
 // Burger + cheese wedge = cheeseburger
 /obj/item/reagent_container/food/snacks/monkeyburger/attackby(obj/item/reagent_container/food/snacks/cheesewedge/W as obj, mob/user as mob)
 	if(istype(W))// && !istype(src,/obj/item/reagent_container/food/snacks/cheesewedge))
-		new /obj/item/reagent_container/food/snacks/cheeseburger(src)
+		new /obj/item/reagent_container/food/snacks/cheeseburger(get_turf(src))
 		to_chat(user, "You make a cheeseburger.")
 		qdel(W)
 		qdel(src)
@@ -2951,7 +3005,7 @@
 // Human Burger + cheese wedge = cheeseburger
 /obj/item/reagent_container/food/snacks/human/burger/attackby(obj/item/reagent_container/food/snacks/cheesewedge/W as obj, mob/user as mob)
 	if(istype(W))
-		new /obj/item/reagent_container/food/snacks/cheeseburger(src)
+		new /obj/item/reagent_container/food/snacks/cheeseburger(get_turf(src))
 		to_chat(user, "You make a cheeseburger.")
 		qdel(W)
 		qdel(src)
@@ -3027,7 +3081,7 @@
 // potato + knife = raw sticks
 /obj/item/reagent_container/food/snacks/grown/potato/attackby(obj/item/W as obj, mob/user as mob)
 	if(istype(W,/obj/item/tool/kitchen/utensil/knife))
-		new /obj/item/reagent_container/food/snacks/rawsticks(src)
+		new /obj/item/reagent_container/food/snacks/rawsticks(get_turf(src))
 		to_chat(user, "You cut the potato.")
 		qdel(src)
 	else
@@ -3088,6 +3142,7 @@
 		to_chat(user, SPAN_NOTICE("You pull off the wrapping from the squishy hamburger!"))
 		package = 0
 		icon_state = "hburger"
+		item_state = "burger"
 
 /obj/item/reagent_container/food/snacks/packaged_hdogs
 	name = "Packaged Hotdog"
@@ -3253,18 +3308,22 @@
 	switch(newflavor)
 		if("boneless pork ribs", "grilled chicken", "pizza square", "spaghetti chunks", "chicken tender")
 			icon_state = "entree"
+			desc = "An MRE entree component. Contains the main course for nutrients. This one is [flavor]."
 			reagents.add_reagent("nutriment", 14)
 			reagents.add_reagent("sodiumchloride", 6)
 		if("cracker", "cheese spread", "rice onigiri", "mashed potatoes", "risotto")
 			icon_state = "side"
+			desc = "An MRE side component. Contains a side, to be eaten alongside the main. This one is [flavor]."
 			reagents.add_reagent("nutriment", 6)
 			reagents.add_reagent("sodiumchloride", 2)
 		if("biscuit", "meatballs", "pretzels", "peanuts", "sushi")
 			icon_state = "snack"
+			desc = "An MRE snack component. Contains a light snack in case you weren't feeling terribly hungry. This one is [flavor]."
 			reagents.add_reagent("nutriment", 4)
 			reagents.add_reagent("sodiumchloride", 2)
 		if("spiced apples", "chocolate brownie", "sugar cookie", "coco bar", "flan", "honey flan")
 			icon_state = "dessert"
+			desc = "An MRE side component. Contains a sweet dessert, to be eaten after the main (or before, if you're rebellious). This one is [flavor]."
 			reagents.add_reagent("nutriment", 2)
 			reagents.add_reagent("sugar", 2)
 			reagents.add_reagent("coco", 1)

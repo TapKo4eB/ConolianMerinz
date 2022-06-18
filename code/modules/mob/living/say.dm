@@ -3,42 +3,50 @@ var/list/department_radio_keys = list(
 	  ":h" = "department",	"#h" = "department",	".h" = "department",
 	  ":+" = "special",		"#+" = "special",		".+" = "special", //activate radio-specific special functions
 	  ":w" = "whisper",		"#w" = "whisper",		".w" = "whisper",
-	  ":z" = "HighCom",		"#z" = "HighCom",		".z" = "HighCom",
 
 	  ":m" = "MedSci",		"#m" = "MedSci",		".m" = "MedSci",
-	  ":e" = "Engi", 		"#e" = "Engi",			".e" = "Engi",
+	  ":n" = "Engi", 		"#n" = "Engi",			".n" = "Engi",
 	  ":g" = "Almayer",		"#g" = "Almayer",		".g" = "Almayer",
 	  ":v" = "Command",		"#v" = "Command",		".v" = "Command",
-	  ":a" = SQUAD_NAME_1,	"#a" = SQUAD_NAME_1,	".a" = SQUAD_NAME_1,
-	  ":b" = SQUAD_NAME_2,	"#b" = SQUAD_NAME_2,	".b" = SQUAD_NAME_2,
-	  ":c" = SQUAD_NAME_3,	"#c" = SQUAD_NAME_3,	".c" = SQUAD_NAME_3,
-	  ":d" = SQUAD_NAME_4,	"#d" = SQUAD_NAME_4,	".d" = SQUAD_NAME_4,
+	  ":a" = SQUAD_MARINE_1,	"#a" = SQUAD_MARINE_1,	".a" = SQUAD_MARINE_1,
+	  ":b" = SQUAD_MARINE_2,	"#b" = SQUAD_MARINE_2,	".b" = SQUAD_MARINE_2,
+	  ":c" = SQUAD_MARINE_3,	"#c" = SQUAD_MARINE_3,	".c" = SQUAD_MARINE_3,
+	  ":d" = SQUAD_MARINE_4,	"#d" = SQUAD_MARINE_4,	".d" = SQUAD_MARINE_4,
+	  ":e" = SQUAD_MARINE_5,	"#e" = SQUAD_MARINE_5,	".e" = SQUAD_MARINE_5,
+	  ":f" = SQUAD_MARINE_CRYO,	"#f" = SQUAD_MARINE_CRYO,		".f" = SQUAD_MARINE_CRYO,
 	  ":p" = "MP",			"#p" = "MP",			".p" = "MP",
 	  ":u" = "Req",			"#u" = "Req",			".u" = "Req",
 	  ":j" = "JTAC",		"#j" = "JTAC",			".j" = "JTAC",
 	  ":t" = "Tactics",		"#t" = "Tactics",		".t" = "Tactics",
 	  ":y" = "WY",			"#y" = "WY",			".y" = "WY",
+	  ":o" = "CCT",			"#o" = "CCT",			".o" = "CCT",
+	  ":z" = "HighCom",		"#z" = "HighCom",		".z" = "HighCom",
+	  ":k" = SQUAD_MARSOC,	"#k" = SQUAD_MARSOC,	".k" = SQUAD_MARSOC,
 
 	  ":R" = "right ear",	"#R" = "right ear",		".R" = "right ear",
 	  ":L" = "left ear",	"#L" = "left ear",		".L" = "left ear",
 	  ":I" = "intercom",	"#I" = "intercom",		".I" = "intercom",
 	  ":H" = "department",	"#H" = "department",	".H" = "department",
 	  ":W" = "whisper",		"#W" = "whisper",		".W" = "whisper",
-	  ":Z" = "HighCom",		"#Z" = "HighCom",		".Z" = "HighCom",
 
 	  ":M" = "MedSci",		"#M" = "MedSci",		".M" = "MedSci",
-	  ":E" = "Engi", 		"#E" = "Engi",			".E" = "Engi",
+	  ":N" = "Engi", 		"#N" = "Engi",			".N" = "Engi",
 	  ":G" = "Almayer",		"#G" = "Almayer",		".G" = "Almayer",
 	  ":V" = "Command",		"#V" = "Command",		".V" = "Command",
-	  ":A" = SQUAD_NAME_1,	"#A" = SQUAD_NAME_1,	".A" = SQUAD_NAME_1,
-	  ":B" = SQUAD_NAME_2,	"#B" = SQUAD_NAME_2,	".B" = SQUAD_NAME_2,
-	  ":C" = SQUAD_NAME_3,	"#C" = SQUAD_NAME_3,	".C" = SQUAD_NAME_3,
-	  ":D" = SQUAD_NAME_4,	"#D" = SQUAD_NAME_4,	".D" = SQUAD_NAME_4,
+	  ":A" = SQUAD_MARINE_1,	"#A" = SQUAD_MARINE_1,	".A" = SQUAD_MARINE_1,
+	  ":B" = SQUAD_MARINE_2,	"#B" = SQUAD_MARINE_2,	".B" = SQUAD_MARINE_2,
+	  ":C" = SQUAD_MARINE_3,	"#C" = SQUAD_MARINE_3,	".C" = SQUAD_MARINE_3,
+	  ":D" = SQUAD_MARINE_4,	"#D" = SQUAD_MARINE_4,	".D" = SQUAD_MARINE_4,
+	  ":E" = SQUAD_MARINE_5,	"#E" = SQUAD_MARINE_5,	".E" = SQUAD_MARINE_5,
+	  ":F" = SQUAD_MARINE_CRYO,	"#F" = SQUAD_MARINE_CRYO,		".F" = SQUAD_MARINE_CRYO,
 	  ":P" = "MP",			"#P" = "MP",			".P" = "MP",
 	  ":U" = "Req",			"#U" = "Req",			".U" = "Req",
 	  ":J" = "JTAC",		"#J" = "JTAC",			".J" = "JTAC",
 	  ":T" = "Tactics",		"#T" = "Tactics",		".T" = "Tactics",
 	  ":Y" = "WY",			"#Y" = "WY",			".Y" = "WY",
+	  ":O" = "CCT",			"#O" = "CCT",			".O" = "CCT",
+	  ":Z" = "HighCom",		"#Z" = "HighCom",		".Z" = "HighCom",
+	  ":K" = SQUAD_MARSOC,	"#K" = SQUAD_MARSOC,	".K" = SQUAD_MARSOC,
 
 	  //kinda localization -- rastaf0
 	  //same keys as above, but on russian keyboard layout. This file uses cp1251 as encoding.
@@ -56,10 +64,13 @@ var/list/department_radio_keys = list(
 /mob/living/proc/binarycheck()
 	return FALSE
 
+///Shows custom speech bubbles for screaming, *warcry etc.
 /mob/living/proc/show_speech_bubble(var/bubble_name)
 	var/list/hear = hearers()
 
 	var/image/speech_bubble = image('icons/mob/hud/talk.dmi',src,"[bubble_name]")
+
+	speech_bubble.appearance_flags = NO_CLIENT_COLOR|KEEP_APART|RESET_COLOR
 
 	if(appearance_flags & PIXEL_SCALE)
 		speech_bubble.appearance_flags |= PIXEL_SCALE
@@ -80,17 +91,13 @@ var/list/department_radio_keys = list(
 
 	speech_bubble = null
 
-#define ENDING_PUNCT list(".", "-", "?", "!")
 
 /mob/living/say(var/message, var/datum/language/speaking = null, var/verb="says", var/alt_name="", var/italics=0, var/message_range = world_view_size, var/sound/speech_sound, var/sound_vol, var/nolog = 0, var/message_mode = null)
 	var/turf/T
 
-	// Automatic punctuation
-	if (client && client.prefs && client.prefs.toggle_prefs & TOGGLE_AUTOMATIC_PUNCTUATION)
-		if (!(copytext(message, -1) in ENDING_PUNCT))
-			message += "."
-
 	if(SEND_SIGNAL(src, COMSIG_LIVING_SPEAK, message, speaking, verb, alt_name, italics, message_range, speech_sound, sound_vol, nolog, message_mode) & COMPONENT_OVERRIDE_SPEAK) return
+
+	message = process_chat_markup(message, list("~", "_"))
 
 	for(var/dst=0; dst<=1; dst++) //Will run twice if src has a clone
 		if(!dst && src.clone) //Will speak in src's location and the clone's
@@ -113,23 +120,23 @@ var/list/department_radio_keys = list(
 		var/list/listening_obj = list()
 
 		if(T)
-			var/list/hear = hear(message_range, T)
 			var/list/hearturfs = list()
 
-			for(var/I in hear)
+			for(var/I in hear(message_range, T))
 				if(istype(I, /mob/))
 					var/mob/M = I
 					listening += M
 					hearturfs += M.locs[1]
 					for(var/obj/O in M.contents)
-						listening_obj |= O
+						if(O.flags_atom & USES_HEARING)
+							listening_obj |= O
 				else if(istype(I, /obj/))
 					var/obj/O = I
 					hearturfs += O.locs[1]
-					listening_obj |= O
+					if(O.flags_atom & USES_HEARING)
+						listening_obj |= O
 
-
-			for(var/mob/M in GLOB.player_list)
+			for(var/mob/M as anything in GLOB.player_list)
 				if((M.stat == DEAD || isobserver(M)) && M.client && M.client.prefs && (M.client.prefs.toggles_chat & CHAT_GHOSTEARS))
 					listening |= M
 					continue
@@ -138,18 +145,19 @@ var/list/department_radio_keys = list(
 
 		var/speech_bubble_test = say_test(message)
 		var/image/speech_bubble = image('icons/mob/hud/talk.dmi',src,"h[speech_bubble_test]")
+		speech_bubble.appearance_flags = NO_CLIENT_COLOR|KEEP_APART|RESET_COLOR
 
 		var/not_dead_speaker = (stat != DEAD)
 		if(not_dead_speaker)
 			langchat_speech(message, listening, speaking)
-		for(var/mob/M in listening)
+		for(var/mob/M as anything in listening)
 			if(not_dead_speaker)
 				M << speech_bubble
 			M.hear_say(message, verb, speaking, alt_name, italics, src, speech_sound, sound_vol)
 
 		addtimer(CALLBACK(src, .proc/remove_speech_bubble, speech_bubble, listening), 30)
 
-		for(var/obj/O in listening_obj)
+		for(var/obj/O as anything in listening_obj)
 			if(O) //It's possible that it could be deleted in the meantime.
 				O.hear_talk(src, message, verb, speaking, italics)
 
@@ -162,15 +170,13 @@ var/list/department_radio_keys = list(
 		if(message_mode)	// we are talking into a radio
 			if(message_mode == "headset")	// default value, means general
 				message_mode = "General"
-			log_say("[name] \[[message_mode]\]: [message] (CKEY: [key]) (JOB: [job])")
+			log_say("[name != "Unknown" ? name : "([real_name])"] \[[message_mode]\]: [message] (CKEY: [key]) (JOB: [job])")
 		else				// we talk normally
-			log_say("[name]: [message] (CKEY: [key]) (JOB: [job])")
+			log_say("[name != "Unknown" ? name : "([real_name])"]: [message] (CKEY: [key]) (JOB: [job])")
 	else
-		log_say("[name]: [message] (CKEY: [key])")
+		log_say("[name != "Unknown" ? name : "([real_name])"]: [message] (CKEY: [key])")
 
 	return 1
-
-#undef ENDING_PUNCT
 
 /mob/living/proc/say_signlang(var/message, var/verb="gestures", var/datum/language/language)
 	for (var/mob/O in viewers(src, null))

@@ -17,6 +17,8 @@
 	var/datum/shuttle/ferry/marine/linked_shuttle
 	var/screen_mode = 0 //used by the dropship console code when this equipment is selected
 	var/point_cost = 0 //how many points it costs to build this with the fabricator, set to 0 if unbuildable.
+	var/skill_required = SKILL_PILOT_TRAINED
+	var/combat_equipment = TRUE
 
 /obj/structure/dropship_equipment/Destroy()
 	QDEL_NULL(ammo_equipped)
@@ -157,6 +159,7 @@
 	point_cost = 500
 	var/deployment_cooldown
 	var/obj/structure/machinery/defenses/sentry/premade/dropship/deployed_turret
+	combat_equipment = FALSE
 
 /obj/structure/dropship_equipment/sentry_holder/Initialize()
 	. = ..()
@@ -275,6 +278,7 @@
 	point_cost = 300
 	var/deployment_cooldown
 	var/obj/structure/machinery/m56d_hmg/mg_turret/dropship/deployed_mg
+	combat_equipment = FALSE
 
 /obj/structure/dropship_equipment/mg_holder/Initialize()
 	. = ..()
@@ -512,17 +516,21 @@
 
 /obj/structure/dropship_equipment/electronics/landing_zone_detector/Destroy()
 	linked_cam_console = null
-	. = ..()
+	return ..()
 
 /obj/structure/dropship_equipment/electronics/landing_zone_detector/on_launch()
-	linked_cam_console.network.Add("landing zones") //only accessible while in the air.
-	for(var/ref in linked_cam_console.concurrent_users)
-		linked_cam_console.update_static_data(locate(ref))
+	linked_cam_console.network.Add(CAMERA_NET_LANDING_ZONES) //only accessible while in the air.
+	for(var/datum/weakref/ref in linked_cam_console.concurrent_users)
+		var/mob/user = ref.resolve()
+		if(user)
+			linked_cam_console.update_static_data(user)
 
 /obj/structure/dropship_equipment/electronics/landing_zone_detector/on_arrival()
-	linked_cam_console.network.Remove("landing zones")
-	for(var/ref in linked_cam_console.concurrent_users)
-		linked_cam_console.update_static_data(locate(ref))
+	linked_cam_console.network.Remove(CAMERA_NET_LANDING_ZONES)
+	for(var/datum/weakref/ref in linked_cam_console.concurrent_users)
+		var/mob/user = ref.resolve()
+		if(user)
+			linked_cam_console.update_static_data(user)
 
 
 /////////////////////////////////// COMPUTERS //////////////////////////////////////
@@ -557,6 +565,7 @@
 	is_weapon = TRUE
 	screen_mode = 1
 	is_interactable = TRUE
+	skill_required = SKILL_PILOT_EXPERT
 	var/last_fired //used for weapon cooldown after use.
 	var/firing_sound
 	var/firing_delay = 20 //delay between firing. 2 seconds by default
@@ -625,9 +634,7 @@
 	// clamp back to maximum inaccuracy
 	ammo_accuracy_range = min(ammo_accuracy_range, ammo_max_inaccuracy)
 
-	var/list/possible_turfs = list()
-	for(var/turf/TU in range(ammo_accuracy_range, target_turf))
-		possible_turfs += TU
+	var/list/possible_turfs = RANGE_TURFS(ammo_accuracy_range, target_turf)
 	var/turf/impact = pick(possible_turfs)
 	if(ammo_warn_sound)
 		playsound(impact, ammo_warn_sound, ammo_warn_sound_volume, 1)
@@ -668,6 +675,7 @@
 	icon_state = "30mm_cannon"
 	firing_sound = 'sound/effects/cannon30.ogg'
 	point_cost = 400
+	skill_required = SKILL_PILOT_TRAINED
 	fire_mission_only = FALSE
 
 /obj/structure/dropship_equipment/weapon/heavygun/update_icon()
@@ -727,6 +735,7 @@
 	firing_sound = 'sound/effects/phasein.ogg'
 	firing_delay = 50 //5 seconds
 	point_cost = 500
+	skill_required = SKILL_PILOT_TRAINED
 	fire_mission_only = FALSE
 
 /obj/structure/dropship_equipment/weapon/laser_beam_gun/update_icon()
@@ -736,8 +745,6 @@
 		if(ship_base) icon_state = "laser_beam_installed"
 		else icon_state = "laser_beam"
 
-
-/*TBD
 /obj/structure/dropship_equipment/weapon/launch_bay
 	name = "launch bay"
 	icon_state = "launch_bay"
@@ -745,18 +752,15 @@
 	icon = 'icons/obj/structures/props/almayer_props.dmi'
 	firing_sound = 'sound/weapons/gun_flare_explode.ogg'
 	firing_delay = 10 //1 seconds
+	bound_height = 32
 	equip_categories = list(DROPSHIP_CREW_WEAPON) //fits inside the central spot of the dropship
-	point_cost = 0
+	point_cost = 400
 
-	update_icon()
-		if(ammo_equipped && ammo_equipped.ammo_count)
-			icon_state = "launch_bay_loaded"
-		else
-			if(ship_base) icon_state = "launch_bay"
-			else icon_state = "launch_bay"
-*/
-
-
+/obj/structure/dropship_equipment/weapon/launch_bay/update_equipment()
+	if(ship_base)
+		icon_state = "launch_bay_deployed"
+	else
+		icon_state = "launch_bay"
 
 //////////////// OTHER EQUIPMENT /////////////////
 
@@ -767,11 +771,12 @@
 	desc = "A winch system to lift injured marines on medical stretchers onto the dropship. Acquire lift target through the dropship equipment console."
 	equip_categories = list(DROPSHIP_CREW_WEAPON)
 	icon_state = "medevac_system"
-	point_cost = 500
+	point_cost = 300
 	is_interactable = TRUE
 	var/obj/structure/bed/medevac_stretcher/linked_stretcher
 	var/medevac_cooldown
 	var/busy_winch
+	combat_equipment = FALSE
 
 /obj/structure/dropship_equipment/medevac_system/Destroy()
 	if(linked_stretcher)
@@ -795,10 +800,6 @@
 
 	if(linked_shuttle.moving_status != SHUTTLE_INTRANSIT)
 		to_chat(user, SPAN_WARNING("[src] can only be used while in flight."))
-		return
-
-	if(!linked_shuttle.transit_gun_mission)
-		to_chat(user, SPAN_WARNING("[src] requires a flyby flight to be used."))
 		return
 
 	if(busy_winch)
@@ -874,10 +875,6 @@
 		to_chat(user, SPAN_WARNING("[src] can only be used while in flight."))
 		return
 
-	if(!linked_shuttle.transit_gun_mission)
-		to_chat(user, SPAN_WARNING("[src] requires a flyby flight to be used."))
-		return
-
 	if(busy_winch)
 		to_chat(user, SPAN_WARNING(" The winch is already in motion."))
 		return
@@ -929,10 +926,6 @@
 		to_chat(user, SPAN_WARNING("[src] can only be used while in flight."))
 		return
 
-	if(!linked_shuttle.transit_gun_mission)
-		to_chat(user, SPAN_WARNING("[src] requires a flyby flight to be used."))
-		return
-
 	if(busy_winch)
 		to_chat(user, SPAN_WARNING(" The winch is already in motion."))
 		return
@@ -972,7 +965,7 @@
 	else if(!ship_base) //uninstalled midway
 		fail = TRUE
 
-	else if(!linked_shuttle || linked_shuttle.moving_status != SHUTTLE_INTRANSIT || !linked_shuttle.transit_gun_mission)
+	else if(!linked_shuttle || linked_shuttle.moving_status != SHUTTLE_INTRANSIT)
 		fail = TRUE
 
 	if(fail)
@@ -1012,10 +1005,11 @@
 	desc = "A winch system to collect any fulton recovery balloons in high altitude. Make sure you turn it on!"
 	equip_categories = list(DROPSHIP_CREW_WEAPON)
 	icon_state = "fulton_system"
-	point_cost = 500
+	point_cost = 200
 	is_interactable = TRUE
 	var/fulton_cooldown
 	var/busy_winch
+	combat_equipment = FALSE
 
 /obj/structure/dropship_equipment/fulton_system/update_equipment()
 	if(ship_base)
@@ -1121,3 +1115,128 @@
 		return
 
 	fulton_cooldown = world.time + 50
+
+// Rappel deployment system
+/obj/structure/dropship_equipment/rappel_system
+	name = "rappel deployment system"
+	equip_categories = list(DROPSHIP_CREW_WEAPON)
+	icon_state = "rappel_module_packaged"
+	point_cost = 500
+	combat_equipment = FALSE
+
+	var/harness = /obj/item/rappel_harness
+
+/obj/structure/dropship_equipment/rappel_system/update_equipment()
+	if(ship_base)
+		icon_state = "rappel_hatch_closed"
+		density = FALSE
+	else
+		icon_state = "rappel_module_packaged"
+
+/obj/effect/warning/rappel
+	color = "#17d17a"
+
+/obj/structure/dropship_equipment/rappel_system/attack_hand(mob/living/carbon/human/user)
+	var/datum/cas_iff_group/cas_group = cas_groups[FACTION_MARINE]
+	var/list/targets = cas_group.cas_signals
+
+	if(!LAZYLEN(targets))
+		to_chat(user, SPAN_NOTICE("No CAS signals found."))
+		return
+
+	if(!can_use(user))
+		return
+
+	var/user_input = tgui_input_list(user, "Choose a target to jump to.", name, targets)
+	if(!user_input)
+		return
+
+	if(!can_use(user))
+		return
+
+	var/datum/cas_signal/LT = user_input
+	if(!istype(LT) || !LT.valid_signal())
+		return
+
+	var/turf/location = get_turf(LT.signal_loc)
+	var/area/location_area = get_area(location)
+	if(CEILING_IS_PROTECTED(location_area.ceiling, CEILING_PROTECTION_TIER_1))
+		to_chat(user, SPAN_WARNING("You cannot jump to the target. It is probably underground."))
+		return
+
+	var/list/valid_turfs = list()
+	for(var/turf/T as anything in RANGE_TURFS(2, location))
+		var/area/t_area = get_area(T)
+		if(!t_area || CEILING_IS_PROTECTED(t_area.ceiling, CEILING_PROTECTION_TIER_1))
+			continue
+		if(T.density)
+			continue
+		var/found_dense = FALSE
+		for(var/atom/A in T)
+			if(A.density && A.can_block_movement)
+				found_dense = TRUE
+				break
+		if(found_dense)
+			continue
+		if(protected_by_pylon(TURF_PROTECTION_MORTAR, T))
+			continue
+		valid_turfs += T
+
+	if(!length(valid_turfs))
+		to_chat(user, SPAN_WARNING("There's nowhere safe for you to land, the landing zone is too congested."))
+		return
+
+	var/turf/deploy_turf = pick(valid_turfs)
+
+	var/obj/effect/warning/rappel/warning_zone = new(deploy_turf)
+	flick("rappel_hatch_opening", src)
+	icon_state = "rappel_hatch_open"
+	user.forceMove(loc)
+	user.client?.perspective = EYE_PERSPECTIVE
+	user.client?.eye = deploy_turf
+
+	if(!do_after(user, 4 SECONDS, INTERRUPT_NO_NEEDHAND, BUSY_ICON_FRIENDLY, user, INTERRUPT_MOVED) || !can_use(user) || protected_by_pylon(TURF_PROTECTION_MORTAR, deploy_turf))
+		qdel(warning_zone)
+		flick("rappel_hatch_closing", src)
+		icon_state = "rappel_hatch_closed"
+		user.client?.perspective = MOB_PERSPECTIVE
+		user.client?.eye = user
+		return
+
+	new /obj/effect/rappel_rope(deploy_turf)
+	user.forceMove(deploy_turf)
+	INVOKE_ASYNC(user, /mob/living/carbon/human.proc/animation_rappel)
+	user.client?.perspective = MOB_PERSPECTIVE
+	user.client?.eye = user
+	deploy_turf.ceiling_debris_check(2)
+	playsound(deploy_turf, 'sound/items/rappel.ogg', 50, TRUE)
+
+	flick("rappel_hatch_closing", src)
+	icon_state = "rappel_hatch_closed"
+	qdel(warning_zone)
+
+/obj/structure/dropship_equipment/rappel_system/proc/can_use(var/mob/living/carbon/human/user)
+	if(linked_shuttle.moving_status != SHUTTLE_INTRANSIT)
+		to_chat(user, SPAN_WARNING("\The [src] can only be used while in flight."))
+		return FALSE
+
+	if(!linked_shuttle.transit_gun_mission)
+		to_chat(user, SPAN_WARNING("\The [src] requires a flyby flight to be used."))
+		return FALSE
+
+	if(user.buckled)
+		to_chat(user, SPAN_WARNING("You cannot rappel while buckled!"))
+		return FALSE
+
+	if(user.is_mob_incapacitated())
+		to_chat(user, SPAN_WARNING("You are in no state to do that!"))
+		return FALSE
+
+	if(!istype(user.belt, harness))
+		to_chat(user, SPAN_WARNING("You must have a rappel harness equipped in order to use \the [src]!"))
+		return FALSE
+
+	if(user.action_busy)
+		return FALSE
+
+	return TRUE

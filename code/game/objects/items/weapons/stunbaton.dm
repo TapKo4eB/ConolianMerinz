@@ -75,15 +75,17 @@
 	var/mob/living/carbon/human/H = user
 	if(istype(H))
 		var/obj/item/card/id/I = H.wear_id
-		if(!istype(I) || !check_access(I))
-			H.visible_message(SPAN_NOTICE("[src] beeeps as [H] picks it up"), SPAN_DANGER("WARNING: Unauthorized user detected. Denying access..."))
-			H.KnockDown(20)
+		if(!istype(I) || !check_access(I) && status)
+			var/datum/effect_system/spark_spread/s = new
+			s.set_up(5, 1, src.loc)
+			H.visible_message(SPAN_NOTICE("[src] beeps as [H] picks it up"), SPAN_DANGER("WARNING: Unauthorized user detected. Denying access..."))
 			H.visible_message(SPAN_WARNING("[src] beeps and sends a shock through [H]'s body!"))
+			H.emote("pain")
+			s.start()
 			deductcharge(hitcost)
 			add_fingerprint(user)
 			return FALSE
 	return TRUE
-
 /obj/item/weapon/melee/baton/pull_response(mob/puller)
 	return check_user_auth(puller)
 
@@ -153,8 +155,6 @@
 	else
 		//copied from human_defense.dm - human defence code should really be refactored some time.
 		if (ishuman(L))
-			user.lastattacked = L	//are these used at all, if we have logs?
-			L.lastattacker = user
 
 			if(!target_zone) //shouldn't ever happen
 				L.visible_message(SPAN_DANGER("<B>[user] misses [L] with \the [src]!"))
@@ -220,7 +220,7 @@
 	item_state = "prod"
 	force = 3
 	throwforce = 5
-	stunforce = 0
+	stunforce = 40
 	hitcost = 2500
 	attack_verb = list("poked")
 	flags_equip_slot = NO_FLAGS

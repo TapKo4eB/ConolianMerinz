@@ -24,6 +24,7 @@
 	var/max_inaccuracy = 6 //what's the max deviation allowed when the ammo is no longer guided by a laser.
 	var/point_cost = 0 //how many points it costs to build this with the fabricator, set to 0 if unbuildable.
 	var/source_mob //who fired it
+	var/combat_equipment = TRUE
 
 
 /obj/structure/ship_ammo/attackby(obj/item/I, mob/user)
@@ -67,6 +68,9 @@
 /obj/structure/ship_ammo/proc/detonate_on(turf/impact)
 	return
 
+/obj/structure/ship_ammo/proc/can_fire_at(turf/impact, mob/user)
+	return TRUE
+
 
 
 //30mm gun
@@ -95,30 +99,31 @@
 		to_chat(user, "It's loaded with an empty [name].")
 
 /obj/structure/ship_ammo/heavygun/detonate_on(turf/impact)
-    set waitfor = 0
-    var/list/turf_list = list()
-    for(var/turf/T in range(impact, bullet_spread_range))
-        turf_list += T
-    var/soundplaycooldown = 0
-    var/debriscooldown = 0
-    for(var/i=1, i<=ammo_used_per_firing, i++)
-        var/turf/U = pick(turf_list)
-        sleep(1)
-        U.ex_act(EXPLOSION_THRESHOLD_MLOW)
-        for(var/atom/movable/AM in U)
-            if(iscarbon(AM))
-                AM.ex_act(EXPLOSION_THRESHOLD_MLOW, , create_cause_data(initial(name), source_mob))
-            else
-                AM.ex_act(EXPLOSION_THRESHOLD_MLOW)
-        if(!soundplaycooldown) //so we don't play the same sound 20 times very fast.
-            playsound(U, get_sfx("explosion"), 40, 1, 20)
-            soundplaycooldown = 3
-        soundplaycooldown--
-        if(!debriscooldown)
-            U.ceiling_debris_check(1)
-            debriscooldown = 6
-        debriscooldown--
-        new /obj/effect/particle_effect/expl_particles(U)
+	set waitfor = 0
+	var/list/turf_list = list()
+	for(var/turf/T in range(bullet_spread_range, impact))
+		turf_list += T
+	var/soundplaycooldown = 0
+	var/debriscooldown = 0
+	for(var/i = 1 to ammo_used_per_firing)
+		var/turf/U = pick(turf_list)
+		sleep(1)
+		var/datum/cause_data/cause_data = create_cause_data(initial(name), source_mob)
+		U.ex_act(EXPLOSION_THRESHOLD_MLOW, pick(alldirs), cause_data)
+		for(var/atom/movable/AM in U)
+			if(iscarbon(AM))
+				AM.ex_act(EXPLOSION_THRESHOLD_MLOW, null, cause_data)
+			else
+				AM.ex_act(EXPLOSION_THRESHOLD_MLOW)
+		if(!soundplaycooldown) //so we don't play the same sound 20 times very fast.
+			playsound(U, get_sfx("explosion"), 40, 1, 20)
+			soundplaycooldown = 3
+		soundplaycooldown--
+		if(!debriscooldown)
+			U.ceiling_debris_check(1)
+			debriscooldown = 6
+		debriscooldown--
+		new /obj/effect/particle_effect/expl_particles(U)
 
 
 /obj/structure/ship_ammo/heavygun/highvelocity
@@ -254,6 +259,22 @@
 		cell_explosion(impact, 450, 100, EXPLOSION_FALLOFF_SHAPE_EXPONENTIAL, null, create_cause_data(initial(name), source_mob)) //Insane fall off combined with insane damage makes the Keeper useful for single targets, but very bad against multiple.
 		qdel(src)
 
+/obj/structure/ship_ammo/rocket/harpoon
+	name = "\improper AGM-84 'Harpoon'"
+	desc = "The AGM-84 Harpoon is an Anti-Ship Missile, designed and used to effectively take down enemy ships with a huge blast wave with low explosive power. This one is modified to use ground signals."
+	icon_state = "harpoon"
+	ammo_id = "s"
+	travelling_time = 50
+	point_cost = 300
+	fire_mission_delay = 4
+
+//Looks kinda OP but all it can actually do is just to blow windows and some of other things out, cant do much damage.
+/obj/structure/ship_ammo/rocket/harpoon/detonate_on(turf/impact)
+	impact.ceiling_debris_check(3)
+	spawn(5)
+		cell_explosion(impact, 150, 16, EXPLOSION_FALLOFF_SHAPE_LINEAR, null, create_cause_data(initial(name), source_mob))
+		qdel(src)
+
 /obj/structure/ship_ammo/rocket/napalm
 	name = "\improper XN-99 'Napalm'"
 	desc = "The XN-99 'Napalm' is an incendiary missile  used to turn specific targeted areas into giant balls of fire for a long time."
@@ -321,3 +342,31 @@
 	..()
 	spawn(5)
 		fire_spread(impact, create_cause_data(initial(name), source_mob), 3, 25, 20, "#EE6515")
+
+/obj/structure/ship_ammo/sentry
+	name = "multi-purpose area denial sentry"
+	desc = "An omni-directional sentry, capable of defending an area from lightly armored hostile incursion."
+	icon_state = "launchable_sentry"
+	equipment_type = /obj/structure/dropship_equipment/weapon/launch_bay
+	ammo_count = 1
+	max_ammo_count = 1
+	ammo_name = "area denial sentry"
+	travelling_time = 0 // handled by droppod
+	point_cost = 600
+	accuracy_range = 0 // pinpoint
+	max_inaccuracy = 0
+
+/obj/structure/ship_ammo/sentry/detonate_on(turf/impact)
+	var/obj/structure/droppod/equipment/sentry/droppod = new(impact, /obj/structure/machinery/defenses/sentry/launchable, source_mob)
+	droppod.drop_time = 5 SECONDS
+	droppod.launch(impact)
+	qdel(src)
+
+/obj/structure/ship_ammo/sentry/can_fire_at(turf/impact, mob/user)
+	for(var/obj/structure/machinery/defenses/def in urange(2, impact))
+		to_chat(user, SPAN_WARNING("The selected drop site is too close to another deployed defense!"))
+		return FALSE
+	if(istype(impact, /turf/closed))
+		to_chat(user, SPAN_WARNING("The selected drop site is a sheer wall!"))
+		return FALSE
+	return TRUE

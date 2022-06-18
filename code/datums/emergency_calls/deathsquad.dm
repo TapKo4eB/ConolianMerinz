@@ -18,38 +18,38 @@
 
 
 // DEATH SQUAD--------------------------------------------------------------------------------
-/datum/emergency_call/death/create_member(datum/mind/M)
-	var/turf/spawn_loc = get_spawn_point()
+/datum/emergency_call/death/create_member(datum/mind/M, var/turf/override_spawn_loc)
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
 	if(!istype(spawn_loc))
 		return //Didn't find a useable spawn point.
 
 	var/mob/living/carbon/human/H = new(spawn_loc)
 	M.transfer_to(H, TRUE)
-	H.set_skills(/datum/skills/commando/deathsquad)
 
 	if(!leader)       //First one spawned is always the leader.
 		leader = H
 		to_chat(H, SPAN_ROLE_HEADER("You are the Whiteout Team Leader!"))
 		to_chat(H, SPAN_ROLE_BODY("Whiteout protocol is in effect for the target, all assets onboard are to be liquidated with expediency unless otherwise instructed by Weyland Yutani personnel holding the position of Director or above."))
-		arm_equipment(H, "Whiteout Team Leader", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/w_y_whiteout/leader, TRUE, TRUE)
 	else if(medics < max_medics)
 		medics++
 		to_chat(H, SPAN_ROLE_HEADER("You are a Whiteout Team Medic!"))
 		to_chat(H, SPAN_ROLE_BODY("Whiteout protocol is in effect for the target, all assets onboard are to be liquidated with expediency unless otherwise instructed by Weyland Yutani personnel holding the position of Director or above."))
-		arm_equipment(H, "Whiteout Team Medic", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/w_y_whiteout/medic, TRUE, TRUE)
 	else if(heavies < max_heavies)
 		heavies++
 		to_chat(H, SPAN_ROLE_HEADER("You are a Whiteout Team Terminator!"))
 		to_chat(H, SPAN_ROLE_BODY("Whiteout protocol is in effect for the target, all assets onboard are to be liquidated with expediency unless otherwise instructed by Weyland Yutani personnel holding the position of Director or above."))
-		arm_equipment(H, "Whiteout Team Terminator", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/w_y_whiteout/terminator, TRUE, TRUE)
 	else
 		to_chat(H, SPAN_ROLE_HEADER("You are a Whiteout Team Operative!"))
 		to_chat(H, SPAN_ROLE_BODY("Whiteout protocol is in effect for the target, all assets onboard are to be liquidated with expediency unless otherwise instructed by Weyland Yutani personnel holding the position of Director or above."))
-		arm_equipment(H, "Whiteout Team Operative", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/w_y_whiteout, TRUE, TRUE)
 
 	addtimer(CALLBACK(GLOBAL_PROC, .proc/to_chat, H, SPAN_BOLD("Objectives: [objectives]")), 1 SECONDS)
 
+//################################################################################################
 // MARSOC commandos - USCM Deathsquad. Event only
 /datum/emergency_call/marsoc
 	name = "MARSOC Operatives"
@@ -59,14 +59,36 @@
 	shuttle_id = "Distress_PMC"
 	name_of_spawn = /obj/effect/landmark/ert_spawns/distress_pmc
 
-	var/operator_team_designation
-	var/curr_operator_number = 1
+/datum/emergency_call/marsoc/create_member(datum/mind/M, var/turf/override_spawn_loc)
 
-// DEATH SQUAD--------------------------------------------------------------------------------
-/datum/emergency_call/marsoc/create_member(datum/mind/M)
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
-	if (!operator_team_designation)
-		operator_team_designation = pick(nato_phonetic_alphabet)
+	if(!istype(spawn_loc))
+		return //Didn't find a useable spawn point.
+
+	var/mob/living/carbon/human/H = new(spawn_loc)
+	M.transfer_to(H, TRUE)
+
+	if(!leader)       //First one spawned is always the leader.
+		leader = H
+		to_chat(H, SPAN_WARNING(FONT_SIZE_BIG("You are a MARSOC Team Leader, better than all the rest.")))
+		arm_equipment(H, /datum/equipment_preset/uscm/marsoc/sl, TRUE, TRUE)
+	else
+		to_chat(H, SPAN_WARNING(FONT_SIZE_BIG("You are an elite MARSOC Operative, the best of the best.")))
+		arm_equipment(H, /datum/equipment_preset/uscm/marsoc, TRUE, TRUE)
+	to_chat(H, SPAN_BOLDNOTICE("You are absolutely loyal to High Command and must follow their directives."))
+	to_chat(H, SPAN_BOLDNOTICE("Execute the mission assigned to you with extreme prejudice!"))
+	return
+
+/datum/emergency_call/marsoc_covert
+	name = "MARSOC Operatives (Covert)"
+	mob_max = 8
+	mob_min = 5
+	probability = 0
+	shuttle_id = "Distress_PMC"
+	name_of_spawn = /obj/effect/landmark/ert_spawns/distress_pmc
+
+/datum/emergency_call/marsoc_covert/create_member(datum/mind/M)
 
 	var/turf/spawn_loc = get_spawn_point()
 
@@ -75,15 +97,13 @@
 
 	var/mob/living/carbon/human/H = new(spawn_loc)
 	M.transfer_to(H, TRUE)
-	H.set_skills(/datum/skills/commando/deathsquad)
-
-	var/operator_name = "[operator_team_designation]-[curr_operator_number]"
-	H.change_real_name(H, operator_name)
-
-	to_chat(H, SPAN_WARNING(FONT_SIZE_BIG("You are an elite MARSOC Operative, the best of the best.")))
-	to_chat(H, "<B> You are absolutely loyal to High Command and must follow their directives.</b>")
-	to_chat(H, "<B> Execute the mission assigned to you with extreme prejudice!</b>")
-	arm_equipment(H, "MARSOC Operator", TRUE, TRUE)
-
-	curr_operator_number++
+	if(!leader)       //First one spawned is always the leader.
+		leader = H
+		to_chat(H, SPAN_WARNING(FONT_SIZE_BIG("You are a MARSOC Team Leader, better than all the rest.")))
+		arm_equipment(H, /datum/equipment_preset/uscm/marsoc/sl/covert, TRUE, TRUE)
+	else
+		to_chat(H, SPAN_WARNING(FONT_SIZE_BIG("You are an elite MARSOC Operative, the best of the best.")))
+		arm_equipment(H, /datum/equipment_preset/uscm/marsoc/covert, TRUE, TRUE)
+	to_chat(H, SPAN_BOLDNOTICE("You are absolutely loyal to High Command and must follow their directives."))
+	to_chat(H, SPAN_BOLDNOTICE("Execute the mission assigned to you with extreme prejudice!"))
 	return

@@ -36,6 +36,13 @@ datum/chemical_reaction/adrenaline
 	required_reagents = list("oxygen" = 1, "phosphorus" = 1, "kelotane" = 1)
 	result_amount = 3
 
+/datum/chemical_reaction/meralyne
+	name = "Meralyne"
+	id = "meralyne"
+	result = "meralyne"
+	required_reagents = list("carbon" = 1, "water" = 1, "bicaridine" = 1)
+	result_amount = 3
+
 /datum/chemical_reaction/dexalinp
 	name = "Dexalin Plus"
 	id = "dexalinp"
@@ -133,7 +140,7 @@ datum/chemical_reaction/adrenaline
 	name = "Paracetamol"
 	id = "paracetamol"
 	result = "paracetamol"
-	required_reagents = list("tramadol" = 1, "sugar" = 1, "water" = 1)
+	required_reagents = list("tramadol" = 1, "nitrogen" = 1, "water" = 1)
 	result_amount = 3
 
 /datum/chemical_reaction/oxycodone

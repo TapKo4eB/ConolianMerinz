@@ -19,31 +19,27 @@
 			message_staff("[key_name_admin(usr)] adjusted the additional pred amount to [abs(value)].")
 
 /datum/admins/proc/force_predator_round()
-	set name = "Force Predator Round"
-	set desc = "Force a predator round for the round type. Only works on maps that support Predator spawns."
+	set name = "Toggle Predator Round"
+	set desc = "Force toggle a predator round for the round type. Only works on maps that support Predator spawns."
 	set category = "Server.Round"
 
 	if(!SSticker || SSticker.current_state < GAME_STATE_PLAYING || !SSticker.mode)
 		to_chat(usr, SPAN_DANGER("The game hasn't started yet!"))
 		return
 
-	if(alert("Are you sure you want to force a predator round?",, "Yes", "No") == "No")
-		return
-
 	var/datum/game_mode/predator_round = SSticker.mode
+	if(alert("Are you sure you want to force toggle a predator round? Predators currently: [(predator_round.flags_round_type & MODE_PREDATOR) ? "Enabled" : "Disabled"]",, "Yes", "No") == "No")
+		return
 
 	if(!(predator_round.flags_round_type & MODE_PREDATOR))
 		var/datum/job/PJ = RoleAuthority.roles_for_mode[JOB_PREDATOR]
-		if(istype(PJ))
-			PJ.set_spawn_positions(marines_assigned)
+		if(istype(PJ) && !PJ.spawn_positions)
+			PJ.set_spawn_positions(players_preassigned)
 		predator_round.flags_round_type |= MODE_PREDATOR
-		to_chat(usr, "The Hunt is now enabled.")
 	else
-		to_chat(usr, "The Hunt is already in progress.")
-		return
+		predator_round.flags_round_type &= ~MODE_PREDATOR
 
-	message_staff("[key_name_admin(usr)] admin-forced a predator round.")
-	return
+	message_staff("[key_name_admin(usr)] has [(predator_round.flags_round_type & MODE_PREDATOR) ? "allowed predators to spawn" : "prevented predators from spawning"].")
 
 /client/proc/free_slot()
 	set name = "Free Job Slots"
@@ -74,20 +70,25 @@
 		return
 
 	var/roles[] = new
-	var/i
 	var/datum/job/J
-	var/datum/job/K
-	for (i in RoleAuthority.roles_for_mode) //All the roles in the game.
-		K = RoleAuthority.roles_for_mode[i]
-		if(K.allow_additional)
-			roles += i
+
+	var/active_role_names = GLOB.gamemode_roles[GLOB.master_mode]
+	if(!active_role_names)
+		active_role_names = ROLES_REGULAR_ALL
+
+	for(var/role_name as anything in active_role_names)
+		var/datum/job/job = RoleAuthority.roles_by_name[role_name]
+		if(!job)
+			continue
+		roles += role_name
+
 	var/role = input("Please select role slot to modify", "Modify amount of slots")  as null|anything in roles
 	if(!role)
 		return
-	J = RoleAuthority.roles_for_mode[role]
+	J = RoleAuthority.roles_by_name[role]
 	var/tpos = J.spawn_positions
 	var/num = input("How many slots role [J.title] should have?\nCurrently taken slots: [J.current_positions]\nTotal amount of slots opened this round: [J.total_positions_so_far]","Number:", tpos) as num|null
-	if(!num)
+	if(isnull(num))
 		return
 	if(!RoleAuthority.modify_role(J, num))
 		to_chat(usr, SPAN_BOLDNOTICE("Can't set job slots to be less than amount of log-ins or you are setting amount of slots less than minimal. Free slots first."))

@@ -10,7 +10,6 @@
 	var/allow_additional	= 0 //Can admins modify positions to it
 	var/scaled = 0
 	var/current_positions 	= 0 //How many players have this job
-	var/fake_positions 		= 0 // Purely used for roundstart pop calculations
 	var/supervisors 		= "" //Supervisors, who this person answers to directly. Should be a string, shown to the player when they enter the game.
 	var/selection_class 	= "" // Job Selection span class (for background color)
 
@@ -31,6 +30,9 @@
 	var/entry_message_intro
 	var/entry_message_body
 	var/entry_message_end
+
+	/// When set to true, SSticker won't call spawn_in_player, instead calling the job's spawn_and_equip proc
+	var/handle_spawn_and_equip = FALSE
 
 /datum/job/New()
 	. = ..()
@@ -115,33 +117,36 @@
 /datum/job/proc/get_access()
 	if(!gear_preset)
 		return null
-	if(GLOB.gear_presets_list[gear_preset])
-		return GLOB.gear_presets_list[gear_preset].access
+	if(GLOB.gear_path_presets_list[gear_preset])
+		return GLOB.gear_path_presets_list[gear_preset].access
 	return null
 
 /datum/job/proc/get_skills()
 	if(!gear_preset)
 		return null
-	if(GLOB.gear_presets_list[gear_preset])
-		return GLOB.gear_presets_list[gear_preset].skills
+	if(GLOB.gear_path_presets_list[gear_preset])
+		return GLOB.gear_path_presets_list[gear_preset].skills
 	return null
 
 /datum/job/proc/get_paygrade()
 	if(!gear_preset)
 		return ""
-	if(GLOB.gear_presets_list[gear_preset])
-		return GLOB.gear_presets_list[gear_preset].paygrade
+	if(GLOB.gear_path_presets_list[gear_preset])
+		return GLOB.gear_path_presets_list[gear_preset].paygrade
 	return ""
 
 /datum/job/proc/get_comm_title()
 	if(!gear_preset)
 		return ""
-	if(GLOB.gear_presets_list[gear_preset])
-		return GLOB.gear_presets_list[gear_preset].role_comm_title
+	if(GLOB.gear_path_presets_list[gear_preset])
+		return GLOB.gear_path_presets_list[gear_preset].role_comm_title
 	return ""
 
 /datum/job/proc/set_spawn_positions(var/count)
 	return spawn_positions
+
+/datum/job/proc/spawn_and_equip(var/mob/new_player/player)
+	CRASH("A job without a set spawn_and_equip proc has handle_spawn_and_equip set to TRUE!")
 
 /datum/job/proc/generate_entry_message()
 	if(!entry_message_intro)
@@ -270,7 +275,7 @@
 		if(flags_startup_parameters & ROLE_ADD_TO_SQUAD) //Are we a muhreen? Randomize our squad. This should go AFTER IDs. //TODO Robust this later.
 			RoleAuthority.randomize_squad(H)
 
-		if(Check_WO() && job_squad_roles.Find(H.job))	//activates self setting proc for marine headsets for WO
+		if(Check_WO() && job_squad_roles.Find(GET_DEFAULT_ROLE(H.job)))	//activates self setting proc for marine headsets for WO
 			var/datum/game_mode/whiskey_outpost/WO = SSticker.mode
 			WO.self_set_headset(H)
 

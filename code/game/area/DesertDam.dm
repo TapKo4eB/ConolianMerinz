@@ -168,7 +168,9 @@
 /area/desert_dam/interior/dam_interior/south_tunnel_entrance
 	name = "Engineering South Tunnel Entrance"
 	icon_state = "red"
-
+/area/desert_dam/interior/dam_interior/garage
+	name = "Garage"
+	icon_state = "green"
 /area/desert_dam/interior/caves
 	name = "Caves"
 	ceiling = CEILING_DEEP_UNDERGROUND
@@ -675,6 +677,8 @@
 	name = "Airstrip Landing Pad"
 	icon_state = "landing_pad"
 	is_resin_allowed = FALSE
+	is_landing_zone = TRUE
+
 /area/desert_dam/exterior/landing_pad_one_external
 	name = "Airstrip Landing Valley"
 	icon_state = "landing_pad_ext"
@@ -686,6 +690,8 @@
 	name = "Aerodrome Landing Pad"
 	icon_state = "landing_pad"
 	is_resin_allowed = FALSE
+	is_landing_zone = TRUE
+
 /area/desert_dam/exterior/landing_pad_two_external
 	name = "Aerodrome Landing Valley"
 	icon_state = "landing_pad_ext"
@@ -708,6 +714,11 @@
 	name = "Telecomms Valley"
 	icon_state = "valley_west"
 	is_resin_allowed = FALSE
+
+// Generic bridge used in nightmare inserts... Can in fact be different places (sigh)
+/area/desert_dam/exterior/valley/valley_bridge
+	name = "Valley Bridge"
+	icon_state = "valley"
 
 //Away from LZ
 

@@ -1,4 +1,11 @@
 /obj/structure/closet/secure_closet/freezer
+	icon = 'icons/obj/structures/machinery/kitchen.dmi'
+	icon_state = "fridge1"
+	icon_closed = "fridge"
+	icon_locked = "fridge1"
+	icon_opened = "fridgeopen"
+	icon_broken = "fridgebroken"
+	icon_off = "fridge1"
 
 /obj/structure/closet/secure_closet/freezer/update_icon()
 	if(broken)
@@ -32,12 +39,6 @@
 
 /obj/structure/closet/secure_closet/freezer/meat
 	name = "Meat Fridge"
-	icon_state = "fridge1"
-	icon_closed = "fridge"
-	icon_locked = "fridge1"
-	icon_opened = "fridgeopen"
-	icon_broken = "fridgebroken"
-	icon_off = "fridge1"
 
 
 /obj/structure/closet/secure_closet/freezer/meat/Initialize()
@@ -49,22 +50,18 @@
 
 /obj/structure/closet/secure_closet/freezer/fridge
 	name = "Refrigerator"
-	icon_state = "fridge1"
-	icon_closed = "fridge"
-	icon_locked = "fridge1"
-	icon_opened = "fridgeopen"
-	icon_broken = "fridgebroken"
-	icon_off = "fridge1"
-
 
 /obj/structure/closet/secure_closet/freezer/fridge/Initialize()
 	. = ..()
 	for(var/i = 0, i < 5, i++)
 		new /obj/item/reagent_container/food/drinks/milk(src)
-	for(var/i = 0, i < 3, i++)
+	for(var/i = 0, i < 4, i++)
 		new /obj/item/reagent_container/food/drinks/soymilk(src)
 	for(var/i = 0, i < 2, i++)
 		new /obj/item/storage/fancy/egg_box(src)
+
+/obj/structure/closet/secure_closet/freezer/fridge/ex_act(severity) // positively devious
+	return
 
 /obj/structure/closet/secure_closet/freezer/fridge/groceries
 	name = "Groceries"
@@ -94,12 +91,6 @@
 
 /obj/structure/closet/secure_closet/freezer/money
 	name = "Freezer"
-	icon_state = "fridge1"
-	icon_closed = "fridge"
-	icon_locked = "fridge1"
-	icon_opened = "fridgeopen"
-	icon_broken = "fridgebroken"
-	icon_off = "fridge1"
 	req_access = list(ACCESS_CIVILIAN_PUBLIC)
 
 
@@ -125,12 +116,6 @@
 /obj/structure/closet/secure_closet/freezer/industry
 	name = "Industry Freezer"
 	desc = "A powerful fine tuned freezer used to polymerize chemicals in the cold. This one is set to the perfect temperature for paraformaldehyde polymerization. The freezer must be kept closed for polymerization."
-	icon_state = "fridge1"
-	icon_closed = "fridge"
-	icon_locked = "fridge1"
-	icon_opened = "fridgeopen"
-	icon_broken = "fridgebroken"
-	icon_off = "fridge1"
 	req_access = list(ACCESS_MARINE_OT)
 	var/obj/structure/machinery/paraform_cooler/CU
 

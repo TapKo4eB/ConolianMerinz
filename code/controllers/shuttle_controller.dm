@@ -48,7 +48,7 @@
 	shuttle1 = new
 	shuttle1.name = "Alamo"
 	shuttle1.location = 0
-	shuttle1.warmup_time = 10 SECONDS
+	shuttle1.warmup_time = DROPSHIP_WARMUP_TIME
 	shuttle1.move_time = DROPSHIP_TRANSIT_DURATION
 	shuttle1.shuttle_tag = "[MAIN_SHIP_NAME] Dropship 1"
 	shuttle1.info_tag = "Almayer Dropship"
@@ -62,7 +62,7 @@
 	shuttle1 = new
 	shuttle1.name = "Normandy"
 	shuttle1.location = 0
-	shuttle1.warmup_time = 10 SECONDS
+	shuttle1.warmup_time = DROPSHIP_WARMUP_TIME
 	shuttle1.move_time = DROPSHIP_TRANSIT_DURATION
 	shuttle1.shuttle_tag = "[MAIN_SHIP_NAME] Dropship 2"
 	shuttle1.info_tag = "Almayer Dropship"
@@ -203,7 +203,29 @@
 	shuttles["Distress_Big"] = ES
 	process_shuttles += ES
 
+	//Small VIP Shuttle
 
+	ES = new()
+	ES.location = 1
+	ES.use_small_docks = TRUE
+
+	for(var/area/A in all_areas)
+		if(A.type == /area/shuttle/distress/start_small)
+			ES.area_offsite = A
+			break
+
+	for(var/area/A in all_areas)
+		if(A.type == /area/shuttle/distress/arrive_n_engi)
+			ES.area_station = A
+			break
+
+	for(var/area/A in all_areas)
+		if(A.type == /area/shuttle/distress/transit_small)
+			ES.area_transition = A
+			break
+
+	shuttles["Distress_Small"] = ES
+	process_shuttles += ES
 
 
 

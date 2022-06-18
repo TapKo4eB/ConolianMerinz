@@ -1,3 +1,37 @@
+/mob/living/carbon/Xenomorph/attackby(obj/item/item, mob/user)
+	if(user.a_intent != INTENT_HELP)
+		return ..()
+	if(HAS_TRAIT(item, TRAIT_TOOL_MULTITOOL) && ishuman(user))
+		var/mob/living/carbon/human/programmer = user
+		if(!iff_tag)
+			to_chat(user, SPAN_WARNING("\The [src] doesn't have an IFF tag to reprogram."))
+			return
+		programmer.visible_message(SPAN_NOTICE("[programmer] starts reprogramming \the [src]'s IFF tag..."), SPAN_NOTICE("You start reprogramming \the [src]'s IFF tag..."), max_distance = 3)
+		if(!do_after(programmer, 5 SECONDS, INTERRUPT_ALL, BUSY_ICON_GENERIC, src, INTERRUPT_DIFF_LOC, BUSY_ICON_GENERIC))
+			return
+		if(!iff_tag)
+			to_chat(programmer, SPAN_WARNING("\The [src]'s tag got removed while you were reprogramming it!"))
+			return
+		if(!iff_tag.handle_reprogramming(programmer, src))
+			return
+		programmer.visible_message(SPAN_NOTICE("[programmer] reprograms \the [src]'s IFF tag."), SPAN_NOTICE("You reprogram \the [src]'s IFF tag."), max_distance = 3)
+		return
+	if(item.type in SURGERY_TOOLS_PINCH)
+		if(!iff_tag)
+			to_chat(user, SPAN_WARNING("\The [src] doesn't have an IFF tag to remove."))
+			return
+		user.visible_message(SPAN_NOTICE("[user] starts removing \the [src]'s IFF tag..."), SPAN_NOTICE("You start removing \the [src]'s IFF tag..."), max_distance = 3)
+		if(!do_after(user, 5 SECONDS * SURGERY_TOOLS_PINCH[item.type], INTERRUPT_ALL, BUSY_ICON_GENERIC, src, INTERRUPT_DIFF_LOC, BUSY_ICON_GENERIC))
+			return
+		if(!iff_tag)
+			to_chat(user, SPAN_WARNING("\The [src]'s tag got removed while you were removing it!"))
+			return
+		user.put_in_hands(iff_tag)
+		iff_tag = null
+		user.visible_message(SPAN_NOTICE("[user] removes \the [src]'s IFF tag."), SPAN_NOTICE("You remove \the [src]'s IFF tag."), max_distance = 3)
+		return
+	return ..()
+
 /mob/living/carbon/Xenomorph/ex_act(var/severity, var/direction, var/datum/cause_data/cause_data, pierce=0)
 
 	if(lying)
@@ -25,7 +59,11 @@
 
 	last_hit_time = world.time
 
-	if (damage >= health && damage >= EXPLOSION_THRESHOLD_GIB)
+	var/shieldtotal = 0
+	for (var/datum/xeno_shield/XS in xeno_shields)
+		shieldtotal += XS.amount
+
+	if (damage >= (health + shieldtotal) && damage >= EXPLOSION_THRESHOLD_GIB)
 		var/oldloc = loc
 		gib(cause_data)
 		create_shrapnel(oldloc, rand(16, 24), , , /datum/ammo/bullet/shrapnel/light/xeno, cause_data)
@@ -105,6 +143,13 @@
 	if(def_zone != "chest") //Which it generally will be, vs xenos
 		chancemod += 5
 
+	var/list/damage_data = list(
+		"bonus_damage" = 0,
+		"damage" = damage
+	)
+	SEND_SIGNAL(src, COMSIG_BONUS_DAMAGE, damage_data)
+	damage += damage_data["bonus_damage"]
+
 	if(damage > 12) //Light damage won't splash.
 		check_blood_splash(damage, damagetype, chancemod)
 
@@ -138,6 +183,8 @@
 	updatehealth()
 
 	last_hit_time = world.time
+	if(damagetype != HALLOSS && damage > 0)
+		life_damage_taken_total += damage
 
 	return 1
 
@@ -216,8 +263,8 @@
 			splash_chance = 80 - (i * 5)
 			if(victim.loc == loc) splash_chance += 30 //Same tile? BURN
 			splash_chance += distance * -15
-			if(victim.species && victim.species.name == "Yautja")
-				splash_chance -= 70 //Preds know to avoid the splashback.
+			if(victim.species?.acid_blood_dodge_chance)
+				splash_chance -= victim.species.acid_blood_dodge_chance
 
 			if(splash_chance > 0 && prob(splash_chance)) //Success!
 				var/dmg = list("damage" = acid_blood_damage)
@@ -231,3 +278,16 @@
 				victim.take_limb_damage(0, dmg["damage"]) //Sizzledam! This automagically burns a random existing body part.
 				victim.add_blood(get_blood_color(), BLOOD_BODY)
 				acid_splash_last = world.time
+
+/mob/living/carbon/Xenomorph/get_target_lock(var/access_to_check)
+	if(isnull(access_to_check))
+		return
+
+	if(!iff_tag)
+		return ..()
+
+	if(!islist(access_to_check))
+		return access_to_check in iff_tag.faction_groups
+
+	var/list/overlap = iff_tag.faction_groups & access_to_check
+	return length(overlap)

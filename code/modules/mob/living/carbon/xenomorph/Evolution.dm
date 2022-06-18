@@ -13,24 +13,15 @@
 	if (!evolve_checks())
 		return
 
-	//Debugging that should've been done
-
 	var/castepick = tgui_input_list(usr, "You are growing into a beautiful alien! It is time to choose a caste.", "Evolve", caste.evolves_to)
 	if(!castepick) //Changed my mind
 		return
 
-	if(!isturf(loc)) //qdel'd or inside something
-		return
-
-	if (!evolve_checks())
+	if(!evolve_checks())
 		return
 
 	if((!hive.living_xeno_queen) && castepick != XENO_CASTE_QUEEN && !isXenoLarva(src) && !hive.allow_no_queen_actions)
 		to_chat(src, SPAN_WARNING("The Hive is shaken by the death of the last Queen. You can't find the strength to evolve."))
-		return
-
-	if(handcuffed || legcuffed)
-		to_chat(src, SPAN_WARNING("The restraints are too restricting to allow you to evolve."))
 		return
 
 	if(castepick == XENO_CASTE_QUEEN) //Special case for dealing with queenae
@@ -72,42 +63,7 @@
 
 	var/mob/living/carbon/Xenomorph/M = null
 
-	//Better to use a get_caste_by_text proc but ehhhhhhhh. Lazy.
-	switch(castepick) //ADD NEW CASTES HERE!
-		if(XENO_CASTE_LARVA) //Not actually possible, but put here for insanity's sake
-			M = /mob/living/carbon/Xenomorph/Larva
-		if(XENO_CASTE_RUNNER)
-			M = /mob/living/carbon/Xenomorph/Runner
-		if(XENO_CASTE_DRONE)
-			M = /mob/living/carbon/Xenomorph/Drone
-		if(XENO_CASTE_CARRIER)
-			M = /mob/living/carbon/Xenomorph/Carrier
-		if(XENO_CASTE_HIVELORD)
-			M = /mob/living/carbon/Xenomorph/Hivelord
-		if(XENO_CASTE_BURROWER)
-			M = /mob/living/carbon/Xenomorph/Burrower
-		if(XENO_CASTE_PRAETORIAN)
-			M = /mob/living/carbon/Xenomorph/Praetorian
-		if(XENO_CASTE_RAVAGER)
-			M = /mob/living/carbon/Xenomorph/Ravager
-		if(XENO_CASTE_SENTINEL)
-			M = /mob/living/carbon/Xenomorph/Sentinel
-		if(XENO_CASTE_SPITTER)
-			M = /mob/living/carbon/Xenomorph/Spitter
-		if(XENO_CASTE_LURKER)
-			M = /mob/living/carbon/Xenomorph/Lurker
-		if (XENO_CASTE_WARRIOR)
-			M = /mob/living/carbon/Xenomorph/Warrior
-		if (XENO_CASTE_DEFENDER)
-			M = /mob/living/carbon/Xenomorph/Defender
-		if(XENO_CASTE_QUEEN)
-			M = /mob/living/carbon/Xenomorph/Queen
-		if(XENO_CASTE_CRUSHER)
-			M = /mob/living/carbon/Xenomorph/Crusher
-		if(XENO_CASTE_BOILER)
-			M = /mob/living/carbon/Xenomorph/Boiler
-		if(XENO_CASTE_PREDALIEN)
-			M = /mob/living/carbon/Xenomorph/Predalien
+	M = RoleAuthority.get_caste_by_text(castepick)
 
 	if(isnull(M))
 		to_chat(usr, SPAN_WARNING("[castepick] is not a valid caste! If you're seeing this message, tell a coder!"))
@@ -121,6 +77,7 @@
 	SPAN_XENONOTICE("You begin to twist and contort."))
 	xeno_jitter(25)
 	evolving = TRUE
+	var/level_to_switch_to = get_vision_level()
 
 	if(!do_after(src, 2.5 SECONDS, INTERRUPT_INCAPACITATED, BUSY_ICON_HOSTILE)) // Can evolve while moving
 		to_chat(src, SPAN_WARNING("You quiver, but nothing happens. Hold still while evolving."))
@@ -170,7 +127,8 @@
 
 	//Regenerate the new mob's name now that our player is inside
 	new_xeno.generate_name()
-
+	if(new_xeno.client)
+		new_xeno.set_lighting_alpha(level_to_switch_to)
 	if(new_xeno.health - getBruteLoss(src) - getFireLoss(src) > 0) //Cmon, don't kill the new one! Shouldnt be possible though
 		new_xeno.bruteloss = src.bruteloss //Transfers the damage over.
 		new_xeno.fireloss = src.fireloss //Transfers the damage over.
@@ -198,8 +156,7 @@
 	SSround_recording.recorder.track_player(new_xeno)
 
 /mob/living/carbon/Xenomorph/proc/evolve_checks()
-	if(evolving)
-		to_chat(src, SPAN_WARNING("You are already evolving!"))
+	if(!check_state(TRUE))
 		return FALSE
 
 	if(is_ventcrawling)
@@ -214,12 +171,12 @@
 		to_chat(src, SPAN_WARNING("Nuh-uh."))
 		return FALSE
 
-	if(jobban_isbanned(src, "Alien"))
-		to_chat(src, SPAN_WARNING("You are jobbanned from aliens and cannot evolve. How did you even become an alien?"))
+	if(lock_evolve)
+		to_chat(src, SPAN_WARNING("You are banished and cannot reach the hivemind."))
 		return FALSE
 
-	if(is_mob_incapacitated(TRUE))
-		to_chat(src, SPAN_WARNING("You can't evolve in your current state."))
+	if(jobban_isbanned(src, JOB_XENOMORPH))//~who so genius to do this is?
+		to_chat(src, SPAN_WARNING("You are jobbanned from aliens and cannot evolve. How did you even become an alien?"))
 		return FALSE
 
 	if(handcuffed || legcuffed)
@@ -239,15 +196,8 @@
 		to_chat(src, SPAN_WARNING("You must be at full health to evolve."))
 		return FALSE
 
-	if (agility || fortify || crest_defense)
+	if(agility || fortify || crest_defense)
 		to_chat(src, SPAN_WARNING("You cannot evolve while in this stance."))
-		return FALSE
-
-	if(is_mob_incapacitated(TRUE))
-		to_chat(src, SPAN_WARNING("You can't evolve in your current state."))
-		return FALSE
-
-	if(!isturf(loc)) //qdel'd or inside something
 		return FALSE
 
 	return TRUE
@@ -273,13 +223,26 @@
 		to_chat(src, SPAN_XENOWARNING("You are too weak to deevolve, regain your health first."))
 		return
 
-	if(!caste.deevolves_to)
+	if(length(caste.deevolves_to) < 1)
 		to_chat(src, SPAN_XENOWARNING("You can't deevolve any further."))
 		return
 
-	var/newcaste = caste.deevolves_to
+	if(lock_evolve)
+		to_chat(src, SPAN_WARNING("You are banished and cannot reach the hivemind."))
+		return FALSE
 
-	var/confirm = alert(src, "Are you sure you want to deevolve from [caste.caste_type] to [newcaste]? You can only do this once.", , "Yes", "No")
+
+	var/newcaste
+
+	if(length(caste.deevolves_to) == 1)
+		newcaste = caste.deevolves_to[1]
+	else if(length(caste.deevolves_to) > 1)
+		newcaste = tgui_input_list(src, "Choose a caste you want to de-evolve to.", "De-evolve", caste.deevolves_to)
+
+	if(!newcaste)
+		return
+
+	var/confirm = alert(src, "Are you sure you want to de-evolve from [caste.caste_type] to [newcaste]?", , "Yes", "No")
 	if(confirm == "No")
 		return
 
@@ -295,8 +258,12 @@
 	if(health <= 0)
 		return
 
-	var/xeno_type
+	if(lock_evolve)
+		to_chat(src, SPAN_WARNING("You are banished and cannot reach the hivemind."))
+		return FALSE
 
+	var/xeno_type
+	var/level_to_switch_to = get_vision_level()
 	switch(newcaste)
 		if("Larva")
 			xeno_type = /mob/living/carbon/Xenomorph/Larva
@@ -337,7 +304,8 @@
 
 	//Regenerate the new mob's name now that our player is inside
 	new_xeno.generate_name()
-
+	if(new_xeno.client)
+		new_xeno.set_lighting_alpha(level_to_switch_to)
 	new_xeno.visible_message(SPAN_XENODANGER("A [new_xeno.caste.caste_type] emerges from the husk of \the [src]."), \
 	SPAN_XENODANGER("You regress into your previous form."))
 

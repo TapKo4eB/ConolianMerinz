@@ -52,8 +52,8 @@
 
 ///////////////////UPP///////////////////////////
 
-/datum/emergency_call/upp/create_member(datum/mind/M)
-	var/turf/spawn_loc = get_spawn_point()
+/datum/emergency_call/upp/create_member(datum/mind/M, var/turf/override_spawn_loc)
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
 	if(!istype(spawn_loc))
 		return //Didn't find a useable spawn point.
@@ -63,23 +63,23 @@
 
 	if(!leader)       //First one spawned is always the leader.
 		leader = H
-		arm_equipment(H, "UPP Leader", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/upp/leader, TRUE, TRUE)
 		to_chat(H, SPAN_ROLE_HEADER("You are an officer of the Union of Progressive People, a powerful socialist state that rivals the United Americas!"))
 	else if(medics < max_medics)
 		medics++
 		to_chat(H, SPAN_ROLE_HEADER("You are a medic of the Union of Progressive People, a powerful socialist state that rivals the United Americas!"))
-		arm_equipment(H, "UPP Medic", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/upp/medic, TRUE, TRUE)
 	else if(engineers < engineers)
 		engineers++
 		to_chat(H, SPAN_ROLE_HEADER("You are a sapper of the Union of Progressive People, a powerful socialist state that rivals the United Americas!"))
-		arm_equipment(H, "UPP Sapper", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/upp/sapper, TRUE, TRUE)
 	else if(heavies < max_heavies)
 		heavies++
 		to_chat(H, SPAN_ROLE_HEADER("You are a sergeant of the Union of Progressive People, a powerful socialist state that rivals the United Americas!"))
-		arm_equipment(H, "UPP Specialist", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/upp/specialist, TRUE, TRUE)
 	else
 		to_chat(H, SPAN_ROLE_HEADER("You are a soldier of the Union of Progressive People, a powerful socialist state that rivals the United Americas!"))
-		arm_equipment(H, "UPP Soldier", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/upp/soldier, TRUE, TRUE)
 
 	print_backstory(H)
 

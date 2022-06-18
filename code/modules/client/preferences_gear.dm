@@ -30,19 +30,24 @@ var/global/list/gear_datums = list()
 	slot = WEAR_HEAD
 
 /datum/gear/cmbeanie
-	display_name = "USCM Beanie (gray)"
+	display_name = "USCM Beanie (Gray)"
 	path = /obj/item/clothing/head/beanie/gray
 	cost = 3
 	slot = WEAR_HEAD
 
 /datum/gear/cmbeanie/green
-	display_name = "USCM Beanie (green)"
+	display_name = "USCM Beanie (Green)"
 	path = /obj/item/clothing/head/beanie/green
 
 /datum/gear/cmbeanie/tan
-	display_name = "USCM Beanie (tan)"
+	display_name = "USCM Beanie (Tan)"
 	path = /obj/item/clothing/head/beanie/tan
 
+/datum/gear/squadberet
+	display_name = "USCM Beret (Squad Specific)"
+	path = /obj/item/clothing/head/beret/cm/squadberet
+	cost = 3
+	slot = WEAR_HEAD
 /datum/gear/cmberet
 	display_name = "USCM Beret (Green)"
 	path = /obj/item/clothing/head/beret/cm
@@ -281,7 +286,7 @@ var/global/list/gear_datums = list()
 
 /datum/gear/type_80_Bayonet
 	display_name = "Type 80 Bayonet"
-	path = /obj/item/attachable/bayonet/upp
+	path = /obj/item/attachable/bayonet/upp_replica
 	slot = WEAR_IN_BACK
 	cost = 4
 
@@ -497,7 +502,7 @@ var/global/list/gear_datums = list()
 
 /datum/gear/broken_nvgs
 	display_name = "Broken Night Vision Goggles"
-	path = /obj/item/prop/helmetgarb/helmet_nvg
+	path = /obj/item/prop/helmetgarb/helmet_nvg/cosmetic
 	cost = 1
 	slot = WEAR_IN_BACK
 

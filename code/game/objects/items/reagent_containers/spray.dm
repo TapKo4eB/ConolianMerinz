@@ -14,6 +14,7 @@
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10) //Set to null instead of list, if there is only one.
 	matter = list("plastic" = 500)
+	transparent = TRUE
 	var/spray_size = 3
 	var/list/spray_sizes = list(1,3)
 	var/safety = FALSE
@@ -27,7 +28,7 @@
 /obj/item/reagent_container/spray/afterattack(atom/A, mob/user, proximity)
 	//this is what you get for using afterattack() TODO: make is so this is only called if attackby() returns 0 or something
 	if(isstorage(A) || istype(A, /obj/structure/surface/table) || istype(A, /obj/structure/surface/rack) || istype(A, /obj/structure/closet) \
-	|| istype(A, /obj/item/reagent_container) || istype(A, /obj/structure/sink) || istype(A, /obj/structure/janitorialcart || istype(A, /obj/structure/ladder)))
+	|| istype(A, /obj/item/reagent_container) || istype(A, /obj/structure/sink) || istype(A, /obj/structure/janitorialcart) || istype(A, /obj/structure/ladder) || istype(A, /obj/screen))
 		return
 
 	if(istype(A, /obj/structure/reagent_dispensers) && get_dist(src,A) <= 1) //this block copypasted from reagent_containers/glass, for lack of a better solution

@@ -47,11 +47,6 @@ SUBSYSTEM_DEF(mapping)
 				to_chat(world, "<span class='boldannounce'>Unable to load next or default map config, defaulting.</span>")
 				configs[i] = old_config
 
-	if(configs[GROUND_MAP])
-		for(var/i in config.votable_modes)
-			if(!(i in configs[GROUND_MAP].gamemodes))
-				config.votable_modes -= i // remove invalid modes
-
 	loadWorld()
 	repopulate_sorted_areas()
 	preloadTemplates()
@@ -60,6 +55,10 @@ SUBSYSTEM_DEF(mapping)
 	initialize_reserved_level(transit.z_value)
 	GLOB.interior_manager = new
 	repopulate_sorted_areas()
+	for(var/maptype as anything in configs)
+		var/datum/map_config/MC = configs[maptype]
+		if(MC.perf_mode)
+			GLOB.perf_flags |= MC.perf_mode
 	return ..()
 
 /datum/controller/subsystem/mapping/proc/wipe_reservations(wipe_safety_delay = 100)
@@ -152,9 +151,10 @@ SUBSYSTEM_DEF(mapping)
 	INIT_ANNOUNCE("Loading [ground_map.map_name]...")
 	Loadground(FailedZs, ground_map.map_name, ground_map.map_path, ground_map.map_file, ground_map.traits, ZTRAITS_GROUND)
 
-	var/datum/map_config/ship_map = configs[SHIP_MAP]
-	INIT_ANNOUNCE("Loading [ship_map.map_name]...")
-	Loadship(FailedZs, ship_map.map_name, ship_map.map_path, ship_map.map_file, ship_map.traits, ZTRAITS_MAIN_SHIP)
+	if(!ground_map.disable_ship_map)
+		var/datum/map_config/ship_map = configs[SHIP_MAP]
+		INIT_ANNOUNCE("Loading [ship_map.map_name]...")
+		Loadship(FailedZs, ship_map.map_name, ship_map.map_path, ship_map.map_file, ship_map.traits, ZTRAITS_MAIN_SHIP)
 
 	if(LAZYLEN(FailedZs))	//but seriously, unless the server's filesystem is messed up this will never happen
 		var/msg = "RED ALERT! The following map files failed to load: [FailedZs[1]]"

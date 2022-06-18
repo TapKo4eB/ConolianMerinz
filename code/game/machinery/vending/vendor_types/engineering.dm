@@ -50,6 +50,48 @@
 		list("Wrench", round(scale * 4), /obj/item/tool/wrench, VENDOR_ITEM_REGULAR)
 	)
 
+/obj/structure/machinery/cm_vending/sorted/tech/comtech_tools
+	name = "\improper ColMarTech Squad ComTech Tools Vendor"
+	desc = "A vending machine that stores various extra tools that are useful on the field."
+	icon_state = "tool"
+	req_access = list(ACCESS_MARINE_ENGPREP)
+
+/obj/structure/machinery/cm_vending/sorted/tech/comtech_tools/populate_product_list(var/scale)
+	listed_products = list(
+		list("EQUIPMENT", -1, null, null),
+		list("Utility Tool Belt", round(scale * 4), /obj/item/storage/belt/utility, VENDOR_ITEM_REGULAR),
+		list("Cable Coil", round(scale * 4), /obj/item/stack/cable_coil/random, VENDOR_ITEM_REGULAR),
+
+		list("TOOLS", -1, null, null),
+		list("Blowtorch", round(scale * 4), /obj/item/tool/weldingtool, VENDOR_ITEM_REGULAR),
+		list("Crowbar", round(scale * 4), /obj/item/tool/crowbar, VENDOR_ITEM_REGULAR),
+		list("Screwdriver", round(scale * 4), /obj/item/tool/screwdriver, VENDOR_ITEM_REGULAR),
+		list("Wirecutters", round(scale * 4), /obj/item/tool/wirecutters, VENDOR_ITEM_REGULAR),
+		list("Wrench", round(scale * 4), /obj/item/tool/wrench, VENDOR_ITEM_REGULAR),
+		list("Multitool", round(scale * 4), /obj/item/device/multitool, VENDOR_ITEM_REGULAR)
+	)
+
+/obj/structure/machinery/cm_vending/sorted/tech/circuits
+	name = "circuit board vendor"
+	desc = "A safe storage for pre-programmed circuit boards, it has an internal gyroscope to keep any external force from moving the boards, thick insulation and a custom 2.1mm UPS port for charging various W-Y exclusive devices (sold separately)."
+	icon_state = "robotics"
+
+/obj/structure/machinery/cm_vending/sorted/tech/circuits/populate_product_list(var/scale)
+	listed_products = list(
+		list("CIRCUITBOARDS", -1, null, null),
+		list("Fire Alarm", 5, /obj/item/circuitboard/firealarm, VENDOR_ITEM_REGULAR),
+		list("APC", 6, /obj/item/circuitboard/apc, VENDOR_ITEM_REGULAR),
+		list("Autolathe", 2, /obj/item/circuitboard/machine/autolathe, VENDOR_ITEM_REGULAR),
+		list("TC-4T Telecommunications", 1, /obj/item/circuitboard/machine/telecomms/relay/tower, VENDOR_ITEM_REGULAR),
+		list("Crew Monitoring Computer", 2, /obj/item/circuitboard/computer/crew, VENDOR_ITEM_REGULAR),
+		list("ID Computer", 2, /obj/item/circuitboard/computer/card, VENDOR_ITEM_REGULAR),
+		list("Security Records", 2, /obj/item/circuitboard/computer/secure_data, VENDOR_ITEM_REGULAR),
+		list("Supply Ordering Console", 2, /obj/item/circuitboard/computer/ordercomp, VENDOR_ITEM_REGULAR),
+		list("Research Data Terminal", 2, /obj/item/circuitboard/computer/research_terminal, VENDOR_ITEM_REGULAR),
+		list("P.A.C.M.A.N Generator", 1, /obj/item/circuitboard/machine/pacman, VENDOR_ITEM_REGULAR),
+		list("Auxiliar Power Storage Unit", 2, /obj/item/circuitboard/machine/ghettosmes, VENDOR_ITEM_REGULAR),
+	)
+
 /obj/structure/machinery/cm_vending/sorted/tech/tool_storage/antag
 	req_access = list(ACCESS_ILLEGAL_PIRATE)
 
@@ -70,7 +112,7 @@
 
 		list("BATTERIES", -1, null, null),
 		list("High-Capacity Power Cell", round(scale * 3), /obj/item/cell/high, VENDOR_ITEM_REGULAR),
-		list("Low-Capacity Power Cell", round(scale * 6), /obj/item/cell, VENDOR_ITEM_REGULAR),
+		list("Low-Capacity Power Cell", round(scale * 7), /obj/item/cell, VENDOR_ITEM_REGULAR),
 	)
 
 /obj/structure/machinery/cm_vending/sorted/tech/electronics_storage/antag
@@ -98,7 +140,8 @@
 		list("Matter Bin", round(scale * 4), /obj/item/stock_parts/matter_bin, VENDOR_ITEM_REGULAR),
 		list("Micro Laser", round(scale * 4), /obj/item/stock_parts/micro_laser , VENDOR_ITEM_REGULAR),
 		list("Micro Manipulator", round(scale * 4), /obj/item/stock_parts/manipulator, VENDOR_ITEM_REGULAR),
-		list("Scanning Module", round(scale * 4), /obj/item/stock_parts/scanning_module, VENDOR_ITEM_REGULAR)
+		list("Scanning Module", round(scale * 4), /obj/item/stock_parts/scanning_module, VENDOR_ITEM_REGULAR),
+		list("Capacitor", round(scale * 3), /obj/item/stock_parts/capacitor, VENDOR_ITEM_REGULAR)
 	)
 
 /obj/structure/machinery/cm_vending/sorted/tech/comp_storage/antag
@@ -157,3 +200,4 @@
 		list("Anesthetic Tank", 2, /obj/item/tank/anesthetic, VENDOR_ITEM_REGULAR),
 		list("Health Analyzer", 2, /obj/item/device/healthanalyzer, VENDOR_ITEM_REGULAR)
 	)
+

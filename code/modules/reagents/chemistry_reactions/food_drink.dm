@@ -146,9 +146,9 @@
 	required_reagents = list("sodium" = 1, "chlorine" = 1)
 	result_amount = 2
 
-/datum/chemical_reaction/cheesewheel
-	name = "Cheesewheel"
-	id = "cheesewheel"
+/datum/chemical_reaction/cheesewheel/immature
+	name = "Immature Cheesewheel"
+	id = "immaturecheesewheel"
 	result = null
 	required_reagents = list("milk" = 40)
 	required_catalysts = list("enzyme" = 5)
@@ -156,7 +156,7 @@
 
 	on_reaction(var/datum/reagents/holder, var/created_volume)
 		var/location = get_turf(holder.my_atom)
-		new /obj/item/reagent_container/food/snacks/sliceable/cheesewheel(location)
+		new /obj/item/reagent_container/food/snacks/sliceable/cheesewheel/immature(location)
 
 
 /datum/chemical_reaction/syntiflesh
@@ -793,3 +793,17 @@
 	result = "suidream"
 	required_reagents = list("space_up" = 2, "bluecuracao" = 1, "melonliquor" = 1)
 	result_amount = 4
+
+/datum/chemical_reaction/eggnog
+	name = "Eggnog"
+	id = "eggnog"
+	result = "eggnog"
+	required_reagents = list("sugar" = 1, "cream" = 1, "milk" = 2)
+	result_amount = 3
+
+/datum/chemical_reaction/spikedeggnog
+	name = "Spiked Eggnog"
+	id = "spikedeggnog"
+	result = "spikedeggnog"
+	required_reagents = list("eggnog" = 2, "rum" = 1)
+	result_amount = 3

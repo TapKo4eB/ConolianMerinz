@@ -1,18 +1,14 @@
 
 var/list/unansweredAhelps = list()			//This feels inefficient, but I can't think of a better way. Stores the message indexed by CID
-var/list/CLFaxes = list()					//List of all CL faxes sent this round
-var/list/fax_contents = list() 				//List of fax contents to maintain it even if source paper is deleted
-var/list/USCMFaxes = list()					//List of all USCM faxes sent this round
 
-// Global lists of the HUDs
-var/global/list/custom_huds_list = list("midnight" = new /datum/custom_hud(),
-									"dark" = new /datum/custom_hud/dark(),
-									"old" = new /datum/custom_hud/old(),
-									"orange" = new /datum/custom_hud/orange(),
-									"white" = new /datum/custom_hud/white(),
-									"alien" = new /datum/custom_hud/alien(),
-									"robot" = new /datum/custom_hud/robot()
-									)
+GLOBAL_LIST_EMPTY(WYFaxes)			//Departmental faxes
+GLOBAL_LIST_EMPTY(USCMFaxes)
+GLOBAL_LIST_EMPTY(ProvostFaxes)
+GLOBAL_LIST_EMPTY(GeneralFaxes)		//Inter-machine faxes
+GLOBAL_LIST_EMPTY(fax_contents)		//List of fax contents to maintain it even if source paper is deleted
+
+GLOBAL_LIST_INIT_TYPED(custom_huds_list, /datum/custom_hud, setup_all_huds())
+GLOBAL_LIST_INIT_TYPED(custom_human_huds, /datum/custom_hud, setup_human_huds())
 
 //Since it didn't really belong in any other category, I'm putting this here
 //This is for procs to replace all the goddamn 'in world's that are chilling around the code
@@ -25,18 +21,11 @@ var/global/list/ai_mob_list = list()				//List of all AIs
 
 GLOBAL_LIST_EMPTY(freed_mob_list) 	// List of mobs freed for ghosts
 
+GLOBAL_LIST_INIT(available_taskbar_icons, setup_taskbar_icons())
+
 // Xeno stuff //
 // Resin constructions parameters
 GLOBAL_LIST_INIT_TYPED(resin_constructions_list, /datum/resin_construction, setup_resin_constructions())
-
-GLOBAL_LIST_INIT(resin_build_order_default, list(
-	/datum/resin_construction/resin_turf/wall,
-	/datum/resin_construction/resin_turf/membrane,
-	/datum/resin_construction/resin_obj/door,
-	/datum/resin_construction/resin_obj/nest,
-	/datum/resin_construction/resin_obj/sticky_resin,
-	/datum/resin_construction/resin_obj/fast_resin,
-))
 
 GLOBAL_LIST_INIT(resin_build_order_drone, list(
 	/datum/resin_construction/resin_turf/wall,
@@ -45,16 +34,35 @@ GLOBAL_LIST_INIT(resin_build_order_drone, list(
 	/datum/resin_construction/resin_obj/nest,
 	/datum/resin_construction/resin_obj/sticky_resin,
 	/datum/resin_construction/resin_obj/fast_resin,
+	/datum/resin_construction/resin_obj/resin_spike
 ))
 
 GLOBAL_LIST_INIT(resin_build_order_hivelord, list(
 	/datum/resin_construction/resin_turf/wall/thick,
+	/datum/resin_construction/resin_turf/wall/reflective,
 	/datum/resin_construction/resin_turf/membrane/thick,
 	/datum/resin_construction/resin_obj/door/thick,
 	/datum/resin_construction/resin_obj/nest,
+	/datum/resin_construction/resin_obj/acid_pillar,
 	/datum/resin_construction/resin_obj/sticky_resin,
 	/datum/resin_construction/resin_obj/fast_resin,
+	/datum/resin_construction/resin_obj/resin_spike
 ))
+
+GLOBAL_LIST_INIT(resin_build_order_ovipositor, list(
+	/datum/resin_construction/resin_turf/wall/queen,
+	/datum/resin_construction/resin_turf/wall/reflective,
+	/datum/resin_construction/resin_turf/membrane/queen,
+	/datum/resin_construction/resin_obj/door/queen,
+	/datum/resin_construction/resin_obj/nest,
+	/datum/resin_construction/resin_obj/acid_pillar,
+	/datum/resin_construction/resin_obj/sticky_resin,
+	/datum/resin_construction/resin_obj/fast_resin,
+	/datum/resin_construction/resin_obj/resin_spike
+))
+
+//Xeno Leader Mark Meanings
+GLOBAL_LIST_INIT_TYPED(resin_mark_meanings, /datum/xeno_mark_define, setup_resin_mark_meanings())
 
 /// Xeno caste datums
 GLOBAL_REFERENCE_LIST_INDEXED(xeno_datum_list, /datum/caste_datum, caste_type)
@@ -67,7 +75,7 @@ var/global/list/chemical_properties_list	//List of all /datum/chem_property datu
 var/global/list/chemical_objective_list	 = list()	//List of all objective reagents indexed by ID associated with the objective value
 var/global/list/chemical_identified_list = list()	//List of all identified objective reagents indexed by ID associated with the objective value
 //List of all id's from classed /datum/reagent datums indexed by class or tier. Used by chemistry generator and chem spawners.
-var/global/list/list/chemical_gen_classes_list = list("C" = list(),"C1" = list(),"C2" = list(),"C3" = list(),"C4" = list(),"C5" = list(),"C6" = list(),"T1" = list(),"T2" = list(),"T3" = list(),"T4" = list(),"omega" = list(),"tau" = list())
+var/global/list/list/chemical_gen_classes_list = list("C" = list(),"C1" = list(),"C2" = list(),"C3" = list(),"C4" = list(),"C5" = list(),"C6" = list(),"T1" = list(),"T2" = list(),"T3" = list(),"T4" = list(),"tau" = list())
 
 GLOBAL_LIST_INIT_TYPED(ammo_list, /datum/ammo, setup_ammo())					//List of all ammo types. Used by guns to tell the projectile how to act.
 GLOBAL_REFERENCE_LIST_INDEXED(joblist, /datum/job, title)					//List of all jobstypes, minus borg and AI
@@ -88,7 +96,8 @@ GLOBAL_LIST_INIT(surgical_tools, setup_surgical_tools())
 GLOBAL_LIST_INIT(surgical_init_tools, GLOB.surgical_tools - typecacheof(SURGERY_TOOLS_NO_INIT_MSG))
 GLOBAL_LIST_INIT(surgical_patient_types, setup_surgical_patient_types())
 
-GLOBAL_LIST_INIT_TYPED(gear_presets_list, /datum/equipment_preset, setup_gear_presets())
+GLOBAL_LIST_INIT_TYPED(gear_path_presets_list, /datum/equipment_preset, setup_gear_path_presets())
+GLOBAL_LIST_INIT_TYPED(gear_name_presets_list, /datum/equipment_preset, setup_gear_name_presets())
 
 var/global/list/active_areas = list()
 var/global/list/all_areas = list()
@@ -103,14 +112,15 @@ GLOBAL_LIST_INIT(explosive_antigrief_exempt_areas, list(
 	//non currently
 ))
 
-var/global/list/yautja_gear = list() // list of loose pred gear
-var/global/list/untracked_yautja_gear = list() // List of untracked loose pred gear
+GLOBAL_LIST_EMPTY(loose_yautja_gear)
+GLOBAL_LIST_EMPTY(tracked_yautja_gear) // list of pred gear with a tracking element attached
+
+GLOBAL_LIST_INIT_TYPED(all_yautja_capes, /obj/item/clothing/yautja_cape, setup_yautja_capes())
 
 //Languages/species/whitelist.
 GLOBAL_LIST_INIT_TYPED(all_species, /datum/species, setup_species())
 GLOBAL_REFERENCE_LIST_INDEXED(all_languages, /datum/language, name)
 GLOBAL_LIST_INIT(language_keys, setup_language_keys())					//table of say codes for all languages
-var/global/list/synth_types = list(SYNTH_GEN_ONE,SYNTH_GEN_TWO, SYNTH_GEN_THREE)
 
 //Xeno mutators
 GLOBAL_REFERENCE_LIST_INDEXED_SORTED(xeno_mutator_list, /datum/xeno_mutator, name)
@@ -125,7 +135,8 @@ GLOBAL_LIST_INIT_TYPED(hive_datum, /datum/hive_status, list(
 	XENO_HIVE_DELTA = new /datum/hive_status/delta(),
 	XENO_HIVE_FERAL = new /datum/hive_status/feral(),
 	XENO_HIVE_TAMED = new /datum/hive_status/corrupted/tamed(),
-	XENO_HIVE_MUTATED = new /datum/hive_status/mutated()
+	XENO_HIVE_MUTATED = new /datum/hive_status/mutated(),
+	XENO_HIVE_FORSAKEN = new /datum/hive_status/forsaken()
 ))
 
 GLOBAL_LIST_INIT(custom_event_info_list, setup_custom_event_info())
@@ -141,6 +152,7 @@ GLOBAL_REFERENCE_LIST_INDEXED(body_types_list, /datum/body_type, name)			// Stor
 	//Hairstyles
 GLOBAL_REFERENCE_LIST_INDEXED(hair_styles_list, /datum/sprite_accessory/hair, name)			//stores /datum/sprite_accessory/hair indexed by name
 GLOBAL_REFERENCE_LIST_INDEXED(facial_hair_styles_list, /datum/sprite_accessory/facial_hair, name)	//stores /datum/sprite_accessory/facial_hair indexed by name
+GLOBAL_REFERENCE_LIST_INDEXED(yautja_hair_styles_list, /datum/sprite_accessory/yautja_hair, name)
 
 	//Underwear
 var/global/list/underwear_m = list("Briefs") //Curse whoever made male/female underwear diffrent colours
@@ -206,15 +218,32 @@ var/global/list/paramslist_cache = list()
 		resin_constructions_list[T] = RC
 	return sortAssoc(resin_constructions_list)
 
-/proc/setup_gear_presets()
-	var/list/gear_presets_list = list()
+/proc/setup_resin_mark_meanings()
+	var/list/resin_meanings_list = list()
+	for (var/T in subtypesof(/datum/xeno_mark_define))
+		var/datum/xeno_mark_define/XMD = new T
+		resin_meanings_list[T] = XMD
+	return sortAssoc(resin_meanings_list)
+
+/proc/setup_gear_path_presets()
+	var/list/gear_path_presets_list = list()
 	for(var/T in typesof(/datum/equipment_preset))
 		var/datum/equipment_preset/EP = T
 		if (!initial(EP.flags))
 			continue
 		EP = new T
-		gear_presets_list[EP.name] = EP
-	return sortAssoc(gear_presets_list)
+		gear_path_presets_list[EP.type] = EP
+	return sortAssoc(gear_path_presets_list)
+
+/proc/setup_gear_name_presets()
+	var/list/gear_path_presets_list = list()
+	for(var/T in typesof(/datum/equipment_preset))
+		var/datum/equipment_preset/EP = T
+		if (!initial(EP.flags))
+			continue
+		EP = new T
+		gear_path_presets_list[EP.name] = EP
+	return sortAssoc(gear_path_presets_list)
 
 /proc/setup_language_keys()
 	var/list/language_keys = list()
@@ -291,6 +320,43 @@ var/global/list/paramslist_cache = list()
 
 	return custom_event_info_list
 
+/proc/setup_taskbar_icons()
+	var/list/png_list = flist("icons/taskbar")
+	for(var/png in png_list)
+		if(!isfile(png))
+			png_list -= png
+	return sortList(png_list)
+
+/proc/setup_all_huds()
+	return list(
+		HUD_MIDNIGHT = new /datum/custom_hud(),
+		HUD_DARK = new /datum/custom_hud/dark(),
+		HUD_BRONZE = new /datum/custom_hud/bronze(),
+		HUD_GLASS = new /datum/custom_hud/glass(),
+		HUD_GREEN = new /datum/custom_hud/green(),
+		HUD_GREY = new /datum/custom_hud/grey(),
+		HUD_HOLO = new /datum/custom_hud/holographic(),
+		HUD_OLD = new /datum/custom_hud/old(),
+		HUD_ORANGE = new /datum/custom_hud/orange(),
+		HUD_RED = new /datum/custom_hud/red(),
+		HUD_WHITE = new /datum/custom_hud/white(),
+		HUD_ALIEN = new /datum/custom_hud/alien(),
+		HUD_ROBOT = new /datum/custom_hud/robot()
+	)
+
+/proc/setup_human_huds()
+	var/list/human_huds = list()
+	for(var/type in GLOB.custom_huds_list - list(HUD_ALIEN, HUD_ROBOT))
+		human_huds += type
+	return human_huds
+
+/proc/setup_yautja_capes()
+	var/list/cape_list = list()
+	for(var/obj/item/clothing/yautja_cape/cape_type as anything in typesof(/obj/item/clothing/yautja_cape))
+		cape_list[initial(cape_type.name)] = cape_type
+	return cape_list
+
+
 /* // Uncomment to debug chemical reaction list.
 /client/verb/debug_chemical_list()
 
@@ -302,3 +368,5 @@ var/global/list/paramslist_cache = list()
 				. += "    has: [t]\n"
 	world << .
 */
+
+GLOBAL_REFERENCE_LIST_INDEXED(all_skills, /datum/skill, skill_name)

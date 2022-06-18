@@ -227,6 +227,13 @@
 /obj/item/weapon/gun/flamer/underextinguisher
 	starting_attachment_types = list(/obj/item/attachable/attached_gun/extinguisher)
 
+/obj/item/weapon/gun/flamer/deathsquad //w-y deathsquad waist flamer
+	name = "\improper M240A3 incinerator unit"
+	desc = "A next-generation incinerator unit, the M240A3 is much lighter and dextreous than its predecessors thanks to the ceramic alloy construction. It can be slinged over a belt and usually comes equipped with X-type fuel."
+	starting_attachment_types = list(/obj/item/attachable/attached_gun/extinguisher)
+	flags_equip_slot = SLOT_BACK | SLOT_WAIST
+	current_mag = /obj/item/ammo_magazine/flamer_tank/EX
+
 /obj/item/weapon/gun/flamer/M240T
 	name = "\improper M240-T incinerator unit"
 	desc = "An improved version of the M240A1 incinerator unit, the M240-T model is capable of dispersing a larger variety of fuel types."
@@ -362,7 +369,7 @@
 
 	flameshape = new_flameshape
 
-	//non-dynamic flame is already colored	
+	//non-dynamic flame is already colored
 	if(R.burn_sprite == "dynamic")
 		color = R.burncolor
 	else
@@ -439,7 +446,11 @@
 						user.attack_log += "\[[time_stamp()]\] <b>[key_name(user)]</b> shot <b>[key_name(H)]</b> with \a <b>[name]</b> in [get_area(user)]."
 						if(weapon_cause_data.cause_name)
 							H.track_friendly_fire(weapon_cause_data.cause_name)
-						msg_admin_ff("[key_name(user)] shot [key_name(H)] with \a [name] in [get_area(user)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[user.x];Y=[user.y];Z=[user.z]'>JMP</a>) (<a href='?priv_msg=\ref[user.client]'>PM</a>)")
+						var/ff_msg = "[key_name(user)] shot [key_name(H)] with \a [name] in [get_area(user)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[user.x];Y=[user.y];Z=[user.z]'>JMP</a>) ([user.client ? "<a href='?priv_msg=[user.client.ckey]'>PM</a>" : "NO CLIENT"])"
+						var/ff_living = TRUE
+						if(H.stat == DEAD)
+							ff_living = FALSE
+						msg_admin_ff(ff_msg, ff_living)
 					else
 						H.attack_log += "\[[time_stamp()]\] <b>[key_name(user)]</b> shot <b>[key_name(H)]</b> with \a <b>[name]</b> in [get_area(user)]."
 						user.attack_log += "\[[time_stamp()]\] <b>[key_name(user)]</b> shot <b>[key_name(H)]</b> with \a <b>[name]</b> in [get_area(user)]."
@@ -510,7 +521,7 @@
 
 	if(sig_result & COMPONENT_NO_BURN && !tied_reagent.fire_penetrating)
 		burn_damage = 0
-	
+
 	if(!burn_damage)
 		to_chat(M, SPAN_DANGER("You step over the flames."))
 		return
@@ -542,12 +553,13 @@
 	initial_burst = FALSE
 	update_flame()
 
-/obj/flamer_fire/process()
+/obj/flamer_fire/process(delta_time)
 	var/turf/T = loc
 	firelevel = max(0, firelevel)
 	if(!istype(T)) //Is it a valid turf? Has to be on a floor
 		qdel(src)
-		return
+		return PROCESS_KILL
+	T.flamer_fire_act(burnlevel*delta_time)
 
 	update_flame()
 
@@ -560,7 +572,7 @@
 		if(++j >= 11) break
 		if(isliving(i))
 			set_on_fire(i)
-		if(isobj(i))
+		else if(isobj(i))
 			var/obj/O = i
 			O.flamer_fire_act(0, weapon_cause_data)
 
@@ -578,6 +590,8 @@
 		R.burn_sprite = burn_sprite
 		R.burncolor = f_color
 		new/obj/flamer_fire(target, cause_data, R)
+	if(target.density)
+		return
 
 	for(var/spread_direction in alldirs)
 
@@ -607,9 +621,6 @@
 		var/turf/T = get_step(target, spread_direction)
 
 		if(!T) //prevents trying to spread into "null" (edge of the map?)
-			continue
-
-		if(T.density)
 			continue
 
 		if(aerial_flame_level && (T.get_pylon_protection_level() >= aerial_flame_level))

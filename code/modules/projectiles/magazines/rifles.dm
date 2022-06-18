@@ -136,7 +136,13 @@
 	bonus_overlay = "mar40_ex"
 	icon_state = "mar40_extended"
 
-
+/obj/item/ammo_magazine/rifle/mar40/lmg
+	name = "\improper MAR drum magazine (7.62x39mm)"
+	desc = "A 7.62x39mm drum magazine for the MAR-50 LMG."
+	caliber = "7.62x39mm"
+	icon_state = "mar50"
+	max_rounds = 100
+	gun_type = /obj/item/weapon/gun/rifle/mar40/lmg
 
 //-------------------------------------------------------
 //M16 RIFLE
@@ -172,6 +178,12 @@
 	max_rounds = 300
 	gun_type = /obj/item/weapon/gun/rifle/lmg
 
+/obj/item/ammo_magazine/rifle/lmg/holo_target
+	name = "\improper M41AE2 ammo box (10x24mm holo-target)"
+	desc = "A semi-rectangular box of holo-target rounds for the M41AE2 Heavy Pulse Rifle."
+	icon_state = "m41ae2_track"
+	default_ammo = /datum/ammo/bullet/rifle/holo_target
+	max_rounds = 200
 
 //-------------------------------------------------------
 //UPP TYPE 71 RIFLE
@@ -261,6 +273,34 @@
 	w_class = SIZE_MEDIUM
 
 //-------------------------------------------------------
+////NSG 23 ASSAULT RIFLE - PMC PRIMARY RIFLE
+
+/obj/item/ammo_magazine/rifle/nsg23
+	name = "\improper NSG 23 magazine (10x24mm)"
+	desc = "An NSG 23 assault rifle magazine."
+	caliber = "10x24mm"
+	icon_state = "nsg23"
+	item_state = "nsg23"
+	bonus_overlay = "nsg23_mag_overlay" //needs to be an overlay, as the mag has a hole that would be filled over by the ext overlay
+	max_rounds = 30
+	gun_type = /obj/item/weapon/gun/rifle/nsg23
+
+/obj/item/ammo_magazine/rifle/nsg23/extended
+	name = "\improper NSG 23 extended magazine (10x24mm)"
+	desc = "An NSG 23 assault rifle magazine. This one contains 45 bullets."
+	icon_state = "nsg23_ext"
+	item_state = "nsg23_ext"
+	bonus_overlay = "nsg23_ext_overlay"
+	max_rounds = 45
+
+/obj/item/ammo_magazine/rifle/nsg23/ap
+	name = "\improper NSG 23 armor-piercing magazine (10x24mm)"
+	desc = "An NSG 23 assault rifle magazine. This one is armor piercing."
+	icon_state = "nsg23_ap"
+	item_state = "nsg23_ap"
+	default_ammo = /datum/ammo/bullet/rifle/ap
+
+//-------------------------------------------------------
 //Basira-Armstrong rifle
 
 /obj/item/ammo_magazine/rifle/hunting
@@ -274,7 +314,7 @@
 	w_class = SIZE_SMALL
 
 //--------------------------------------------------------
-//Default bolt action rifle ammo
+//Bolt action rifle ammo
 /obj/item/ammo_magazine/rifle/boltaction
 	name = "\improper Bolt Action magazine (7.62mm)"
 	desc = "Bolt action magazine, simple really."
@@ -284,3 +324,10 @@
 	max_rounds = 10
 	gun_type = /obj/item/weapon/gun/boltaction
 	w_class = SIZE_SMALL
+
+/obj/item/ammo_magazine/rifle/boltaction/colony
+	name = "\improper Model 12 Bolt Action magazine (8mm W-Y)"
+	desc = "A magazine for the Model 12 Bolt Action Rifle, holds ten rounds."
+	caliber = "8mm W-Y"
+	gun_type = /obj/item/weapon/gun/boltaction/colony
+	w_class = SIZE_MEDIUM

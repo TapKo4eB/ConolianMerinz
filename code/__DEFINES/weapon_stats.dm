@@ -66,7 +66,7 @@ var/accuracy_mult_unwielded
 ////SCATTER////
 */
 
-#define SCATTER_AMOUNT_NEURO 40
+#define SCATTER_AMOUNT_NEURO 60
 #define SCATTER_AMOUNT_TIER_1 15
 #define SCATTER_AMOUNT_TIER_2 10
 #define SCATTER_AMOUNT_TIER_3 8
@@ -145,11 +145,13 @@ As such, don't expect any values assigned to common firearms to even consider ho
 #define FIRE_DELAY_TIER_8 	3
 #define FIRE_DELAY_TIER_9 	2
 #define FIRE_DELAY_TIER_10 	1
+#define FIRE_DELAY_TIER_SMG	1.3
 
 /*
 ////RANGE RELATED////
 */
 
+#define DAMAGE_FALLOFF_BLANK 	30
 #define DAMAGE_FALLOFF_TIER_1 	10
 #define DAMAGE_FALLOFF_TIER_2 	9
 #define DAMAGE_FALLOFF_TIER_3 	8

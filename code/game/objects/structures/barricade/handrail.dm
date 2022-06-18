@@ -13,7 +13,7 @@
 	destroyed_stack_amount = 1
 	crusher_resistant = FALSE
 	can_wire = FALSE
-	barricade_hitsound = "sound/effects/metalhit.ogg"
+	barricade_hitsound = 'sound/effects/metalhit.ogg'
 	projectile_coverage = PROJECTILE_COVERAGE_LOW
 	var/build_state = BARRICADE_BSTATE_SECURED
 	var/reinforced = FALSE	//Reinforced to be a cade or not
@@ -181,3 +181,12 @@
 /obj/structure/barricade/handrail/wire
 	icon_state = "wire_rail"
 	climb_delay = CLIMB_DELAY_SHORT
+
+/obj/structure/barricade/handrail/sandstone
+	name = "sandstone handrail"
+	icon_state = "hr_sandstone"
+	stack_type = /obj/item/stack/sheet/mineral/sandstone
+	debris = list(/obj/item/stack/sheet/mineral/sandstone)
+
+/obj/structure/barricade/handrail/sandstone/b
+	icon_state = "hr_sandstone_b"

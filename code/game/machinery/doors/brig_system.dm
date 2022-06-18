@@ -6,6 +6,9 @@
 	req_access = list(ACCESS_MARINE_BRIG)
 	anchored = TRUE    		// can't pick it up
 	density = FALSE       		// can walk through it.
+	unacidable = TRUE
+	indestructible = TRUE
+
 	var/id = null     		// id of door it controls.
 	var/picture_state		// icon_state of alert picture, if not displaying text/numbers
 	var/list/obj/structure/machinery/targets = list()
@@ -260,7 +263,7 @@
 
 		if(ishuman(user))
 			var/mob/living/carbon/human/H = user
-			if(H.get_paygrade(0) in list("Captain", "Commodore", "Rear Admiral", "Vice Admiral", "Admiral", "Fleet Admiral", "Inspector", "Provost Marshal", "Provost Sector Marshal", "Provost Chief Marshal"))
+			if((H.get_paygrade(1) in GLOB.co_paygrades) || (H.get_paygrade(1) in GLOB.highcom_paygrades) || (H.get_paygrade(1) == "PvI"))
 				dat += "<br/>"
 				dat += "<a href='?src=\ref[src];brig=pardon'>Pardon</a>"
 				dat += "<br/>"
@@ -379,3 +382,11 @@
 /obj/structure/machinery/brig_cell/cell_4
 	name = "Cell 4"
 	id = "Cell 4"
+
+/obj/structure/machinery/brig_cell/perma_1
+	name = "Perma 1"
+	id = "Perma 1"
+
+/obj/structure/machinery/brig_cell/perma_2
+	name = "Perma 2"
+	id = "Perma 2"

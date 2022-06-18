@@ -18,6 +18,7 @@
 	var/max_amount //also see stack recipes initialisation, param "max_res_amount" must be equal to this max_amount
 	var/stack_id //used to determine if two stacks are of the same kind.
 	var/amount_sprites = FALSE //does it have sprites for extra amount, like metal, plasteel, or wood
+	var/display_maptext = TRUE //does it show amount on top of the icon
 	//Coords for contents display, to make it play nice with inventory borders.
 	maptext_x = 4
 	maptext_y = 3
@@ -34,7 +35,7 @@
 Also change the icon to reflect the amount of sheets, if possible.*/
 /obj/item/stack/update_icon()
 	..()
-	if(isstorage(loc) || ismob(loc))
+	if((isstorage(loc) || ismob(loc)) && display_maptext)
 		maptext = "<span class='langchat'>[(amount > 1)? "[amount]" : ""]</span>"
 	else
 		maptext = ""
@@ -180,6 +181,10 @@ Also change the icon to reflect the amount of sheets, if possible.*/
 			if(AC)
 				to_chat(usr, SPAN_WARNING("The [R.title] cannot be built here!"))  //might cause some friendly fire regarding other items like barbed wire, shouldn't be a problem?
 				return
+
+		if((R.flags & RESULT_REQUIRES_SNOW) && !(istype(usr.loc, /turf/open/snow) || istype(usr.loc, /turf/open/auto_turf/snow)))
+			to_chat(usr, SPAN_WARNING("The [R.title] must be built on snow!"))
+			return
 
 		if(R.time)
 			if(usr.action_busy)
@@ -334,8 +339,6 @@ Also change the icon to reflect the amount of sheets, if possible.*/
 
 	return ..()
 
-
-
 /*
  * Recipe datum
  */
@@ -351,8 +354,9 @@ Also change the icon to reflect the amount of sheets, if possible.*/
 	var/on_floor = 0
 	var/skill_req = SKILL_CONSTRUCTION
 	var/skill_lvl = 0 //whether only people with sufficient construction skill can build this.
+	var/flags = NO_FLAGS
 
-/datum/stack_recipe/New(title, result_type, req_amount = 1, res_amount = 1, max_res_amount = 1, time = 0, one_per_turf = 0, on_floor = 0, skill_req, skill_lvl = 0, min_time = 0)
+/datum/stack_recipe/New(title, result_type, req_amount = 1, res_amount = 1, max_res_amount = 1, time = 0, one_per_turf = 0, on_floor = 0, skill_req, skill_lvl = 0, min_time = 0, flags = NO_FLAGS)
 	src.title = title
 	src.result_type = result_type
 	src.req_amount = req_amount
@@ -364,6 +368,7 @@ Also change the icon to reflect the amount of sheets, if possible.*/
 	src.on_floor = on_floor
 	src.skill_req = skill_req
 	src.skill_lvl = skill_lvl
+	src.flags = flags
 
 /*
  * Recipe list datum

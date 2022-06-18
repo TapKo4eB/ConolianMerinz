@@ -1,6 +1,6 @@
 another day, another killed xeno and another spoken joke
 
-# LICENSE
+## LICENSE
 
 The code for CM-SS13 is licensed under the [GNU Affero General Public License v3](http://www.gnu.org/licenses/agpl.html), which can be found in full in [/LICENSE-AGPL3](/LICENSE-AGPL3).
 

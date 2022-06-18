@@ -12,11 +12,6 @@
 	},
 /area/adminlevel/chinook/medical)
 "ad" = (
-/obj/structure/sign/securearea{
-	desc = "A warning sign which reads 'LIVE AMMUNITION RANGE'.";
-	name = "\improper FIRING RANGE";
-	pixel_y = -32
-	},
 /obj/structure/machinery/disposal,
 /turf/open/floor/almayer,
 /area/adminlevel/chinook/sec)
@@ -60,7 +55,6 @@
 /area/space)
 "am" = (
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -761,7 +755,6 @@
 	},
 /area/adminlevel/chinook/sec)
 "cx" = (
-/obj/structure/largecrate/supply/machine,
 /turf/open/floor/almayer{
 	dir = 5;
 	icon_state = "plating";
@@ -1113,7 +1106,6 @@
 /obj/structure/surface/table/reinforced/almayer_B,
 /obj/item/device/multitool,
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -2122,7 +2114,6 @@
 	},
 /obj/structure/largecrate/random/case/double,
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -2174,7 +2165,6 @@
 "gT" = (
 /obj/structure/machinery/telecomms/relay/preset/centcom,
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -3628,14 +3618,6 @@
 	},
 /area/adminlevel/chinook/offices)
 "lz" = (
-/obj/structure/sign/directions/medical{
-	pixel_x = 28;
-	pixel_y = -5
-	},
-/obj/structure/sign/directions/engineering{
-	pixel_x = 28;
-	pixel_y = 2
-	},
 /turf/open/floor/almayer{
 	dir = 4;
 	icon_state = "silver";
@@ -6975,7 +6957,6 @@
 	listening_level = 9
 	},
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -7341,11 +7322,6 @@
 	},
 /area/adminlevel/chinook/event)
 "xk" = (
-/obj/structure/sign/securearea{
-	desc = "A warning sign which reads 'LIVE AMMUNITION RANGE'.";
-	name = "\improper FIRING RANGE";
-	pixel_x = 32
-	},
 /turf/open/floor/almayer{
 	dir = 5;
 	icon_state = "plating";
@@ -7727,7 +7703,6 @@
 	listening_level = 9
 	},
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -8616,11 +8591,6 @@
 	},
 /area/adminlevel/chinook)
 "Cf" = (
-/obj/structure/sign/securearea{
-	desc = "A warning sign which reads 'LIVE AMMUNITION RANGE'.";
-	name = "\improper FIRING RANGE";
-	pixel_x = -29
-	},
 /turf/open/floor/almayer{
 	dir = 8;
 	icon_state = "red";
@@ -8770,7 +8740,6 @@
 "CN" = (
 /turf/open/floor/almayer{
 	dir = 8;
-	icon_regular_floor = "cargo_arrow";
 	icon_state = "cargo_arrow"
 	},
 /area/adminlevel/chinook)
@@ -8927,7 +8896,6 @@
 /obj/structure/surface/table/reinforced/almayer_B,
 /obj/item/device/flashlight/lamp,
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -9080,10 +9048,6 @@
 	},
 /area/adminlevel/chinook/sec)
 "Ea" = (
-/obj/structure/sign/directions/engineering{
-	dir = 1;
-	pixel_x = 28
-	},
 /turf/open/floor/almayer{
 	dir = 4;
 	icon_state = "silver";
@@ -9504,7 +9468,6 @@
 "FQ" = (
 /obj/structure/machinery/telecomms/hub/preset_cent,
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -11354,7 +11317,6 @@
 	},
 /turf/open/floor/almayer{
 	dir = 8;
-	icon_regular_floor = "cargo_arrow";
 	icon_state = "cargo_arrow"
 	},
 /area/adminlevel/chinook/shuttle)
@@ -11622,7 +11584,6 @@
 	dir = 4
 	},
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -13120,7 +13081,6 @@
 /obj/structure/surface/rack,
 /obj/effect/spawner/random/toolbox,
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -13173,7 +13133,6 @@
 	freq_listening = list(1353,1357,1359,1355,1469,1471,1354,1342,1344,1235,1340,1214,1358,1356,1236,1240,1449,1451,1453,1455)
 	},
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -13316,7 +13275,6 @@
 "SQ" = (
 /obj/structure/machinery/telecomms/server/presets/centcomm,
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -13503,9 +13461,6 @@
 /area/adminlevel/chinook/cargo)
 "TC" = (
 /obj/structure/closet/crate,
-/obj/structure/sign/fire{
-	pixel_y = 25
-	},
 /turf/open/floor/almayer{
 	icon_state = "cargo";
 	tag = "icon-bluecorner (NORTH)"
@@ -14170,7 +14125,6 @@
 	tag = "icon-tube1 (EAST)"
 	},
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)
@@ -14541,7 +14495,6 @@
 /area/adminlevel/chinook/event)
 "WV" = (
 /turf/open/floor/almayer{
-	icon_regular_floor = "cargo_arrow";
 	icon_state = "cargo_arrow"
 	},
 /area/adminlevel/chinook/cargo)
@@ -15107,7 +15060,6 @@
 "Yq" = (
 /turf/open/floor/almayer{
 	dir = 8;
-	icon_regular_floor = "cargo_arrow";
 	icon_state = "cargo_arrow"
 	},
 /area/adminlevel/chinook/shuttle)
@@ -15331,7 +15283,6 @@
 	name = "Chinook Telecommunications Mainframe"
 	},
 /turf/open/floor/almayer{
-	icon_plating = "tcomms";
 	icon_state = "tcomms"
 	},
 /area/adminlevel/chinook/engineering)

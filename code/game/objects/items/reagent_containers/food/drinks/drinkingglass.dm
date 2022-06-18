@@ -233,7 +233,7 @@
 				if("atomicbomb")
 					icon_state = "atomicbombglass"
 					name = "Atomic Bomb"
-					desc = "Nanotrasen cannot take legal responsibility for your actions after imbibing."
+					desc = "Weyland-Yutani cannot take legal responsibility for your actions after imbibing."
 					center_of_mass = "x=15;y=7"
 				if("longislandicedtea")
 					icon_state = "longislandicedteaglass"
@@ -443,7 +443,7 @@
 				if("acidspit")
 					icon_state = "acidspitglass"
 					name = "Acid Spit"
-					desc = "A drink from Nanotrasen. Made from live aliens."
+					desc = "A drink from Weyland-Yutani. Made from live aliens."
 					center_of_mass = "x=16;y=7"
 				if("amasec")
 					icon_state = "amasecglass"
@@ -599,6 +599,16 @@
 					icon_state = "pwineglass"
 					name = "Glass of ???"
 					desc = "A black ichor with an oily purple sheer on top. Are you sure you should drink this?"
+					center_of_mass = "x=16;y=5"
+				if("eggnog")
+					icon_state = "glass_white"
+					name = "Glass of Eggnog"
+					desc = "A rich, non-alcoholic dairy-based beverage traditionally consumed around Christmastime."
+					center_of_mass = "x=16;y=10"
+				if("spikedeggnog")
+					icon_state = "goldschlagerglass"
+					name = "Glass of Spiked Eggnog"
+					desc = "Just looking at this brings back memories of hugs, family, and present unwrappings."
 					center_of_mass = "x=16;y=5"
 				else
 					//a common drinking reagent that makes more than half of the total volume

@@ -34,11 +34,12 @@
 	langchat_listeners = null
 
 ///Creates the image if one does not exist, resets settings that are modified by speech procs.
-/mob/proc/langchat_make_image()
+/mob/proc/langchat_make_image(var/override_color = null)
 	if(!langchat_image)
 		langchat_image = image(null, src)
 		langchat_image.layer = 20
-		langchat_image.appearance_flags = KEEP_APART
+		langchat_image.plane = RUNECHAT_PLANE
+		langchat_image.appearance_flags = NO_CLIENT_COLOR|KEEP_APART|RESET_COLOR
 		langchat_image.maptext_y = langchat_height
 		langchat_image.maptext_height = 64
 		langchat_image.maptext_x = LANGCHAT_X_OFFSET
@@ -46,13 +47,13 @@
 
 	langchat_image.pixel_y = 0
 	langchat_image.alpha = 0
-	langchat_image.color = langchat_color
+	langchat_image.color = override_color ? override_color : langchat_color
 	if(appearance_flags & PIXEL_SCALE)
 		langchat_image.appearance_flags |= PIXEL_SCALE
 
-/mob/proc/langchat_speech(message, var/list/listeners, language)
+/mob/proc/langchat_speech(message, var/list/listeners, language, var/override_color, var/skip_language_check = FALSE)
 	langchat_drop_image()
-	langchat_make_image()
+	langchat_make_image(override_color)
 
 	var/text_to_display = message
 	if(length(text_to_display) > LANGCHAT_LONGEST_TEXT)
@@ -65,7 +66,7 @@
 
 	langchat_listeners = listeners
 	for(var/mob/M in langchat_listeners)
-		if(langchat_client_enabled(M) && !M.ear_deaf && M.say_understands(src, language))
+		if(langchat_client_enabled(M) && !M.ear_deaf && (skip_language_check || M.say_understands(src, language)))
 			M.client.images += langchat_image
 
 	animate(langchat_image, pixel_y = langchat_image.pixel_y + LANGCHAT_MESSAGE_POP_Y_SINK, alpha = LANGCHAT_MAX_ALPHA, time = LANGCHAT_MESSAGE_POP_TIME)

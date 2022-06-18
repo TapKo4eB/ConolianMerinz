@@ -15,14 +15,15 @@
 	var/det_time = 40
 	var/dangerous = 0		//Make an danger overlay for humans?
 	var/arm_sound = 'sound/weapons/armbomb.ogg'
+	var/has_arm_sound = TRUE
 	var/underslug_launchable = FALSE
 	var/hand_throwable = TRUE
 	harmful = TRUE	//Is it harmful? Are they banned for synths?
-	has_iff = TRUE	//Should it be checked by antigrief?
+	antigrief_protection = TRUE	//Should it be checked by antigrief?
 
 /obj/item/explosive/grenade/Initialize()
 	. = ..()
-	det_time = rand(det_time - 5, det_time + 5)
+	det_time = max(0, rand(det_time - 5, det_time + 5))
 
 /obj/item/explosive/grenade/proc/can_use_grenade(mob/living/carbon/human/user)
 	if(!hand_throwable)
@@ -39,6 +40,12 @@
 
 	return TRUE
 
+/obj/item/explosive/grenade/dropped(mob/user)
+	. = ..()
+	if(iscarbon(user) && active)
+		var/mob/living/carbon/nade_user = user
+		nade_user.toggle_throw_mode(THROW_MODE_OFF)
+
 /obj/item/explosive/grenade/attack_self(mob/user)
 	if(active)
 		return
@@ -51,8 +58,8 @@
 	if(!. || isnull(loc))
 		return
 
-	if(has_iff && user.faction == FACTION_MARINE && explosive_grief_check(src))
-		to_chat(user, SPAN_WARNING("\The [name]'s IFF inhibitor prevents you from priming the grenade!"))
+	if(antigrief_protection && user.faction == FACTION_MARINE && explosive_grief_check(src))
+		to_chat(user, SPAN_WARNING("\The [name]'s safe-area accident inhibitor prevents you from priming the grenade!"))
 		// Let staff know, in case someone's actually about to try to grief
 		msg_admin_niche("[key_name(user)] attempted to prime \a [name] in [get_area(src)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[src.loc.x];Y=[src.loc.y];Z=[src.loc.z]'>JMP</a>)")
 		return
@@ -70,9 +77,14 @@
 	SPAN_WARNING("You prime \a [name]!"))
 	msg_admin_attack("[key_name(user)] primed \a grenade ([name]) in [get_area(src)] ([src.loc.x],[src.loc.y],[src.loc.z]).", src.loc.x, src.loc.y, src.loc.z)
 	user.attack_log += text("\[[time_stamp()]\] <font color='red'> [key_name(user)] primed \a grenade ([name]) at ([src.loc.x],[src.loc.y],[src.loc.z])</font>")
-	if(initial(dangerous) && has_species(user, "Human"))
-		var/nade_sound = user.gender == FEMALE ? get_sfx("female_fragout") : get_sfx("male_fragout")
-		playsound(user, nade_sound, 35)
+	if(initial(dangerous))
+		var/nade_sound
+		if(has_species(user, "Human"))
+			nade_sound = user.gender == FEMALE ? get_sfx("female_fragout") : get_sfx("male_fragout")
+		else if(ismonkey(user))
+			nade_sound = sound('sound/voice/monkey_scream.ogg')
+		if(nade_sound)
+			playsound(user, nade_sound, 35)
 
 	var/mob/living/carbon/C = user
 	if(istype(C) && !C.throw_mode)
@@ -86,13 +98,14 @@
 		to_chat(user, SPAN_WARNING("This isn't a hand grenade!"))
 		return
 	cause_data = create_cause_data(initial(name), user)
-	playsound(loc, arm_sound, 25, 1, 6)
+	if(has_arm_sound)
+		playsound(loc, arm_sound, 25, 1, 6)
 	if(customizable)
 		activate_sensors()
 	else
 		active = TRUE
 		w_class = SIZE_MASSIVE // We cheat a little, primed nades become massive so they cant be stored anywhere
-		addtimer(CALLBACK(src, .proc/prime), det_time)
+		det_time ? addtimer(CALLBACK(src, .proc/prime), det_time) : prime()
 	update_icon()
 
 /obj/item/explosive/grenade/update_icon()

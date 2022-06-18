@@ -1,31 +1,32 @@
-/mob/living/carbon/Xenomorph/proc/build_resin(var/atom/A, var/thick = FALSE, var/message = TRUE, var/use_plasma = TRUE)
+/mob/living/carbon/Xenomorph/proc/build_resin(var/atom/A, var/thick = FALSE, var/message = TRUE, var/use_plasma = TRUE, var/add_build_mod = 1)
 	if(!selected_resin)
-		return
+		return SECRETE_RESIN_FAIL
 
 	var/datum/resin_construction/RC = GLOB.resin_constructions_list[selected_resin]
 
 	var/total_resin_cost = XENO_RESIN_BASE_COST + RC.cost // Live, diet, shit code, repeat
 
-	if(action_busy)
-		return FALSE
+	if(action_busy && !can_stack_builds)
+		return SECRETE_RESIN_FAIL
 	if(!check_state())
-		return FALSE
+		return SECRETE_RESIN_FAIL
 	if(use_plasma && !check_plasma(total_resin_cost))
-		return FALSE
+		return SECRETE_RESIN_FAIL
 	if(GLOB.interior_manager.interior_z == z)
 		to_chat(src, SPAN_XENOWARNING("It's too tight in here to build."))
-		return FALSE
+		return SECRETE_RESIN_FAIL
 
 	if(RC.max_per_xeno != RESIN_CONSTRUCTION_NO_MAX)
 		var/current_amount = length(built_structures[RC.build_path])
 		if(current_amount >= RC.max_per_xeno)
 			to_chat(src, SPAN_XENOWARNING("You've already built the maximum possible structures you can!"))
-			return FALSE
+			return SECRETE_RESIN_FAIL
 
 	var/turf/current_turf = get_turf(A)
 
-	if(extra_build_dist != IGNORE_BUILD_DISTANCE && get_dist(src, A) > src.caste.max_build_dist + extra_build_dist) // Hivelords have max_build_dist of 1, drones and queens 0
-		current_turf = get_turf(src)
+	if(extra_build_dist != IGNORE_BUILD_DISTANCE && get_dist(src, A) > src.caste.max_build_dist + extra_build_dist) // Hivelords and eggsac carriers have max_build_dist of 1, drones and queens 0
+		to_chat(src, SPAN_XENOWARNING("You can't build from that far!"))
+		return SECRETE_RESIN_FAIL
 	else if(thick) //hivelords can thicken existing resin structures.
 		var/thickened = FALSE
 		if(istype(A, /turf/closed/wall/resin))
@@ -33,15 +34,15 @@
 
 			if(istype(A, /turf/closed/wall/resin/weak))
 				to_chat(src, SPAN_XENOWARNING("[WR] is too flimsy to be reinforced."))
-				return FALSE
+				return SECRETE_RESIN_FAIL
 
 			for(var/datum/effects/xeno_structure_reinforcement/sf in WR.effects_list)
 				to_chat(src, SPAN_XENOWARNING("The extra resin is preventing you from reinforcing [WR]. Wait until it elapse."))
-				return FALSE
+				return SECRETE_RESIN_FAIL
 
 			if (WR.hivenumber != hivenumber)
 				to_chat(src, SPAN_XENOWARNING("[WR] doesn't belong to your hive!"))
-				return FALSE
+				return SECRETE_RESIN_FAIL
 
 			if(WR.type == /turf/closed/wall/resin)
 				WR.ChangeTurf(/turf/closed/wall/resin/thick)
@@ -51,18 +52,18 @@
 				total_resin_cost = XENO_THICKEN_MEMBRANE_COST
 			else
 				to_chat(src, SPAN_XENOWARNING("[WR] can't be made thicker."))
-				return FALSE
+				return SECRETE_RESIN_FAIL
 			thickened = TRUE
 
 		else if(istype(A, /obj/structure/mineral_door/resin))
 			var/obj/structure/mineral_door/resin/DR = A
 			if (DR.hivenumber != hivenumber)
 				to_chat(src, SPAN_XENOWARNING("[DR] doesn't belong to your hive!"))
-				return FALSE
+				return SECRETE_RESIN_FAIL
 
 			for(var/datum/effects/xeno_structure_reinforcement/sf in DR.effects_list)
 				to_chat(src, SPAN_XENOWARNING("The extra resin is preventing you from reinforcing [DR]. Wait until it elapse."))
-				return FALSE
+				return SECRETE_RESIN_FAIL
 
 			if(DR.hardness == 1.5) //non thickened
 				var/oldloc = DR.loc
@@ -71,7 +72,7 @@
 				total_resin_cost = XENO_THICKEN_DOOR_COST
 			else
 				to_chat(src, SPAN_XENOWARNING("[DR] can't be made thicker."))
-				return FALSE
+				return SECRETE_RESIN_FAIL
 			thickened = TRUE
 
 		if(thickened)
@@ -85,13 +86,13 @@
 			return TRUE
 
 	if (!RC.can_build_here(current_turf, src))
-		return FALSE
+		return SECRETE_RESIN_FAIL
 
-	var/wait_time = RC.build_time * caste.build_time_mult
+	var/wait_time = RC.build_time * caste.build_time_mult * add_build_mod
 
 	var/obj/effect/alien/weeds/alien_weeds = current_turf.weeds
-	if(!alien_weeds)
-		return
+	if(!alien_weeds || alien_weeds.secreting)
+		return SECRETE_RESIN_FAIL
 
 	var/obj/warning
 	var/succeeded = TRUE
@@ -104,18 +105,17 @@
 	if(!do_after(src, wait_time, INTERRUPT_NO_NEEDHAND|BEHAVIOR_IMMOBILE, BUSY_ICON_BUILD, alien_weeds))
 		succeeded = FALSE
 
-	if(warning)
-		qdel(warning)
+	qdel(warning)
 
-	if(alien_weeds)
+	if(!QDELETED(alien_weeds))
 		alien_weeds.secreting = FALSE
 		alien_weeds.update_icon()
 
 	if(!succeeded)
-		return FALSE
+		return SECRETE_RESIN_INTERRUPT
 
 	if (!RC.can_build_here(current_turf, src))
-		return FALSE
+		return SECRETE_RESIN_FAIL
 
 	if(use_plasma)
 		use_plasma(total_resin_cost)
@@ -130,7 +130,7 @@
 		RegisterSignal(new_resin, COMSIG_PARENT_QDELETING, .proc/remove_built_structure)
 
 	new_resin.add_hiddenprint(src) //so admins know who placed it
-	return TRUE
+	return SECRETE_RESIN_SUCCESS
 
 /mob/living/carbon/Xenomorph/proc/remove_built_structure(var/atom/A)
 	SIGNAL_HANDLER
@@ -153,3 +153,41 @@
 
 	if(hive.living_xeno_queen)
 		xeno_message("Hive: A new <b>[structure_template]<b> construction has been designated at [sanitize(current_area_name)]!", 3, hivenumber)
+
+/mob/living/carbon/Xenomorph/proc/make_marker(turf/target_turf)
+	if(!target_turf)
+		return FALSE
+	var/found_weeds = FALSE
+	if(!selected_mark)
+		to_chat(src, SPAN_NOTICE("You must have a meaning for the mark before you can make it."))
+		hive.mark_ui.open_mark_menu(src)
+		return FALSE
+	if(target_turf.z != src.z)
+		to_chat(src, SPAN_NOTICE("You have no psychic presence on that world."))
+		return FALSE
+	if(!(istype(target_turf)) || target_turf.density)
+		return FALSE
+	for(var/atom/movable/AM  in target_turf.contents)
+		if(istype(AM, /obj/effect/alien/weeds))
+			found_weeds = TRUE
+		if(AM.density || istype(AM, /obj/effect/alien/resin))
+			to_chat(src, SPAN_XENONOTICE("Theres not enough space there for a resin mark."))
+			return FALSE
+
+	var/obj/effect/alien/resin/marker/NM = new /obj/effect/alien/resin/marker(target_turf, src)
+	playsound(target_turf, "alien_resin_build", 25)
+
+	if(!found_weeds)
+		to_chat(src, SPAN_XENOMINORWARNING("You made the resin mark on ground with no weeds, it will break soon without any."))
+
+	if(isXenoQueen(src))
+		NM.color = "#7a21c4"
+	else
+		NM.color = "#db6af1"
+	if(hive.living_xeno_queen)
+		var/current_area_name = get_area_name(target_turf)
+
+		for(var/mob/living/carbon/Xenomorph/X in hive.totalXenos)
+			to_chat(X, SPAN_XENOANNOUNCE("[src.name] has declared: [NM.mark_meaning.desc] in [sanitize(current_area_name)]! (<a href='?src=\ref[X];overwatch=1;target=\ref[NM]'>Watch</a>) (<a href='?src=\ref[X];track=1;target=\ref[NM]'>Track</a>)"))
+			//this is killing the tgui chat and I dont know why
+	return TRUE

@@ -1,5 +1,8 @@
 //for all defines that doesn't fit in any other file.
 
+//Fullscreen overlay resolution in tiles.
+#define FULLSCREEN_OVERLAY_RESOLUTION_X 15
+#define FULLSCREEN_OVERLAY_RESOLUTION_Y 15
 
 //dirt type for each turf types.
 
@@ -89,10 +92,6 @@
 //           END DO_AFTER FLAGS            //
 // *************************************** //
 
-#define PAYGRADES_MARINE list("C","E1","E2","E3","E4","E5","E6","E7","E8","E9","E9E","O1","O2","O3","O4","O5","O5E","O6","O7","O8","O9","O9E")
-#define PAYGRADES_OFFICER list("O1","O2","O3","O4","O5","O5E","O6","O7","O8","O9","O9E")
-#define PAYGRADES_ENLISTED list("C","E1","E2","E3","E4","E5","E6","E7","E8","E9","E9E")
-
 // MATERIALS
 #define MATERIAL_METAL     "metal"
 #define MATERIAL_PLASTEEL  "plasteel"
@@ -113,6 +112,9 @@
 #define STACK_20		20
 #define STACK_25		25
 #define STACK_30		30
+#define STACK_35		35
+#define STACK_40		40
+#define STACK_45		45
 #define STACK_50		50
 
 // Assembly Stages
@@ -211,3 +213,16 @@
 
 // Shuttles
 #define isshuttleturf(T) (length(T.baseturfs) && (/turf/baseturf_skipover/shuttle in T.baseturfs))
+
+//Luma coefficients suggested for HDTVs. If you change these, make sure they add up to 1.
+#define LUMA_R 0.213
+#define LUMA_G 0.715
+#define LUMA_B 0.072
+
+//Automatic punctuation
+#define ENDING_PUNCT list(".", "-", "?", "!")
+
+//ghost vision mode pref settings
+#define GHOST_VISION_LEVEL_NO_NVG		"No Night Vision"
+#define GHOST_VISION_LEVEL_MID_NVG		"Half Night Vision"
+#define GHOST_VISION_LEVEL_FULL_NVG		"Full Night Vision"

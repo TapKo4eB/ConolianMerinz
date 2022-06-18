@@ -32,11 +32,13 @@
 			var/list/mods = params2list(params)
 			var/turf/TU = params2turf(mods["screen-loc"], get_turf(client.eye), client)
 			if (TU)
+				params += ";click_catcher=1"
 				do_click(TU, location, params)
 		return
 
 	if (world.time < next_click)
 		return
+
 
 	next_click = world.time + 1 //Maximum code-permitted clickrate 10.26/s, practical maximum manual rate: 8.5, autoclicker maximum: between 7.2/s and 8.5/s.
 	var/list/mods = params2list(params)
@@ -234,14 +236,31 @@
 	if(!dx && !dy) return
 
 	var/direction
+	var/specific_direction
 	if(abs(dx) < abs(dy))
-		if(dy > 0)	direction = NORTH
-		else		direction = SOUTH
+		if(dy > 0)
+			direction = NORTH
+		else
+			direction = SOUTH
+		if(dx)
+			if(dx > 0)
+				specific_direction = direction|EAST
+			else
+				specific_direction = direction|WEST
 	else
-		if(dx > 0)	direction = EAST
-		else		direction = WEST
+		if(dx > 0)
+			direction = EAST
+		else
+			direction = WEST
+		if(dy)
+			if(dy > 0)
+				specific_direction = direction|NORTH
+			else
+				specific_direction = direction|SOUTH
+	if(!specific_direction)
+		specific_direction = direction
 
-	facedir(direction)
+	facedir(direction, specific_direction)
 
 
 
@@ -278,8 +297,10 @@
 
 
 
-/client/proc/change_view(new_size)
-	view = new_size
+/client/proc/change_view(new_size, var/atom/source)
+	if(SEND_SIGNAL(mob, COMSIG_MOB_CHANGE_VIEW, new_size) & COMPONENT_OVERRIDE_VIEW)
+		return TRUE
+	view = mob.check_view_change(new_size, source)
 	apply_clickcatcher()
 	mob.reload_fullscreens()
 
@@ -337,7 +358,7 @@
 		to_world(SPAN_DEBUG("Hadn't tested."))
 		return
 	var/test_time = (world.time - started_testing) * 0.1 //in seconds
-	
+
 	to_world(SPAN_DEBUG("We did <b>[clicks]</b> clicks over <b>[test_time]</b> seconds, for an average clicks-per-second of <b>[clicks / test_time]</b>."))
 	started_testing = 0
 	clicks = 0

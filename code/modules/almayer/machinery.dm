@@ -50,13 +50,13 @@
 
 /obj/item/prop/almayer/comp_closed
 	name = "dropship maintenance computer"
-	desc = "A closed dropship maintenance computer that technicans and pilots use to find out whats wrong with a dropship. It has various outlets for different systems."
+	desc = "A closed dropship maintenance computer that technicians and pilots use to find out what's wrong with a dropship. It has various outlets for different systems."
 	icon_state = "hangar_comp"
 	w_class = SIZE_LARGE
 
 /obj/item/prop/almayer/comp_open
 	name = "dropship maintenance computer"
-	desc = "A opened dropship maintenance computer, it seems to be off however. Its used by technicans and pilots to find damaged or broken systems on a dropship. It has various outlets for different systems."
+	desc = "A opened dropship maintenance computer, it seems to be off however. It's used by technicians and pilots to find damaged or broken systems on a dropship. It has various outlets for different systems."
 	icon_state = "hangar_comp_open"
 	w_class = SIZE_LARGE
 
@@ -118,7 +118,7 @@
 
 /obj/structure/machinery/prop/almayer/NavCon
 	name = "NavCon"
-	desc = "Navigational console for ploting course and heading of the ship. Since the AI calculates all long range navigation, this is only used for in system curse corrections and orbital maneuvers. Don't touch it!"
+	desc = "Navigational console for ploting course and heading of the ship. Since the AI calculates all long range navigation, this is only used for in-system course corrections and orbital maneuvers. Don't touch it!"
 
 	density = 0
 	anchored = 1
@@ -164,7 +164,7 @@
 
 /obj/structure/machinery/prop/almayer/NavCon2
 	name = "NavCon 2"
-	desc = "Navigational console for ploting course and heading of the ship. Since the AI calculates all long range navigation, this is only used for in system curse corrections and orbital maneuvers. Don't touch it!"
+	desc = "Navigational console for ploting course and heading of the ship. Since the AI calculates all long range navigation, this is only used for in-system course corrections and orbital maneuvers. Don't touch it!"
 
 	density = 0
 	anchored = 1
@@ -221,12 +221,21 @@
 	icon = 'icons/obj/structures/machinery/computer.dmi'
 	icon_state = "maptable"
 
+	var/map_type = TACMAP_DEFAULT
+	var/map_base_type = TACMAP_BASE_OCCLUDED
+	var/map_additional_parameter = null
+
+/obj/structure/machinery/prop/almayer/CICmap/Initialize()
+	. = ..()
+	SSmapview.map_machines += src
+
 /obj/structure/machinery/prop/almayer/CICmap/Destroy()
 	for(var/mob/living/L in current_viewers)
 		to_chat(L, SPAN_NOTICE("You stop looking at the map."))
 		close_browser(L,"marineminimap")
 		current_viewers -= L
 		continue
+	SSmapview.map_machines -= src
 	return ..()
 
 /obj/structure/machinery/prop/almayer/CICmap/examine(mob/living/user)
@@ -237,17 +246,15 @@
 			current_viewers -= user
 			return
 		current_viewers += user
-		if(!istype(marine_mapview_overlay_5))
-			overlay_marine_mapview()
 		to_chat(user, SPAN_NOTICE("You start looking at the map."))
-		user << browse_rsc(marine_mapview_overlay_5, "marine_minimap.png")
-		show_browser(user, "<img src=marine_minimap.png>", "Tactical Map Table", "marineminimap", "size=[(map_sizes[1][1]*2)+50]x[(map_sizes[1][2]*2)+50]", closeref = src)
+		var/icon/O = overlay_tacmap(map_type, map_base_type, map_additional_parameter)
+		user << browse_rsc(O, "marine_minimap.png")
+		show_browser(user, "<img src=marine_minimap.png>", "Tactical Map Table", "marineminimap", "size=[(map_sizes[1]*2)+50]x[(map_sizes[2]*2)+50]", closeref = src)
 		return
 	..()
 
 /obj/structure/machinery/prop/almayer/CICmap/proc/update_mapview()
-	if(!istype(marine_mapview_overlay_5))
-		overlay_marine_mapview()
+	var/icon/O = overlay_tacmap(map_type, map_base_type, map_additional_parameter)
 	for(var/mob/living/L in current_viewers)
 		if(!powered() || get_dist(src,L) > 2)
 			to_chat(L, SPAN_NOTICE("You stop looking at the map."))
@@ -255,8 +262,8 @@
 			current_viewers -= L
 			continue
 
-		L << browse_rsc(marine_mapview_overlay_5, "marine_minimap.png")
-		show_browser(L, "<img src=marine_minimap.png>", "Tactical Map Table", "marineminimap", "size=[(map_sizes[1][1]*2)+50]x[(map_sizes[1][2]*2)+50]", closeref = src)
+		L << browse_rsc(O, "marine_minimap.png")
+		show_browser(L, "<img src=marine_minimap.png>", "Tactical Map Table", "marineminimap", "size=[(map_sizes[1]*2)+50]x[(map_sizes[2]*2)+50]", closeref = src)
 
 
 /obj/structure/machinery/prop/almayer/CICmap/Topic(href, href_list)
@@ -267,6 +274,22 @@
 		to_chat(usr, SPAN_NOTICE("You stop looking at the map."))
 		close_browser(usr, "marineminimap")
 		current_viewers -= usr
+
+/obj/structure/machinery/prop/almayer/CICmap/upp
+	map_type = TACMAP_FACTION
+	map_base_type = TACMAP_BASE_OPEN
+	map_additional_parameter = FACTION_UPP
+
+/obj/structure/machinery/prop/almayer/CICmap/clf
+	map_type = TACMAP_FACTION
+	map_base_type = TACMAP_BASE_OPEN
+	map_additional_parameter = FACTION_CLF
+
+/obj/structure/machinery/prop/almayer/CICmap/pmc
+	map_type = TACMAP_FACTION
+	map_base_type = TACMAP_BASE_OPEN
+	map_additional_parameter = FACTION_PMC
+
 
 //Nonpower using props
 
@@ -472,8 +495,9 @@
 /obj/structure/closet/basketball
 	name = "athletic wardrobe"
 	desc = "It's a storage unit for athletic wear."
-	icon_state = "mixed"
-	icon_closed = "mixed"
+	icon_state = "purple"
+	icon_closed = "purple"
+	icon_opened = "purple_open"
 
 /obj/structure/closet/basketball/Initialize()
 	. = ..()

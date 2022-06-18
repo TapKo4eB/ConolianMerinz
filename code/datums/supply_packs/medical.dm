@@ -117,12 +117,12 @@
 /datum/supply_packs/upgraded_medical_kits
 	name = "upgraded medical equipment crate (x4)"
 	contains = list(
-					/obj/item/storage/box/medic_upgraded_kits,
-					/obj/item/storage/box/medic_upgraded_kits,
-					/obj/item/storage/box/medic_upgraded_kits,
-					/obj/item/storage/box/medic_upgraded_kits
+					/obj/item/storage/box/czsp/medic_upgraded_kits,
+					/obj/item/storage/box/czsp/medic_upgraded_kits,
+					/obj/item/storage/box/czsp/medic_upgraded_kits,
+					/obj/item/storage/box/czsp/medic_upgraded_kits,
 					)
-	cost = RO_PRICE_PRICY
+	cost = 0
 	buyable = FALSE
 	containertype = /obj/structure/closet/crate/medical
 	containername = "upgraded medical equipment crate"

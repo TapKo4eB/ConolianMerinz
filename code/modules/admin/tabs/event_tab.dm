@@ -29,6 +29,8 @@
 	var/datum/custom_event_info/CEI = GLOB.custom_event_info_list[faction]
 
 	var/input = input(usr, "Enter the custom event message for \"[faction]\" category. Be descriptive. \nTo remove the event message, remove text and confirm.", "[faction] Event Message", CEI.msg) as message|null
+	if(isnull(input))
+		return
 
 	if(input == "" || !input)
 		CEI.msg = ""
@@ -143,7 +145,7 @@
 	if(!check_rights(R_ADMIN))
 		return
 
-	var/tag = tgui_input_list(usr, "Which ERT shuttle should be force launched?", "Select an ERT Shuttle:", list("Distress", "Distress_PMC", "Distress_UPP", "Distress_Big"))
+	var/tag = tgui_input_list(usr, "Which ERT shuttle should be force launched?", "Select an ERT Shuttle:", list("Distress", "Distress_PMC", "Distress_UPP", "Distress_Big", "Distress_Small"))
 	if(!tag) return
 
 	var/datum/shuttle/ferry/ert/shuttle = shuttle_controller.shuttles[tag]
@@ -156,6 +158,8 @@
 		var/dock_list = list("Port", "Starboard", "Aft")
 		if(shuttle.use_umbilical)
 			dock_list = list("Port Hangar", "Starboard Hangar")
+		if(shuttle.use_small_docks)
+			dock_list = list("Port Engineering", "Starboard Engineering")
 		var/dock_name = tgui_input_list(usr, "Where on the [MAIN_SHIP_NAME] should the shuttle dock?", "Select a docking zone:", dock_list)
 		switch(dock_name)
 			if("Port") dock_id = /area/shuttle/distress/arrive_2
@@ -163,6 +167,8 @@
 			if("Aft") dock_id = /area/shuttle/distress/arrive_3
 			if("Port Hangar") dock_id = /area/shuttle/distress/arrive_s_hangar
 			if("Starboard Hangar") dock_id = /area/shuttle/distress/arrive_n_hangar
+			if("Port Engineering") dock_id = /area/shuttle/distress/arrive_s_engi
+			if("Starboard Engineering") dock_id = /area/shuttle/distress/arrive_n_engi
 			else return
 		for(var/datum/shuttle/ferry/ert/F in shuttle_controller.process_shuttles)
 			if(F != shuttle)
@@ -227,7 +233,12 @@
 	if(announce == "No")
 		is_announcing = FALSE
 
-	chosen_ert.activate(is_announcing)
+	var/turf/override_spawn_loc
+	var/use_current_loc = alert(usr, "Spawn at their assigned spawnpoints, or at your location?", "Spawnpoint Selection", "Assigned Spawnpoint", "Current Location") == "Current Location" ? TRUE : FALSE
+	if(use_current_loc)
+		override_spawn_loc = get_turf(usr)
+
+	chosen_ert.activate(is_announcing, override_spawn_loc)
 
 	message_staff("[key_name_admin(usr)] admin-called a [choice == "Randomize" ? "randomized ":""]distress beacon: [chosen_ert.name]")
 
@@ -258,10 +269,9 @@
 	set name = "Disable Shuttle Console"
 	set desc = "Prevents a shuttle control console from being accessed."
 	set category = "Admin.Events"
-
 	if(!SSticker.mode || !check_rights(R_ADMIN))
 		return
-	
+
 	var/obj/structure/machinery/computer/shuttle_control/input = tgui_input_list(usr, "Choose which console to disable", "Shuttle Controls", GLOB.shuttle_controls)
 	if(!input)
 		return
@@ -269,6 +279,27 @@
 
 	message_staff("[key_name_admin(usr)] set [input]'s disabled to [input.disabled].")
 
+/datum/admins/proc/add_req_points()
+	set name = "Add Requisitions Points"
+	set desc = "Add points to the ship requisitions department."
+	set category = "Admin.Events"
+	if(!SSticker.mode || !check_rights(R_ADMIN))
+		return
+
+	var/points_to_add = input(usr, "Enter the amount of points to give, or a negative number to subtract. 1 point = $100.", "Points", 0) as num
+	if(points_to_add == 0)
+		return
+	else if((supply_controller.points + points_to_add) < 0)
+		supply_controller.points = 0
+	else if((supply_controller.points + points_to_add) > 99999)
+		supply_controller.points = 99999
+	else
+		supply_controller.points += points_to_add
+
+
+	message_staff("[key_name_admin(usr)] granted requisitions [points_to_add] points.")
+	if(points_to_add >= 0)
+		shipwide_ai_announcement("Additional Supply Budget has been authorised for this operation.")
 
 /datum/admins/proc/admin_force_selfdestruct()
 	set name = "Self Destruct"
@@ -293,26 +324,45 @@
 	if(!admin_holder)
 		return
 
-	var/answer = alert(src, "Which kind of faxes would you like to see?", "Faxes", "CL faxes", "USCM faxes", "Cancel")
+	var/list/options = list("Weyland-Yutani", "High Command", "Provost", "Other", "Cancel")
+	var/answer = tgui_input_list(src, "Which kind of faxes would you like to see?", "Faxes", options)
 	switch(answer)
-		if("CL faxes")
+		if("Weyland-Yutani")
 			var/body = "<body>"
 
-			for(var/text in CLFaxes)
+			for(var/text in GLOB.WYFaxes)
 				body += text
 				body += "<br><br>"
 
 			body += "<br><br></body>"
-			show_browser(src, body, "Faxes from the CL", "clfaxviewer", "size=300x600")
-		if("USCM faxes")
+			show_browser(src, body, "Faxes to Weyland-Yutani", "wyfaxviewer", "size=300x600")
+		if("High Command")
 			var/body = "<body>"
 
-			for(var/text in USCMFaxes)
+			for(var/text in GLOB.USCMFaxes)
 				body += text
 				body += "<br><br>"
 
 			body += "<br><br></body>"
-			show_browser(src, body, "Faxes from the USCM", "uscmfaxviewer", "size=300x600")
+			show_browser(src, body, "Faxes to High Command", "uscmfaxviewer", "size=300x600")
+		if("Provost")
+			var/body = "<body>"
+
+			for(var/text in GLOB.ProvostFaxes)
+				body += text
+				body += "<br><br>"
+
+			body += "<br><br></body>"
+			show_browser(src, body, "Faxes to the Provost Office", "provostfaxviewer", "size=300x600")
+		if("Other")
+			var/body = "<body>"
+
+			for(var/text in GLOB.GeneralFaxes)
+				body += text
+				body += "<br><br>"
+
+			body += "<br><br></body>"
+			show_browser(src, body, "Inter-machine Faxes", "otherfaxviewer", "size=300x600")
 		if("Cancel")
 			return
 
@@ -406,9 +456,11 @@
 	var/input = input(usr, "Please enter announcement text. Be advised, this announcement will be heard both on Almayer and planetside by conscious humans of selected faction.", "What?", "") as message|null
 	if(!input)
 		return
-	var/customname = input(usr, "Pick a title for the announcement. Cancel for \"USCM Update\" title.", "Title") as text|null
+	var/customname = input(usr, "Pick a title for the announcement. Confirm empty text for \"[faction] Update\" title.", "Title") as text|null
+	if(isnull(customname))
+		return
 	if(!customname)
-		customname = "USCM Update"
+		customname = "[faction] Update"
 	if(faction == FACTION_MARINE)
 		for(var/obj/structure/machinery/computer/almayer_control/C in machines)
 			if(!(C.inoperable()))
@@ -592,6 +644,7 @@
 		<A href='?src=\ref[src];events=evacuation_start'>Trigger Evacuation</A><BR>
 		<A href='?src=\ref[src];events=evacuation_cancel'>Cancel Evacuation</A><BR>
 		<A href='?src=\ref[src];events=disable_shuttle_console'>Disable Shuttle Control</A><BR>
+		<A href='?src=\ref[src];events=add_req_points'>Add Requisitions Points</A><BR>
 		<BR>
 		<B>Research</B><BR>
 		<A href='?src=\ref[src];events=change_clearance'>Change Research Clearance</A><BR>
@@ -661,11 +714,11 @@
 
 /datum/admins/var/create_humans_html = null
 /datum/admins/proc/create_humans(var/mob/user)
-	if(!GLOB.gear_presets_list)
+	if(!GLOB.gear_name_presets_list)
 		return
 
 	if(!create_humans_html)
-		var/equipment_presets = jointext(GLOB.gear_presets_list, ";")
+		var/equipment_presets = jointext(GLOB.gear_name_presets_list, ";")
 		create_humans_html = file2text('html/create_humans.html')
 		create_humans_html = replacetext(create_humans_html, "null /* object types */", "\"[equipment_presets]\"")
 
@@ -676,7 +729,23 @@
 	set category = "Admin.Events"
 	if(admin_holder)
 		admin_holder.create_humans(usr)
-	return
+
+/datum/admins/var/create_xenos_html = null
+/datum/admins/proc/create_xenos(var/mob/user)
+	if(!create_xenos_html)
+		var/hive_types = jointext(ALL_XENO_HIVES, ";")
+		var/xeno_types = jointext(ALL_XENO_CASTES, ";")
+		create_xenos_html = file2text('html/create_xenos.html')
+		create_xenos_html = replacetext(create_xenos_html, "null /* hive paths */", "\"[hive_types]\"")
+		create_xenos_html = replacetext(create_xenos_html, "null /* xeno paths */", "\"[xeno_types]\"")
+
+	show_browser(user, replacetext(create_xenos_html, "/* ref src */", "\ref[src]"), "Create Xenos", "create_xenos", "size=450x630")
+
+/client/proc/create_xenos()
+	set name = "Create Xenos"
+	set category = "Admin.Events"
+	if(admin_holder)
+		admin_holder.create_xenos(usr)
 
 /client/proc/clear_mutineers()
 	set name = "Clear All Mutineers"
@@ -693,8 +762,8 @@
 		return
 
 	for(var/mob/living/carbon/human/H in GLOB.human_mob_list)
-		if(H && H.faction == FACTION_MUTINEER)
-			H.faction = FACTION_MARINE
+		if(H.mob_flags & MUTINEER)
+			H.mob_flags &= ~MUTINEER
 			H.hud_set_squad()
 
 			for(var/datum/action/human_action/activable/mutineer/A in H.actions)
@@ -708,13 +777,110 @@
 	if(!check_rights(R_ADMIN))
 		return
 
-	if(alert("Are you SURE you want to do this? It will create an OB explosion!",, "Yes", "No") == "No") return
-
+	var/list/firemodes = list("Standard Warhead", "Custom HE", "Custom Cluster", "Custom Incendiary")
+	var/mode = tgui_input_list(usr, "Select fire mode:", "Fire mode", firemodes)
 	// Select the warhead.
-	var/list/warheads = subtypesof(/obj/structure/ob_ammo/warhead/)
-	var/choice = tgui_input_list(usr, "Select the warhead:", "Warhead to use", warheads)
-	var/obj/structure/ob_ammo/warhead/warhead = new choice
+	var/obj/structure/ob_ammo/warhead/warhead
+	var/statsmessage
+	var/custom = TRUE
+	switch(mode)
+		if("Standard Warhead")
+			custom = FALSE
+			var/list/warheads = subtypesof(/obj/structure/ob_ammo/warhead/)
+			var/choice = tgui_input_list(usr, "Select the warhead:", "Warhead to use", warheads)
+			warhead = new choice
+		if("Custom HE")
+			var/obj/structure/ob_ammo/warhead/explosive/OBShell = new
+			OBShell.name = input("What name should the warhead have?", "Set name", "HE orbital warhead")
+			if(!OBShell.name) return//null check to cancel
+			OBShell.clear_power = input("How much explosive power should the wall clear blast have?", "Set clear power", 1200) as num|null
+			if(isnull(OBShell.clear_power)) return
+			OBShell.clear_falloff = input("How much falloff should the wall clear blast have?", "Set clear falloff", 400) as num|null
+			if(isnull(OBShell.clear_falloff)) return
+			OBShell.standard_power = input("How much explosive power should the main blasts have?", "Set blast power", 600) as num|null
+			if(isnull(OBShell.standard_power)) return
+			OBShell.standard_falloff = input("How much falloff should the main blasts have?", "Set blast falloff", 30) as num|null
+			if(isnull(OBShell.standard_falloff)) return
+			OBShell.clear_delay = input("How much delay should the clear blast have?", "Set clear delay", 3) as num|null
+			if(isnull(OBShell.clear_delay)) return
+			OBShell.double_explosion_delay = input("How much delay should the clear blast have?", "Set clear delay", 6) as num|null
+			if(isnull(OBShell.double_explosion_delay)) return
+			statsmessage = "Custom HE OB ([OBShell.name]) Stats from [key_name(usr)]: Clear Power: [OBShell.clear_power], Clear Falloff: [OBShell.clear_falloff], Clear Delay: [OBShell.clear_delay], Blast Power: [OBShell.standard_power], Blast Falloff: [OBShell.standard_falloff], Blast Delay: [OBShell.double_explosion_delay]."
+			warhead = OBShell
+			qdel(OBShell)
+		if("Custom Cluster")
+			var/obj/structure/ob_ammo/warhead/cluster/OBShell = new
+			OBShell.name = input("What name should the warhead have?", "Set name", "Cluster orbital warhead")
+			if(!OBShell.name) return//null check to cancel
+			OBShell.total_amount = input("How many salvos should be fired?", "Set cluster number", 60) as num|null
+			if(isnull(OBShell.total_amount)) return
+			OBShell.instant_amount = input("How many shots per salvo? (Max 10)", "Set shot count", 3) as num|null
+			if(isnull(OBShell.instant_amount)) return
+			if(OBShell.instant_amount > 10)
+				OBShell.instant_amount = 10
+			OBShell.explosion_power = input("How much explosive power should the blasts have?", "Set blast power", 300) as num|null
+			if(isnull(OBShell.explosion_power)) return
+			OBShell.explosion_falloff = input("How much falloff should the blasts have?", "Set blast falloff", 150) as num|null
+			if(isnull(OBShell.explosion_falloff)) return
+			statsmessage = "Custom Cluster OB ([OBShell.name]) Stats from [key_name(usr)]: Salvos: [OBShell.total_amount], Shot per Salvo: [OBShell.instant_amount], Explosion Power: [OBShell.explosion_power], Explosion Falloff: [OBShell.explosion_falloff]."
+			warhead = OBShell
+			qdel(OBShell)
+		if("Custom Incendiary")
+			var/obj/structure/ob_ammo/warhead/incendiary/OBShell = new
+			OBShell.name = input("What name should the warhead have?", "Set name", "Incendiary orbital warhead")
+			if(!OBShell.name) return//null check to cancel
+			OBShell.clear_power = input("How much explosive power should the wall clear blast have?", "Set clear power", 1200) as num|null
+			if(isnull(OBShell.clear_power)) return
+			OBShell.clear_falloff = input("How much falloff should the wall clear blast have?", "Set clear falloff", 400) as num|null
+			if(isnull(OBShell.clear_falloff)) return
+			OBShell.clear_delay = input("How much delay should the clear blast have?", "Set clear delay", 3) as num|null
+			if(isnull(OBShell.clear_delay)) return
+			OBShell.distance = input("How many tiles radius should the fire be? (Max 30)", "Set fire radius", 18) as num|null
+			if(isnull(OBShell.distance)) return
+			if(OBShell.distance > 30)
+				OBShell.distance = 30
+			OBShell.fire_level = input("How long should the fire last?", "Set fire duration", 70) as num|null
+			if(isnull(OBShell.fire_level)) return
+			OBShell.burn_level = input("How damaging should the fire be?", "Set fire strength", 80) as num|null
+			if(isnull(OBShell.burn_level)) return
+			var/list/firetypes = list("white","blue","red","green","custom")
+			OBShell.fire_type = tgui_input_list(usr, "Select the fire color:", "Fire color", firetypes)
+			if(isnull(OBShell.fire_type)) return
+			OBShell.fire_color = null
+			if(OBShell.fire_type == "custom")
+				OBShell.fire_type = "dynamic"
+				OBShell.fire_color = input(src, "Please select Fire color.", "Fire color") as color|null
+				if(isnull(OBShell.fire_color)) return
+			statsmessage = "Custom Incendiary OB ([OBShell.name]) Stats from [key_name(usr)]: Clear Power: [OBShell.clear_power], Clear Falloff: [OBShell.clear_falloff], Clear Delay: [OBShell.clear_delay], Fire Distance: [OBShell.distance], Fire Duration: [OBShell.fire_level], Fire Strength: [OBShell.burn_level]."
+			warhead = OBShell
+			qdel(OBShell)
+
+	if(custom)
+		if(alert(usr, statsmessage, "Confirm Stats", "Yes", "No") == "No") return
+		message_staff(statsmessage)
+
 	var/turf/target = get_turf(usr.loc)
-	message_staff("[key_name(usr)] has fired \an [warhead.name] at ([target.x],[target.y],[target.z]).")
-	warhead.warhead_impact(target)
-	QDEL_IN(warhead, OB_CRASHING_DOWN)
+
+	if(alert(usr, "Fire or Spawn Warhead?", "Mode", "Fire", "Spawn") == "Fire")
+		if(alert("Are you SURE you want to do this? It will create an OB explosion!",, "Yes", "No") == "No") return
+		message_staff("[key_name(usr)] has fired \an [warhead.name] at ([target.x],[target.y],[target.z]).")
+		warhead.warhead_impact(target)
+		QDEL_IN(warhead, OB_CRASHING_DOWN)
+	else
+		warhead.loc = target
+
+/client/proc/change_taskbar_icon()
+	set name = "Set Taskbar Icon"
+	set desc = "Change the taskbar icon to a preset list of selectable icons."
+	set category = "Admin.Events"
+
+	if(!check_rights(R_ADMIN))
+		return
+
+	var/taskbar_icon = tgui_input_list(usr, "Select an icon you want to appear on the player's taskbar.", "Taskbar Icon", GLOB.available_taskbar_icons)
+	if(!taskbar_icon)
+		return
+
+	SSticker.mode.taskbar_icon = taskbar_icon
+	SSticker.set_clients_taskbar_icon(taskbar_icon)
+	message_staff("[key_name_admin(usr)] has changed the taskbar icon to [taskbar_icon].")

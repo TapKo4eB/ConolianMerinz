@@ -69,7 +69,7 @@ They're all essentially identical when it comes to getting the job done.
 	// It should never have negative ammo after spawn. If it does, we need to know about it.
 	if(current_rounds < 0)
 		to_chat(user, "Something went horribly wrong. Ahelp the following: ERROR CODE R1: negative current_rounds on examine.")
-		log_debug("ERROR CODE R1: negative current_rounds on examine. User: <b>[usr]</b>")
+		log_debug("ERROR CODE R1: negative current_rounds on examine. User: <b>[usr]</b> Magazine: <b>[src]</b>")
 	else
 		to_chat(user, "[src] has <b>[current_rounds]</b> rounds out of <b>[max_rounds]</b>.")
 
@@ -186,7 +186,6 @@ bullets/shells. ~N
 	icon_state = "bullet"
 	matter = list("metal" = 50) //This changes based on the ammo ammount. 5k is the base of one shell/bullet.
 	flags_equip_slot = null // It only fits into pockets and such.
-
 	w_class = SIZE_SMALL
 	current_rounds = 1 // So it doesn't get autofilled for no reason.
 	max_rounds = 5 // For shotguns, though this will be determined by the handful type when generated.
@@ -228,7 +227,6 @@ If it is the same and the other stack isn't full, transfer an amount (default 1)
 /obj/item/ammo_magazine/handful/proc/generate_handful(new_ammo, new_caliber, new_max_rounds, new_rounds, new_gun_type)
 	var/datum/ammo/A = GLOB.ammo_list[new_ammo]
 	var/ammo_name = A.name //Let's pull up the name.
-
 	var/multiple_handful_name = A.multiple_handful_name
 
 	name = "handful of [ammo_name + (multiple_handful_name ? " ":"s ") + "([new_caliber])"]"
@@ -328,6 +326,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 	var/num_of_magazines = 10
 	var/handfuls = FALSE
 	var/icon_state_deployed = null
+	var/handful = "shells" //used for 'magazine' boxes that give handfuls to determine what kind for the sprite
 
 /obj/item/ammo_box/magazine/Initialize()
 	. = ..()
@@ -427,6 +426,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/shotgun
 	name = "shotgun shell box (Slugs x 100)"
 	icon_state = "base_slug"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = ""
 	overlay_gun_type = "_shells"
 	overlay_content = "_slug"
@@ -483,6 +483,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 
 /obj/item/ammo_box/magazine/ap
 	name = "magazine box (AP M41A x 10)"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_ap"
 	overlay_content = "_ap"
 	magazine_type = /obj/item/ammo_magazine/rifle/ap
@@ -492,6 +493,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 
 /obj/item/ammo_box/magazine/le
 	name = "magazine box (LE M41A x 10)"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_le"
 	overlay_content = "_le"
 	magazine_type = /obj/item/ammo_magazine/rifle/le
@@ -501,6 +503,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 
 /obj/item/ammo_box/magazine/ext
 	name = "magazine box (Ext M41A x 8)"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_ext"
 	num_of_magazines = 8
 	magazine_type = /obj/item/ammo_magazine/rifle/extended
@@ -510,6 +513,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 
 /obj/item/ammo_box/magazine/incen
 	name = "magazine box (Incen M41A x 10)"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_incen"
 	overlay_content = "_incen"
 	magazine_type = /obj/item/ammo_magazine/rifle/incendiary
@@ -519,6 +523,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 
 /obj/item/ammo_box/magazine/explosive
 	name = "magazine box (Explosive M41A x 10)"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_expl"
 	overlay_content = "_expl"
 	magazine_type = /obj/item/ammo_magazine/rifle/explosive
@@ -531,6 +536,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/m39
 	name = "magazine box (M39 x 12)"
 	icon_state = "base_m39"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_reg"
 	overlay_gun_type = "_m39"
 	overlay_content = "_hv"
@@ -582,6 +588,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/l42a
 	name = "magazine box (L42A x 16)"
 	icon_state = "base_l42"
+	flags_equip_slot = SLOT_BACK
 	overlay_gun_type = "_l42"
 	num_of_magazines = 16
 	magazine_type = /obj/item/ammo_magazine/rifle/l42a
@@ -631,6 +638,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/M16
 	name = "magazine box (M16 x 12)"
 	icon_state = "base_m16"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_reg"
 	overlay_gun_type = "_m16"
 	num_of_magazines = 12
@@ -650,11 +658,69 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/M16/ap/empty
 	empty = TRUE
 
+//-----------------------R4T Lever-action rifle handfuls box-----------------------
+
+/obj/item/ammo_box/magazine/lever_action
+	name = "45-70 bullets box (45-70 x 300)"
+	icon_state = "base_4570"
+	overlay_ammo_type = "_reg"
+	overlay_gun_type = "_4570"
+	overlay_content = "_4570"
+	magazine_type = /obj/item/ammo_magazine/handful/lever_action
+	num_of_magazines = 300
+	handfuls = TRUE
+	handful = "rounds"
+
+/obj/item/ammo_box/magazine/lever_action/empty
+	empty = TRUE
+
+/obj/item/ammo_box/magazine/lever_action/training
+	name = "45-70 blank box (45-70 x 300)"
+	icon_state = "base_4570"
+	overlay_ammo_type = "_45_training"
+	overlay_gun_type = "_4570"
+	overlay_content = "_training"
+	magazine_type = /obj/item/ammo_magazine/handful/lever_action/training
+
+	/*if(overlay_gun_type)
+		overlays += image(icon, icon_state = "text[overlay_gun_type]")		//adding text
+	if(overlay_ammo_type)
+		overlays += image(icon, icon_state = "base_type[overlay_ammo_type]")	//adding base color stripes
+		overlays += image(icon, icon_state = "lid_type[overlay_ammo_type]")	adding base color stripes*/
+
+/obj/item/ammo_box/magazine/lever_action/training/empty
+	empty = TRUE
+
+//unused
+/obj/item/ammo_box/magazine/lever_action/tracker
+	name = "45-70 tracker bullets box (45-70 x 300)"
+	icon_state = "base_4570"
+	overlay_ammo_type = "_45_tracker"
+	overlay_gun_type = "_4570"
+	overlay_content = "_tracker"
+	magazine_type = /obj/item/ammo_magazine/handful/lever_action/tracker
+
+/obj/item/ammo_box/magazine/lever_action/tracker/empty
+	empty = TRUE
+
+//unused
+/obj/item/ammo_box/magazine/lever_action/marksman
+	name = "45-70 marksman bullets box (45-70 x 300)"
+	icon_state = "base_4570"
+	overlay_ammo_type = "_45_marksman"
+	overlay_gun_type = "_4570"
+	overlay_content = "_marksman"
+	magazine_type = /obj/item/ammo_magazine/handful/lever_action/marksman
+
+/obj/item/ammo_box/magazine/lever_action/marksman/empty
+	empty = TRUE
+
 //-----------------------M4A3 Pistol Mag Box-----------------------
 
 /obj/item/ammo_box/magazine/m4a3
 	name = "magazine box (M4A3 x 16)"
 	icon_state = "base_m4a3"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_reg"
 	overlay_gun_type = "_m4a3"
 	num_of_magazines = 16
@@ -686,6 +752,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/m44
 	name = "speed loaders box (M44 x 16)"
 	icon_state = "base_m44"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_m44_reg"
 	overlay_gun_type = "_m44"
 	overlay_content = "_speed"
@@ -716,6 +783,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/su6
 	name = "magazine box (SU-6 x 16)"
 	icon_state = "base_su6"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_reg"
 	overlay_gun_type = "_su6"
 	num_of_magazines = 16
@@ -729,6 +797,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/mod88
 	name = "magazine box (88 Mod 4 AP x 16)"
 	icon_state = "base_mod88"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_ap"
 	overlay_gun_type = "_mod88"
 	overlay_content = "_ap"
@@ -743,6 +812,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/vp78
 	name = "magazine box (VP78 x 16)"
 	icon_state = "base_vp78"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_reg"
 	overlay_gun_type = "_vp78"
 	num_of_magazines = 16
@@ -756,6 +826,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 /obj/item/ammo_box/magazine/type71
 	name = "magazine box (Type71 x 10)"
 	icon_state = "base_type71"
+	flags_equip_slot = SLOT_BACK
 	overlay_ammo_type = "_type71_reg"
 	overlay_gun_type = "_type71"
 	overlay_content = "_type71_reg"
@@ -823,14 +894,16 @@ Turn() or Shift() as there is virtually no overhead. ~N
 			overlays += image(icon, icon_state = "magaz[item_box.overlay_content]_1")
 	else
 		var/obj/item/ammo_magazine/AM = locate(/obj/item/ammo_magazine) in item_box.contents
+		if(item_box.overlay_ammo_type)
+			overlays += image(icon, icon_state = "base_type[item_box.overlay_ammo_type]")
 		if(AM.current_rounds == item_box.num_of_magazines)
-			overlays += image(icon, icon_state = "shells[item_box.overlay_content]")
+			overlays += image(icon, icon_state = "[item_box.handful][item_box.overlay_content]")
 		else if(AM.current_rounds > (item_box.num_of_magazines/2))
-			overlays += image(icon, icon_state = "shells[item_box.overlay_content]_3")
+			overlays += image(icon, icon_state = "[item_box.handful][item_box.overlay_content]_3")
 		else if(AM.current_rounds > (item_box.num_of_magazines/4))
-			overlays += image(icon, icon_state = "shells[item_box.overlay_content]_2")
+			overlays += image(icon, icon_state = "[item_box.handful][item_box.overlay_content]_2")
 		else if(AM.current_rounds > 0)
-			overlays += image(icon, icon_state = "shells[item_box.overlay_content]_1")
+			overlays += image(icon, icon_state = "[item_box.handful][item_box.overlay_content]_1")
 
 
 /obj/structure/magazine_box/attack_hand(mob/living/user)
@@ -843,7 +916,7 @@ Turn() or Shift() as there is virtually no overhead. ~N
 		else
 			var/obj/item/ammo_magazine/AM = locate(/obj/item/ammo_magazine) in item_box.contents
 			if(AM)
-				AM.create_handful(user, 5, src)
+				AM.create_handful(user, AM.transfer_handful_amount, src)
 		update_icon()
 	else
 		to_chat(user, SPAN_NOTICE("\The [src] is empty."))

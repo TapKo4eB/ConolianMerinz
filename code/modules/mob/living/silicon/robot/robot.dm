@@ -78,7 +78,7 @@ var/list/robot_verbs_default = list(
 	spark_system.set_up(5, 0, src)
 	spark_system.attach(src)
 
-	add_language("Robot Talk", 1)
+	add_language(LANGUAGE_BINARY, 1)
 
 	ident = rand(1, 999)
 	updatename("Default")
@@ -170,21 +170,21 @@ var/list/robot_verbs_default = list(
 	switch(modtype)
 		if("Standard")
 			module = new /obj/item/circuitboard/robot_module/standard(src)
-			module.channels = list("Command" = 1, "MP" = 0, SQUAD_NAME_1 = 0, SQUAD_NAME_2 = 0, SQUAD_NAME_3 = 0, SQUAD_NAME_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
+			module.channels = list("Command" = 1, "MP" = 0, SQUAD_MARINE_1 = 0, SQUAD_MARINE_2 = 0, SQUAD_MARINE_3 = 0, SQUAD_MARINE_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
 			module_sprites["Default"] = "robot"
 			module_sprites["Droid"] = "droid"
 			module_sprites["Drone"] = "drone-standard"
 
 		if("Service")
 			module = new /obj/item/circuitboard/robot_module/butler(src)
-			module.channels = list("Command" = 1, "MP" = 0, SQUAD_NAME_1 = 0, SQUAD_NAME_2 = 0, SQUAD_NAME_3 = 0, SQUAD_NAME_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
+			module.channels = list("Command" = 1, "MP" = 0, SQUAD_MARINE_1 = 0, SQUAD_MARINE_2 = 0, SQUAD_MARINE_3 = 0, SQUAD_MARINE_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
 			module_sprites["Default"] = "Service2"
 			module_sprites["Rich"] = "maximillion"
 			module_sprites["Drone"] = "drone-service"
 
 		if("Medic")
 			module = new /obj/item/circuitboard/robot_module/medic(src)
-			module.channels = list("Command" = 1, "MP" = 0, SQUAD_NAME_1 = 0, SQUAD_NAME_2 = 0, SQUAD_NAME_3 = 0, SQUAD_NAME_4 = 0, "Engi" = 0, "MedSci" = 1, "Req" = 0 )
+			module.channels = list("Command" = 1, "MP" = 0, SQUAD_MARINE_1 = 0, SQUAD_MARINE_2 = 0, SQUAD_MARINE_3 = 0, SQUAD_MARINE_4 = 0, "Engi" = 0, "MedSci" = 1, "Req" = 0 )
 			if(camera && ("Robots" in camera.network))
 				camera.network.Add("Medical")
 			module_sprites["Standard"] = "surgeon"
@@ -194,7 +194,7 @@ var/list/robot_verbs_default = list(
 
 		if("Surgeon")
 			module = new /obj/item/circuitboard/robot_module/surgeon(src)
-			module.channels = list("Command" = 1, "MP" = 0, SQUAD_NAME_1 = 0, SQUAD_NAME_2 = 0, SQUAD_NAME_3 = 0, SQUAD_NAME_4 = 0, "Engi" = 0, "MedSci" = 1, "Req" = 0 )
+			module.channels = list("Command" = 1, "MP" = 0, SQUAD_MARINE_1 = 0, SQUAD_MARINE_2 = 0, SQUAD_MARINE_3 = 0, SQUAD_MARINE_4 = 0, "Engi" = 0, "MedSci" = 1, "Req" = 0 )
 			if(camera && ("Robots" in camera.network))
 				camera.network.Add("Medical")
 			module_sprites["Standard"] = "surgeon"
@@ -204,14 +204,14 @@ var/list/robot_verbs_default = list(
 
 		if("Security")
 			module = new /obj/item/circuitboard/robot_module/security(src)
-			module.channels = list("Command" = 1, "MP" = 1, SQUAD_NAME_1 = 0, SQUAD_NAME_2 = 0, SQUAD_NAME_3 = 0, SQUAD_NAME_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
+			module.channels = list("Command" = 1, "MP" = 1, SQUAD_MARINE_1 = 0, SQUAD_MARINE_2 = 0, SQUAD_MARINE_3 = 0, SQUAD_MARINE_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
 			module_sprites["Bloodhound"] = "bloodhound"
 			module_sprites["Bloodhound - Treaded"] = "secborg+tread"
 			module_sprites["Drone"] = "drone-sec"
 
 		if("Engineering")
 			module = new /obj/item/circuitboard/robot_module/engineering(src)
-			module.channels = list("Command" = 1, "MP" = 0, SQUAD_NAME_1 = 0, SQUAD_NAME_2 = 0, SQUAD_NAME_3 = 0, SQUAD_NAME_4 = 0, "Engi" = 1, "MedSci" = 0, "Req" = 0 )
+			module.channels = list("Command" = 1, "MP" = 0, SQUAD_MARINE_1 = 0, SQUAD_MARINE_2 = 0, SQUAD_MARINE_3 = 0, SQUAD_MARINE_4 = 0, "Engi" = 1, "MedSci" = 0, "Req" = 0 )
 			if(camera && ("Robots" in camera.network))
 				camera.network.Add("Engineering")
 			module_sprites["Landmate"] = "landmate"
@@ -220,7 +220,7 @@ var/list/robot_verbs_default = list(
 
 		if("Janitor")
 			module = new /obj/item/circuitboard/robot_module/janitor(src)
-			module.channels = list("Command" = 1, "MP" = 0, SQUAD_NAME_1 = 0, SQUAD_NAME_2 = 0, SQUAD_NAME_3 = 0, SQUAD_NAME_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
+			module.channels = list("Command" = 1, "MP" = 0, SQUAD_MARINE_1 = 0, SQUAD_MARINE_2 = 0, SQUAD_MARINE_3 = 0, SQUAD_MARINE_4 = 0, "Engi" = 0, "MedSci" = 0, "Req" = 0 )
 			module_sprites["Mop Gear Rex"] = "mopgearrex"
 			module_sprites["Drone"] = "drone-janitor"
 
@@ -764,18 +764,21 @@ var/list/robot_verbs_default = list(
 		if(!module_state_1)
 			module_state_1 = O
 			O.layer = ABOVE_HUD_LAYER
+			O.plane = ABOVE_HUD_PLANE
 			contents += O
 			if(istype(module_state_1,/obj/item/robot/sight))
 				sight_mode |= module_state_1:sight_mode
 		else if(!module_state_2)
 			module_state_2 = O
 			O.layer = ABOVE_HUD_LAYER
+			O.plane = ABOVE_HUD_PLANE
 			contents += O
 			if(istype(module_state_2,/obj/item/robot/sight))
 				sight_mode |= module_state_2:sight_mode
 		else if(!module_state_3)
 			module_state_3 = O
 			O.layer = ABOVE_HUD_LAYER
+			O.plane = ABOVE_HUD_PLANE
 			contents += O
 			if(istype(module_state_3,/obj/item/robot/sight))
 				sight_mode |= module_state_3:sight_mode

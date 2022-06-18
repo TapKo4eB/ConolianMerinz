@@ -31,6 +31,7 @@
 /obj/structure/machinery/autodoc/Initialize()
 	. = ..()
 	connect_autodoc_console()
+	flags_atom |= USES_HEARING
 
 /obj/structure/machinery/autodoc/proc/connect_autodoc_console()
 	if(connected)
@@ -68,7 +69,7 @@
 	var/list/obj/limb/parts = human.get_damaged_limbs(brute,burn)
 	if(!parts.len)	return
 	var/obj/limb/picked = pick(parts)
-	if(picked.status & LIMB_ROBOT)
+	if(picked.status & (LIMB_ROBOT|LIMB_SYNTHSKIN))
 		picked.heal_damage(brute, burn, TRUE)
 		human.pain.apply_pain(-brute, BRUTE)
 		human.pain.apply_pain(-burn, BURN)
@@ -138,8 +139,8 @@
 				if(occupant.getToxLoss() > 0)
 					occupant.apply_damage(-3, TOX)
 					if(prob(10))
-						visible_message("\The [src] whirrs and gurgles as it kelates the occupant.")
-						to_chat(occupant, SPAN_INFO("You feel slighly less ill."))
+						visible_message("\The [src] whirrs and gurgles as it chelates the occupant.")
+						to_chat(occupant, SPAN_INFO("You feel slightly less ill."))
 				else
 					heal_toxin = 0
 					visible_message("[icon2html(src, viewers(src))] \The <b>[src]</b> speaks: Chelation complete.")
@@ -240,8 +241,9 @@
 
 	var/mob/living/carbon/human/H = M
 	var/datum/data/record/N = null
+	var/human_ref = WEAKREF(H)
 	for(var/datum/data/record/R in GLOB.data_core.medical)
-		if (R.fields["name"] == H.real_name)
+		if (R.fields["ref"] == human_ref)
 			N = R
 	if(isnull(N))
 		visible_message("\The [src] buzzes: No records found for occupant.")
@@ -523,7 +525,7 @@
 		target.incision_depths[L.name] = SURGERY_DEPTH_SHALLOW
 
 /obj/structure/machinery/autodoc/verb/eject()
-	set name = "Eject Med-Pod"
+	set name = "Eject AutoDoc"
 	set category = "Object"
 	set src in oview(1)
 	if(usr.stat == DEAD)
@@ -609,6 +611,15 @@
 		connected.stop_processing()
 		connected.process() // one last update
 
+
+//clickdrag code - "resist to get out" code is in living_verbs.dm
+/obj/structure/machinery/autodoc/MouseDrop_T(mob/target, mob/user)
+	. = ..()
+	var/mob/living/H = user
+	if(!istype(H) || target != user) //cant make others get in. grab-click for this
+		return
+
+	move_inside(target) //Using this so not everyone who is untrained can enter it.
 
 /obj/structure/machinery/autodoc/attackby(obj/item/W, mob/living/user)
 	if(!ishuman(user))
@@ -715,7 +726,7 @@
 		return
 	var/dat = ""
 	if(!connected || (connected.inoperable()))
-		dat += "This console is not connected to a Med-Pod or the Med-Pod is non-functional."
+		dat += "This console is not connected to a Auto-Doc or the Auto-Doc is non-functional."
 		to_chat(user, "This console seems to be powered down.")
 	else
 		if(!skillcheck(user, SKILL_SURGERY, SKILL_SURGERY_NOVICE) && !connected.event)
@@ -731,8 +742,8 @@
 				if(2)	t1 = "<font color='red'><b>dead</b></font>"
 			var/operating
 			switch(connected.surgery)
-				if(0) operating = "Med-Pod: STANDING BY"
-				if(1) operating = "Med-Pod: IN SURGERY: DO NOT MANUALLY EJECT"
+				if(0) operating = "Auto-Doc: STANDING BY"
+				if(1) operating = "Auto-Doc: IN SURGERY: DO NOT MANUALLY EJECT"
 			var/damageOxy = occupant.getOxyLoss() > 50 ? "<b>[occupant.getOxyLoss()]</b>" : occupant.getOxyLoss()
 			var/damageTox = occupant.getToxLoss() > 50 ? "<b>[occupant.getToxLoss()]</b>" : occupant.getToxLoss()
 			var/damageFire = occupant.getFireLoss() > 50 ? "<b>[occupant.getFireLoss()]</b>" : occupant.getFireLoss()
@@ -746,8 +757,9 @@
 
 			var/list/surgeryqueue = list()
 			var/datum/data/record/N = null
+			var/occupant_ref = WEAKREF(connected.occupant)
 			for(var/datum/data/record/R in GLOB.data_core.medical)
-				if (R.fields["name"] == connected.occupant.real_name)
+				if (R.fields["ref"] == occupant_ref)
 					N = R
 			if(isnull(N))
 				N = create_medical_record(connected.occupant)
@@ -841,9 +853,9 @@
 				if(isnull(surgeryqueue["missing"]))
 					dat += "<a href='?src=\ref[src];missing=1'>Limb Replacement Surgery</a><hr>"
 		else
-			dat += "The Med-Pod is empty."
+			dat += "The Auto-Doc is empty."
 	dat += text("<a href='?src=\ref[];mach_close=sleeper'>Close</a>", user)
-	show_browser(user, dat, "Autodoc Medical System", "sleeper", "size=300x400")
+	show_browser(user, dat, "Auto-Doc Medical System", "sleeper", "size=300x400")
 	onclose(user, "sleeper")
 
 /obj/structure/machinery/autodoc_console/Topic(href, href_list)
@@ -855,8 +867,9 @@
 		if(connected.occupant && ishuman(connected.occupant))
 			// manual surgery handling
 			var/datum/data/record/N = null
+			var/occupant_ref = WEAKREF(connected.occupant)
 			for(var/datum/data/record/R in GLOB.data_core.medical)
-				if (R.fields["name"] == connected.occupant.real_name)
+				if (R.fields["ref"] == occupant_ref)
 					N = R
 			if(isnull(N))
 				N = create_medical_record(connected.occupant)

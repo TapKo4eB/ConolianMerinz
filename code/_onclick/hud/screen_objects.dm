@@ -13,17 +13,21 @@
 	icon_state = "x"
 	layer = ABOVE_HUD_LAYER
 	unacidable = TRUE
+	appearance_flags = NO_CLIENT_COLOR //So that saturation/desaturation etc. effects don't hit the HUD.
 	var/obj/master = null	//A reference to the object in the slot. Grabs or items, generally.
 
 /obj/screen/text
 	icon = null
 	icon_state = null
 	mouse_opacity = 0
-	screen_loc = "CENTER-7,CENTER-7"
+	plane = CINEMATIC_PLANE
+	layer = CINEMATIC_LAYER
 	maptext_height = 480
 	maptext_width = 480
+	appearance_flags = NO_CLIENT_COLOR|PIXEL_SCALE
 
 /obj/screen/cinematic
+	plane = CINEMATIC_PLANE
 	layer = CINEMATIC_LAYER
 	mouse_opacity = 0
 	screen_loc = "1,0"
@@ -53,6 +57,7 @@
 	icon = 'icons/mob/hud/actions.dmi'
 	icon_state = "template"
 	var/datum/action/source_action
+	var/image/maptext_overlay
 
 /obj/screen/action_button/clicked(var/mob/user)
 	if(!user || !source_action)
@@ -64,7 +69,8 @@
 
 /obj/screen/action_button/Destroy()
 	source_action = null
-	. = ..()
+	QDEL_NULL(maptext_overlay)
+	return ..()
 
 /obj/screen/action_button/proc/get_button_screen_loc(button_number)
 	var/row = round((button_number-1)/13) //13 is max amount of buttons per row
@@ -75,7 +81,15 @@
 	var/coord_row_offset = 26
 	return "WEST[coord_col]:[coord_col_offset],NORTH[coord_row]:[coord_row_offset]"
 
-
+/obj/screen/action_button/proc/set_maptext(var/new_maptext, var/new_maptext_x, var/new_maptext_y)
+	overlays -= maptext_overlay
+	maptext_overlay = image(null, null, null, layer + 0.1)
+	maptext_overlay.maptext = new_maptext
+	if(new_maptext_x)
+		maptext_overlay.maptext_x = new_maptext_x
+	if(new_maptext_y)
+		maptext_overlay.maptext_y = new_maptext_y
+	overlays += maptext_overlay
 
 /obj/screen/action_button/hide_toggle
 	name = "Hide Buttons"
@@ -513,52 +527,127 @@
 
 
 /obj/screen/squad_leader_locator
+	name = "beacon tracker"
 	icon = 'icons/mob/hud/human_midnight.dmi'
 	icon_state = "trackoff"
-	name = "squad leader locator"
 	alpha = 0 //invisible
 	mouse_opacity = 0
 
-/obj/screen/squad_leader_locator/clicked(var/mob/living/carbon/human/H)
-	if(!istype(H))
+/obj/screen/squad_leader_locator/clicked(mob/living/carbon/human/user, mods)
+	if(!istype(user))
 		return
-	if(H.get_active_hand())
+	var/obj/item/device/radio/headset/earpiece = user.get_type_in_ears(/obj/item/device/radio/headset)
+	var/has_access = earpiece.misc_tracking || (user.assigned_squad && user.assigned_squad.radio_freq == earpiece.frequency)
+	if(!istype(earpiece) || !earpiece.has_hud || !has_access)
+		to_chat(user, SPAN_WARNING("Unauthorized access detected."))
 		return
-	var/obj/item/device/radio/headset/almayer/marine/earpiece = H.get_type_in_ears(/obj/item/device/radio/headset/almayer/marine)
-	if(!H.assigned_squad || !istype(earpiece) || H.assigned_squad.radio_freq != earpiece.frequency)
-		to_chat(H, SPAN_WARNING("Unauthorized access detected."))
+	if(mods["shift"])
+		var/area/current_area = get_area(user)
+		to_chat(user, SPAN_NOTICE("You are currently at: <b>[current_area.name]</b>."))
 		return
-	H.assigned_squad.ui_interact(H)
+	else if(mods["alt"])
+		earpiece.switch_tracker_target()
+		return
+	if(user.get_active_hand())
+		return
+	if(user.assigned_squad)
+		user.assigned_squad.ui_interact(user)
+
+/obj/screen/mark_locator
+	name = "mark locator"
+	icon = 'icons/mob/hud/alien_standard.dmi'
+	icon_state = "marker"
+
+/obj/screen/mark_locator/clicked(mob/living/carbon/Xenomorph/user, mods)
+	if(!istype(user))
+		return FALSE
+	if(mods["shift"] && user.tracked_marker)
+		if(user.observed_xeno == user.tracked_marker)
+			user.overwatch(user.tracked_marker, TRUE) //passing in an obj/effect into a proc that expects mob/xenomorph B)
+		else
+			to_chat(user, SPAN_XENONOTICE("You psychically observe the [user.tracked_marker.mark_meaning.name] resin mark in [get_area_name(user.tracked_marker)]."))
+			user.overwatch(user.tracked_marker) //this is so scuffed, sorry if this causes errors
+		return
+	if(mods["alt"] && user.tracked_marker)
+		user.stop_tracking_resin_mark()
+		return
+	if(!user.hive)
+		to_chat(user, SPAN_WARNING("You don't belong to a hive!"))
+		return FALSE
+	if(!user.hive.living_xeno_queen)
+		to_chat(user, SPAN_WARNING("Without a queen your psychic link is broken!"))
+		return FALSE
+	if(user.burrow || user.is_mob_incapacitated() || user.buckled)
+		return FALSE
+	user.hive.mark_ui.update_all_data()
+	user.hive.mark_ui.open_mark_menu(user)
 
 /obj/screen/queen_locator
+	name = "queen locator"
 	icon = 'icons/mob/hud/alien_standard.dmi'
 	icon_state = "trackoff"
-	name = "queen locator"
+	var/track_state = TRACKER_QUEEN
 
-/obj/screen/queen_locator/clicked(var/mob/living/carbon/Xenomorph/X)
-	if(!istype(X))
+/obj/screen/queen_locator/clicked(mob/living/carbon/Xenomorph/user, mods)
+	if(!istype(user))
 		return FALSE
-	if(!X.hive)
+	if(mods["shift"])
+		var/area/current_area = get_area(user)
+		to_chat(user, SPAN_NOTICE("You are currently at: <b>[current_area.name]</b>."))
+		return
+	if(!user.hive)
+		to_chat(user, SPAN_WARNING("You don't belong to a hive!"))
 		return FALSE
-	if(!X.hive.living_xeno_queen)
+	if(mods["alt"])
+		var/list/options = list()
+		if(user.hive.living_xeno_queen)
+			options["Queen"] = TRACKER_QUEEN
+		if(user.hive.hive_location)
+			options["Hive Core"] = TRACKER_HIVE
+		var/xeno_leader_index = 1
+		for(var/xeno in user.hive.xeno_leader_list)
+			var/mob/living/carbon/Xenomorph/xeno_lead = user.hive.xeno_leader_list[xeno_leader_index]
+			if(xeno_lead)
+				options["Xeno Leader [xeno_lead]"] = "[xeno_leader_index]"
+			xeno_leader_index++
+		var/selected = tgui_input_list(user, "Select what you want the locator to track.", "Locator Options", options)
+		if(selected)
+			track_state = options[selected]
+		return
+	if(!user.hive.living_xeno_queen)
+		to_chat(user, SPAN_WARNING("Your hive doesn't have a living queen!"))
 		return FALSE
-	X.overwatch(X.hive.living_xeno_queen)
+	if(user.burrow || user.is_mob_incapacitated() || user.buckled)
+		return FALSE
+	user.overwatch(user.hive.living_xeno_queen)
 
 /obj/screen/xenonightvision
 	icon = 'icons/mob/hud/alien_standard.dmi'
 	name = "toggle night vision"
-	icon_state = "nightvision1"
+	icon_state = "nightvision_full"
 
 /obj/screen/xenonightvision/clicked(var/mob/user)
 	if (..())
 		return 1
 	var/mob/living/carbon/Xenomorph/X = user
 	X.toggle_nightvision()
-	if(icon_state == "nightvision1")
-		icon_state = "nightvision0"
-	else
-		icon_state = "nightvision1"
+	update_icon(X)
 	return 1
+
+/obj/screen/xenonightvision/update_icon(var/mob/living/carbon/Xenomorph/owner)
+	. = ..()
+	var/vision_define
+	switch(owner.lighting_alpha)
+		if(LIGHTING_PLANE_ALPHA_INVISIBLE)
+			icon_state = "nightvision_full"
+			vision_define = XENO_VISION_LEVEL_FULL_NVG
+		if(LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE)
+			icon_state = "nightvision_half"
+			vision_define = XENO_VISION_LEVEL_MID_NVG
+		if(LIGHTING_PLANE_ALPHA_VISIBLE)
+			icon_state = "nightvision_off"
+			vision_define = XENO_VISION_LEVEL_NO_NVG
+	to_chat(owner, SPAN_NOTICE("Night vision mode switched to <b>[vision_define]</b>."))
 
 /obj/screen/bodytemp
 	name = "body temperature"
@@ -586,3 +675,27 @@
 
 		user.hud_used.hidden_inventory_update()
 	return 1
+
+/obj/screen/preview
+	icon = 'icons/turf/almayer.dmi'
+	icon_state = "blank"
+	plane = -100
+	layer = TURF_LAYER
+
+/obj/screen/rotate
+	icon_state = "centred_arrow"
+	dir = EAST
+	var/atom/assigned_atom
+	var/rotate_amount = 90
+
+/obj/screen/rotate/Initialize(mapload, var/set_assigned_atom)
+	. = ..()
+	assigned_atom = set_assigned_atom
+
+/obj/screen/rotate/clicked(mob/user)
+	if(assigned_atom)
+		assigned_atom.setDir(turn(assigned_atom.dir, rotate_amount))
+
+/obj/screen/rotate/alt
+	dir = WEST
+	rotate_amount = -90

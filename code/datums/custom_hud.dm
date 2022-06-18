@@ -94,6 +94,24 @@
 /datum/custom_hud/orange
 	ui_style_icon	= 'icons/mob/hud/human_orange.dmi'
 
+/datum/custom_hud/glass
+	ui_style_icon	= 'icons/mob/hud/human_glass.dmi'
+
+/datum/custom_hud/red
+	ui_style_icon	= 'icons/mob/hud/human_red.dmi'
+
+/datum/custom_hud/green
+	ui_style_icon	= 'icons/mob/hud/human_green.dmi'
+
+/datum/custom_hud/bronze
+	ui_style_icon	= 'icons/mob/hud/human_bronze.dmi'
+
+/datum/custom_hud/holographic
+	ui_style_icon	= 'icons/mob/hud/human_holo.dmi'
+
+/datum/custom_hud/grey
+	ui_style_icon	= 'icons/mob/hud/human_grey.dmi'
+
 /datum/custom_hud/dark
 	ui_style_icon	= 'icons/mob/hud/human_dark.dmi'
 
@@ -101,6 +119,7 @@
 	UI_NUTRITION_LOC 	= "EAST-2:33,14:15"
 	UI_TEMP_LOC 		= "EAST-1:26,15:-7"
 	UI_HEALTH_LOC 		= "EAST-1:27,15:-8"
+	UI_SL_LOCATOR_LOC	= "EAST-1:27,12:22"
 
 /datum/custom_hud/dark/get_status_loc(var/placement)
 	var/col = (placement-1)
@@ -141,6 +160,7 @@
 	var/ui_queen_locator 		= "EAST-1:28,8:13"
 	var/ui_alienplasmadisplay 	= "EAST-1:28,6:13"
 	var/ui_alienarmordisplay 	= "EAST-1:28,5:13"
+	var/ui_mark_locator 		= "EAST-1:28,10:13"
 
 /datum/custom_hud/robot
 	ui_style_icon = 'icons/mob/hud/screen1_robot.dmi'

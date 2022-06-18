@@ -16,12 +16,15 @@
 		return
 	if (M.client)
 		M.ghostize(FALSE)
+	M.aghosted = FALSE //Incase you ckey into an aghosted body.
 	message_staff("[key_name_admin(usr)] modified [key_name(M)]'s ckey to [new_ckey]", 1)
 
 	M.ckey = new_ckey
 	var/mob/living/carbon/Xenomorph/XNO = M
 	if(istype(XNO))
 		XNO.generate_name()
+		XNO.set_lighting_alpha_from_prefs(M.client)
+	M.client?.change_view(world_view_size)
 
 /client/proc/cmd_admin_changekey(mob/O in GLOB.mob_list)
 	set name = "Change CKey"
@@ -73,7 +76,7 @@
 		if("Security HUD")
 			H = huds[MOB_HUD_SECURITY_ADVANCED]
 		if("Squad HUD")
-			H = huds[MOB_HUD_SQUAD_OBSERVER]
+			H = huds[MOB_HUD_FACTION_OBSERVER]
 		if("Xeno Status HUD")
 			H = huds[MOB_HUD_XENO_STATUS]
 		else return
@@ -159,6 +162,39 @@
 
 	message_staff(WRAP_STAFF_LOG(usr, "subtle messaged [key_name(M)] as [message_option], saying \"[msg]\" in [get_area(M)] ([M.x],[M.y],[M.z])."), M.x, M.y, M.z)
 
+/client/proc/cmd_admin_alert_message(var/mob/M)
+	set name = "Alert Message"
+	set category = "Admin.Game"
+
+	if(!ismob(M))
+		return
+	if (!CLIENT_IS_STAFF(src))
+		to_chat(src, "Only administrators may use this command.")
+		return
+
+	var/res = alert(src, "Do you wish to send an admin alert to this user?",,"Yes","No","Custom")
+	switch(res)
+		if("Yes")
+			var/message = "An admin is trying to talk to you!<br>Check your chat window and click their name to respond or you may be banned!"
+
+			show_blurb(M, 15, message, null, "center", "center", COLOR_RED, null, null, 1)
+			log_admin("[key_name(src)] sent a default admin alert to [key_name(M)].")
+			message_staff("[key_name(src)] sent a default admin alert to [key_name(M)].")
+		if("Custom")
+			var/message = input(src, "Input your custom admin alert text:", "Message") as text|null
+			if(!message)
+				return
+
+			var/new_color = input(src, "Input your message color:", "Color Selector") as color|null
+			if(!new_color)
+				return
+
+			show_blurb(M, 15, message, null, "center", "center", new_color, null, null, 1)
+			log_admin("[key_name(src)] sent an admin alert to [key_name(M)] with custom message [message].")
+			message_staff("[key_name(src)] sent an admin alert to [key_name(M)] with custom message [message].")
+		else
+			return
+
 /client/proc/cmd_admin_direct_narrate(var/mob/M)
 	set name = "Narrate"
 	set category = null
@@ -185,13 +221,21 @@
 	set name = "Attack Log"
 	set category = null
 
+	if (!CLIENT_IS_STAFF(src))
+		to_chat(src, "Only administrators may use this command.")
+		return
+
 	to_chat(usr, SPAN_DANGER("<b>Attack Log for [mob]</b>"))
 	for(var/t in M.attack_log)
 		to_chat(usr, t)
 
-/proc/possess(obj/O as obj in GLOB.object_list)
+/client/proc/possess(obj/O as obj in GLOB.object_list)
 	set name = "Possess Obj"
 	set category = null
+
+	if (!CLIENT_IS_STAFF(src))
+		to_chat(src, "Only administrators may use this command.")
+		return
 
 	var/turf/T = get_turf(O)
 
@@ -209,9 +253,13 @@
 	usr.client.eye = O
 	usr.control_object = O
 
-/proc/release(obj/O as obj in GLOB.object_list)
+/client/proc/release(obj/O as obj in GLOB.object_list)
 	set name = "Release Obj"
 	set category = null
+
+	if (!CLIENT_IS_STAFF(src))
+		to_chat(src, "Only administrators may use this command.")
+		return
 
 	if(usr.control_object && usr.name_archive) //if you have a name archived and if you are actually relassing an object
 		usr.real_name = usr.name_archive

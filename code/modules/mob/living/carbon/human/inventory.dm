@@ -107,7 +107,7 @@
 		return FALSE
 
 	if(I == wear_suit)
-		if(s_store)
+		if(s_store && !(s_store.flags_equip_slot & SLOT_SUIT_STORE))
 			drop_inv_item_on_ground(s_store)
 		wear_suit = null
 		if(I.flags_inv_hide & HIDESHOES)
@@ -124,10 +124,6 @@
 			drop_inv_item_on_ground(l_store)
 		if(belt)
 			drop_inv_item_on_ground(belt)
-		if(wear_suit) //We estimate all armors with uniform restrictions aren't okay with removing the uniform altogether
-			var/obj/item/clothing/suit/S = wear_suit
-			if(S.uniform_restricted)
-				drop_inv_item_on_ground(wear_suit)
 		w_uniform = null
 		update_suit_sensors()
 		update_inv_w_uniform()
@@ -239,6 +235,7 @@
 		W.pickup(src)
 	W.forceMove(src)
 	W.layer = ABOVE_HUD_LAYER
+	W.plane = ABOVE_HUD_PLANE
 
 	switch(slot)
 		if(WEAR_BACK)
@@ -350,24 +347,26 @@
 			W.equipped(src, slot)
 			update_inv_s_store()
 		if(WEAR_IN_BACK)
-			back.attackby(W,src)
+			var/obj/item/storage/S = back
+			S.attempt_item_insertion(W, FALSE, src)
 			back.update_icon()
 		if(WEAR_IN_SHOES)
 			shoes.attackby(W,src)
 			shoes.update_icon()
 		if(WEAR_IN_SCABBARD)
-			back.attackby(W,src)
+			var/obj/item/storage/S = back
+			S.attempt_item_insertion(W, FALSE, src)
 			back.update_icon()
 		if(WEAR_IN_JACKET)
 			var/obj/item/clothing/suit/storage/S = wear_suit
 			if(istype(S) && S.pockets.storage_slots)
-				wear_suit.attackby(W, src)
+				S.pockets.attempt_item_insertion(W, FALSE, src)
 				wear_suit.update_icon()
 
 		if(WEAR_IN_HELMET)
 			var/obj/item/clothing/head/helmet/marine/HM = src.head
 			if(istype(HM) && HM.pockets.storage_slots)
-				HM.pockets.attackby(W, src)
+				HM.pockets.attempt_item_insertion(W, FALSE, src)
 				HM.update_icon()
 
 		if(WEAR_IN_ACCESSORY)
@@ -382,21 +381,27 @@
 			update_inv_w_uniform()
 
 		if(WEAR_IN_BELT)
-			belt.attackby(W,src)
+			var/obj/item/storage/S = belt
+			S.attempt_item_insertion(W, FALSE, src)
 			belt.update_icon()
 		if(WEAR_IN_J_STORE)
-			s_store.attackby(W,src)
+			var/obj/item/storage/S = s_store
+			S.attempt_item_insertion(W, FALSE, src)
 			s_store.update_icon()
 		if(WEAR_IN_L_STORE)
-			l_store.attackby(W,src)
+			var/obj/item/storage/S = l_store
+			S.attempt_item_insertion(W, FALSE, src)
 			l_store.update_icon()
 		if(WEAR_IN_R_STORE)
-			r_store.attackby(W,src)
+			var/obj/item/storage/S = r_store
+			S.attempt_item_insertion(W, FALSE, src)
 			r_store.update_icon()
 
 		else
 			to_chat(src, SPAN_DANGER("You are trying to eqip this item to an unsupported inventory slot. How the heck did you manage that? Stop it..."))
 			return
+
+	SEND_SIGNAL(src, COMSIG_HUMAN_EQUIPPED_ITEM, W, slot)
 	recalculate_move_delay = TRUE
 	return 1
 
@@ -444,7 +449,42 @@
 		if(WEAR_LEGCUFFS)
 			return legcuffed
 
-
+/mob/living/carbon/human/get_slot_by_item(obj/item/I)
+	if(I == back)
+		return WEAR_BACK
+	if(I == wear_mask)
+		return WEAR_FACE
+	if(I == belt)
+		return WEAR_WAIST
+	if(I == wear_id)
+		return WEAR_ID
+	if(I == wear_l_ear)
+		return WEAR_L_EAR
+	if(I == wear_r_ear)
+		return WEAR_R_EAR
+	if(I == glasses)
+		return WEAR_EYES
+	if(I == gloves)
+		return WEAR_HANDS
+	if(I == head)
+		return WEAR_HEAD
+	if(I == shoes)
+		return WEAR_FEET
+	if(I == wear_suit)
+		return WEAR_JACKET
+	if(I == w_uniform)
+		return WEAR_BODY
+	if(I == l_store)
+		return WEAR_L_STORE
+	if(I == r_store)
+		return WEAR_R_STORE
+	if(I == s_store)
+		return WEAR_J_STORE
+	if(I == handcuffed)
+		return WEAR_HANDCUFFS
+	if(I == legcuffed)
+		return WEAR_LEGCUFFS
+	return ..()
 
 
 
@@ -461,7 +501,7 @@
 	attack_log += "\[[time_stamp()]\] <font color='red'>Attempted to remove [key_name(M)]'s [I.name] ([slot_to_process])</font>"
 	log_interact(src, M, "[key_name(src)] tried to remove [key_name(M)]'s [I.name] ([slot_to_process]).")
 
-	M.visible_message(SPAN_DANGER("[src] tries to remove [M]'s [I.name]."), \
+	src.visible_message(SPAN_DANGER("[src] tries to remove [M]'s [I.name]."), \
 					SPAN_DANGER("You are trying to remove [M]'s [I.name]."), null, 5)
 	I.add_fingerprint(src)
 	if(do_after(src, HUMAN_STRIP_DELAY * src.get_skill_duration_multiplier(), INTERRUPT_ALL, BUSY_ICON_GENERIC, M, INTERRUPT_MOVED, BUSY_ICON_GENERIC))

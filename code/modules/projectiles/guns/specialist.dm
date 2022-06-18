@@ -36,11 +36,19 @@
 
 	flags_item = TWOHANDED|NO_CRYO_STORE
 
+/obj/item/weapon/gun/rifle/sniper/M42A/verb/toggle_scope_zoom_level()
+	set name = "Toggle Scope Zoom Level"
+	set category = "Weapons"
+	set src in usr
+	var/obj/item/attachable/scope/variable_zoom/S = attachments["rail"]
+	S.toggle_zoom_level()
+
 /obj/item/weapon/gun/rifle/sniper/M42A/handle_starting_attachment()
 	..()
-	var/obj/item/attachable/scope/S = new(src)
+	var/obj/item/attachable/scope/variable_zoom/S = new(src)
 	S.hidden = TRUE
 	S.flags_attach_features &= ~ATTACH_REMOVABLE
+	S.ignore_clash_fog = TRUE
 	S.Attach(src)
 	update_attachable(S.slot)
 
@@ -50,7 +58,7 @@
 	))
 
 /obj/item/weapon/gun/rifle/sniper/M42A/set_gun_attachment_offsets()
-	attachable_offset = list("muzzle_x" = 33, "muzzle_y" = 18,"rail_x" = 12, "rail_y" = 20, "under_x" = 19, "under_y" = 14, "stock_x" = 19, "stock_y" = 14)
+	attachable_offset = list("muzzle_x" = 39, "muzzle_y" = 17,"rail_x" = 12, "rail_y" = 20, "under_x" = 19, "under_y" = 14, "stock_x" = 19, "stock_y" = 14)
 
 
 /obj/item/weapon/gun/rifle/sniper/M42A/set_gun_config_values()
@@ -62,16 +70,16 @@
 	damage_mult = BASE_BULLET_DAMAGE_MULT
 	recoil = RECOIL_AMOUNT_TIER_5
 
-/obj/item/weapon/gun/rifle/sniper/M42B
-	name = "\improper XM42B experimental anti-tank rifle"
-	desc = "An experimental anti-tank rifle produced by Armat Systems, currently undergoing field testing. Chambered in 10x99mm Caseless."
+/obj/item/weapon/gun/rifle/sniper/XM42B
+	name = "\improper XM42B experimental anti-materiel rifle"
+	desc = "An experimental anti-materiel rifle produced by Armat Systems, recently reacquired from the deep storage of an abandoned prototyping facility. This one in particular is currently undergoing field testing. Chambered in 10x99mm Caseless."
 	icon_state = "xm42b"
 	item_state = "xm42b"
 	unacidable = TRUE
 	indestructible = 1
 
 	fire_sound = 'sound/weapons/sniper_heavy.ogg'
-	current_mag = /obj/item/ammo_magazine/sniper/anti_tank
+	current_mag = /obj/item/ammo_magazine/sniper/anti_materiel //Renamed from anti-tank to align with new identity/description. Other references have been changed as well. -Kaga
 	force = 12
 	wield_delay = WIELD_DELAY_HORRIBLE //Ends up being 1.6 seconds due to scope
 	zoomdevicename = "scope"
@@ -79,45 +87,55 @@
 	flags_gun_features = GUN_AUTO_EJECTOR|GUN_SPECIALIST|GUN_WIELDED_FIRING_ONLY|GUN_AMMO_COUNTER
 	starting_attachment_types = list(/obj/item/attachable/sniperbarrel)
 
-/obj/item/weapon/gun/rifle/sniper/M42B/handle_starting_attachment()
+/obj/item/weapon/gun/rifle/sniper/XM42B/handle_starting_attachment()
 	..()
-	var/obj/item/attachable/scope/S = new(src)
+	var/obj/item/attachable/scope/variable_zoom/S = new(src)
 	S.icon_state = "pmcscope"
 	S.attach_icon = "pmcscope"
 	S.flags_attach_features &= ~ATTACH_REMOVABLE
+	S.ignore_clash_fog = TRUE
 	S.Attach(src)
 	update_attachable(S.slot)
 
 
-/obj/item/weapon/gun/rifle/sniper/M42B/set_gun_attachment_offsets()
+/obj/item/weapon/gun/rifle/sniper/XM42B/set_gun_attachment_offsets()
 	attachable_offset = list("muzzle_x" = 32, "muzzle_y" = 18,"rail_x" = 15, "rail_y" = 19, "under_x" = 20, "under_y" = 15, "stock_x" = 20, "stock_y" = 15)
 
 
-/obj/item/weapon/gun/rifle/sniper/M42B/set_gun_config_values()
+/obj/item/weapon/gun/rifle/sniper/XM42B/set_gun_config_values()
 	..()
-	fire_delay = FIRE_DELAY_TIER_4 * 8 //Big boy damage, but it takes a lot of time to fire a shot.
+	fire_delay = FIRE_DELAY_TIER_6 * 6 //Big boy damage, but it takes a lot of time to fire a shot.
+	//Kaga: Adjusted from 56 (Tier 4, 7*8) -> 30 (Tier 6, 5*6) ticks. 95 really wasn't big-boy damage anymore, although I updated it to 125 to remain consistent with the other 10x99mm caliber weapon (M42C). Now takes only twice as long as the M42A.
 	burst_amount = BURST_AMOUNT_TIER_1
-	accuracy_mult = BASE_ACCURACY_MULT + 2*HIT_ACCURACY_MULT_TIER_10
+	accuracy_mult = BASE_ACCURACY_MULT + 2*HIT_ACCURACY_MULT_TIER_10 //Who coded this like this, and why? It just calculates out to 1+1=2. Leaving a note here to check back later.
 	scatter = SCATTER_AMOUNT_TIER_10
 	damage_mult = BASE_BULLET_DAMAGE_MULT
 	recoil = RECOIL_AMOUNT_TIER_1
 
-/obj/item/weapon/gun/rifle/sniper/M42B/set_bullet_traits()
+/obj/item/weapon/gun/rifle/sniper/XM42B/set_bullet_traits()
 	LAZYADD(traits_to_give, list(
-		BULLET_TRAIT_ENTRY(/datum/element/bullet_trait_iff)
+		BULLET_TRAIT_ENTRY(/datum/element/bullet_trait_iff),
+		BULLET_TRAIT_ENTRY(/datum/element/bullet_trait_penetrating),
+		BULLET_TRAIT_ENTRY_ID("turfs", /datum/element/bullet_trait_damage_boost, 11, GLOB.damage_boost_turfs),
+		BULLET_TRAIT_ENTRY_ID("breaching", /datum/element/bullet_trait_damage_boost, 11, GLOB.damage_boost_breaching),
+		//At 1375 per shot it'll take 1 shot to break resin turfs, and a full mag of 8 to break reinforced walls.
+		BULLET_TRAIT_ENTRY_ID("pylons", /datum/element/bullet_trait_damage_boost, 6, GLOB.damage_boost_pylons)
+		//At 750 per shot it'll take 3 to break a Pylon (1800 HP). No Damage Boost vs other xeno structures yet, those will require a whole new list w/ the damage_boost trait.
 	))
 
+/*
+//Disabled until an identity is better defined. -Kaga
 /obj/item/weapon/gun/rifle/sniper/M42B/afterattack(atom/target, mob/user, flag)
 	if(able_to_fire(user))
 		if(get_dist(target,user) <= 8)
 			to_chat(user, SPAN_WARNING("The [src.name] beeps, indicating that the target is within an unsafe proximity to the rifle, refusing to fire."))
 			return
 		else ..()
-
+*/
 
 /obj/item/weapon/gun/rifle/sniper/elite
 	name = "\improper M42C anti-tank sniper rifle"
-	desc = "A high end mag-rail heavy sniper rifle from Weyland-Armat chambered in the heaviest ammo available, 10x99mm Caseless."
+	desc = "A high-end superheavy magrail sniper rifle from Weyland-Armat chambered in a specialized variant of the heaviest ammo available, 10x99mm Caseless. This weapon requires a specialized armor rig for recoil mitigation in order to be used effectively."
 	icon_state = "m42c"
 	item_state = "m42c" //NEEDS A TWOHANDED STATE
 
@@ -134,6 +152,7 @@
 	S.icon_state = "pmcscope"
 	S.attach_icon = "pmcscope"
 	S.flags_attach_features &= ~ATTACH_REMOVABLE
+	S.ignore_clash_fog = TRUE
 	S.Attach(src)
 	update_attachable(S.slot)
 
@@ -149,8 +168,8 @@
 	..()
 	fire_delay = FIRE_DELAY_TIER_6*5
 	burst_amount = BURST_AMOUNT_TIER_1
-	accuracy_mult = BASE_ACCURACY_MULT + HIT_ACCURACY_MULT_TIER_10
-	scatter = SCATTER_AMOUNT_TIER_8
+	accuracy_mult = BASE_ACCURACY_MULT * 3 //Was previously BAM + HAMT10, similar to the XM42B, and coming out to 1.5? Changed to be consistent with M42A. -Kaga
+	scatter = SCATTER_AMOUNT_TIER_10 //Was previously 8, changed to be consistent with the XM42B.
 	damage_mult = BASE_BULLET_DAMAGE_MULT
 	recoil = RECOIL_AMOUNT_TIER_1
 
@@ -177,15 +196,16 @@
 						/obj/item/attachable/verticalgrip,
 						/obj/item/attachable/gyro,
 						/obj/item/attachable/bipod,
-						/obj/item/attachable/scope/slavic)
+						/obj/item/attachable/scope/variable_zoom/slavic)
 
 	flags_gun_features = GUN_AUTO_EJECTOR|GUN_WIELDED_FIRING_ONLY
 
 
 /obj/item/weapon/gun/rifle/sniper/svd/handle_starting_attachment()
 	..()
-	var/obj/item/attachable/S = new /obj/item/attachable/scope/slavic(src)
+	var/obj/item/attachable/scope/S = new /obj/item/attachable/scope/variable_zoom/slavic(src)
 	S.flags_attach_features &= ~ATTACH_REMOVABLE
+	S.ignore_clash_fog = TRUE
 	S.Attach(src)
 	update_attachable(S.slot)
 	S = new /obj/item/attachable/slavicbarrel(src)
@@ -323,10 +343,10 @@
 
 
 /obj/item/weapon/gun/smartgun/Initialize(mapload, ...)
-	. = ..()
-	ammo_primary = GLOB.ammo_list[ammo_primary]
+	ammo_primary = GLOB.ammo_list[ammo_primary] //Gun initialize calls replace_ammo() so we need to set these first.
 	ammo_secondary = GLOB.ammo_list[ammo_secondary]
 	MD = new(src)
+	. = ..()
 
 /obj/item/weapon/gun/smartgun/set_gun_attachment_offsets()
 	attachable_offset = list("muzzle_x" = 33, "muzzle_y" = 16,"rail_x" = 17, "rail_y" = 18, "under_x" = 22, "under_y" = 14, "stock_x" = 22, "stock_y" = 14)
@@ -340,7 +360,7 @@
 	fa_scatter_peak = FULL_AUTO_SCATTER_PEAK_TIER_6
 	fa_max_scatter = SCATTER_AMOUNT_TIER_5
 	if(accuracy_improvement)
-		accuracy_mult += HIT_ACCURACY_MULT_TIER_2
+		accuracy_mult += HIT_ACCURACY_MULT_TIER_3
 	else
 		accuracy_mult += HIT_ACCURACY_MULT_TIER_1
 	if(recoil_compensation)
@@ -456,11 +476,11 @@
 		if(!ishuman(user)) return 0
 		var/mob/living/carbon/human/H = user
 		if(!skillcheckexplicit(user, SKILL_SPEC_WEAPONS, SKILL_SPEC_SMARTGUN) && !skillcheckexplicit(user, SKILL_SPEC_WEAPONS, SKILL_SPEC_ALL))
-			to_chat(user, SPAN_WARNING("You don't seem to know how to use [src]..."))
-			return 0
-		if ( !istype(H.wear_suit,/obj/item/clothing/suit/storage/marine/smartgunner) || !istype(H.back,/obj/item/smartgun_powerpack))
-			click_empty(H)
-			return 0
+			to_chat(H, SPAN_WARNING("You don't seem to know how to use \the [src]..."))
+			return FALSE
+		if(!H.wear_suit || !(H.wear_suit.flags_inventory & SMARTGUN_HARNESS))
+			to_chat(H, SPAN_WARNING("You need a harness suit to be able to fire \the [src]..."))
+			return FALSE
 
 /obj/item/weapon/gun/smartgun/delete_bullet(obj/item/projectile/projectile_to_fire, refund = 0)
 	if(!current_mag)
@@ -507,9 +527,9 @@
 		link_powerpack(usr)
 
 /obj/item/weapon/gun/smartgun/Fire(atom/target, mob/living/user, params, reflex = 0, dual_wield)
-	if(!powerpack)
+	if(!powerpack || (powerpack && user.back != powerpack))
 		if(!link_powerpack(user))
-			click_empty(user)
+			to_chat(user, SPAN_WARNING("You need a powerpack to be able to fire \the [src]..."))
 			unlink_powerpack()
 			return
 	if(powerpack)
@@ -701,6 +721,66 @@
 		if(!auto_fire)
 			STOP_PROCESSING(SSobj, src)
 
+//CO SMARTGUN
+/obj/item/weapon/gun/smartgun/co
+	name = "\improper M56C 'Cavalier' smartgun"
+	desc = "The actual firearm in the 4-piece M56C Smartgun system. Back order only. Besides a more robust weapons casing, an ID lock system and a fancy paintjob, the gun's performance is identical to the standard-issue M56B."
+	icon_state = "m56c"
+	item_state = "m56c"
+	flags_gun_features = GUN_AUTO_EJECTOR|GUN_SPECIALIST|GUN_WIELDED_FIRING_ONLY|GUN_HAS_FULL_AUTO
+
+	var/mob/living/carbon/human/linked_human
+	var/is_locked = TRUE
+
+/obj/item/weapon/gun/smartgun/co/able_to_fire(mob/user)
+	. = ..()
+	if(is_locked && linked_human && linked_human != user)
+		if(linked_human.is_revivable() || linked_human.stat != DEAD)
+			to_chat(user, SPAN_WARNING("[icon2html(src)] Trigger locked by [src]. Unauthorized user."))
+			playsound(loc,'sound/weapons/gun_empty.ogg', 25, 1)
+			return FALSE
+
+		linked_human = null
+		is_locked = FALSE
+		UnregisterSignal(linked_human, COMSIG_PARENT_QDELETING)
+
+/obj/item/weapon/gun/smartgun/co/pickup(user)
+	if(!linked_human)
+		src.name_after_co(user, src)
+		to_chat(usr, SPAN_NOTICE("[icon2html(src)] You pick up \the [src], registering yourself as its owner."))
+	..()
+
+/obj/item/weapon/gun/smartgun/co/verb/toggle_lock()
+	set category = "Weapons"
+	set name = "Toggle Lock"
+	set src in usr
+
+	if(usr != linked_human)
+		to_chat(usr, SPAN_WARNING("[icon2html(src)] Action denied by \the [src]. Unauthorized user."))
+		return
+
+	is_locked = !is_locked
+	to_chat(usr, SPAN_NOTICE("[icon2html(src)] You [is_locked? "lock": "unlock"] \the [src]."))
+	playsound(loc,'sound/machines/click.ogg', 25, 1)
+
+/obj/item/weapon/gun/smartgun/co/proc/name_after_co(var/mob/living/carbon/human/H, var/obj/item/weapon/gun/smartgun/co/I)
+	linked_human = H
+	RegisterSignal(linked_human, COMSIG_PARENT_QDELETING, .proc/remove_idlock)
+
+/obj/item/weapon/gun/smartgun/co/examine()
+	..()
+	if(linked_human)
+		if(is_locked)
+			to_chat(usr, SPAN_NOTICE("It is registered to [linked_human]."))
+		else
+			to_chat(usr, SPAN_NOTICE("It is registered to [linked_human], but has its fire restrictions unlocked."))
+	else
+		to_chat(usr, SPAN_NOTICE("It's unregistered. Pick it up to register yourself as its owner."))
+
+/obj/item/weapon/gun/smartgun/co/proc/remove_idlock()
+	SIGNAL_HANDLER
+	linked_human = null
+
 /obj/item/weapon/gun/smartgun/dirty
 	name = "\improper M56D 'Dirty' smartgun"
 	desc = "The actual firearm in the 4-piece M56D Smartgun System. If you have this, you're about to bring some serious pain to anyone in your way.\nYou may toggle firing restrictions by using a special action."
@@ -733,6 +813,15 @@
 	burst_scatter_mult = SCATTER_AMOUNT_TIER_10
 
 
+// CLF SMARTGUN
+
+/obj/item/weapon/gun/smartgun/clf
+	name = "\improper M56B 'Freedom' smartgun"
+	desc = "The actual firearm in the 4-piece M56B Smartgun System. Essentially a heavy, mobile machinegun. This one has the CLF logo carved over the manufactoring stamp.\nYou may toggle firing restrictions by using a special action."
+
+/obj/item/weapon/gun/smartgun/clf/Initialize(mapload, ...)
+	. = ..()
+	MD.iff_signal = FACTION_CLF
 
 //-------------------------------------------------------
 //HEAVY WEAPONS
@@ -806,7 +895,7 @@
 	///Does it launch its grenades in a low arc or a high? Do they strike people in their path, or fly beyond?
 	var/is_lobbing = FALSE
 	///Verboten munitions. This is a blacklist. Anything in this list isn't loadable.
-	var/disallowed_grenade_types = list(/obj/item/explosive/grenade/spawnergrenade, /obj/item/explosive/grenade/alien)
+	var/disallowed_grenade_types = list(/obj/item/explosive/grenade/spawnergrenade, /obj/item/explosive/grenade/alien, /obj/item/explosive/grenade/incendiary/molotov, /obj/item/explosive/grenade/flashbang)
 	///What is this weapon permitted to fire? This is a whitelist. Anything in this list can be fired. Anything.
 	var/valid_munitions = list(/obj/item/explosive/grenade)
 
@@ -841,8 +930,10 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	var/GL_sprite = base_gun_icon
 	if(GL_has_empty_icon && !length(cylinder.contents))
 		GL_sprite += "_e"
+		playsound(loc, cocked_sound, 25, 1)
 	if(GL_has_open_icon && open_chamber)
 		GL_sprite += "_o"
+		playsound(loc, cocked_sound, 25, 1)
 	icon_state = GL_sprite
 
 
@@ -908,6 +999,7 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 
 	user.visible_message(SPAN_NOTICE("[user] loads [I] into [src]."),
 	SPAN_NOTICE("You load [I] into the grenade launcher."), null, 4, CHAT_TYPE_COMBAT_ACTION)
+	playsound(usr, reload_sound, 75, 1)
 	if(internal_slots > 1)
 		to_chat(user, SPAN_INFO("Now storing: [length(cylinder.contents) + 1] / [internal_slots] grenades."))
 
@@ -920,9 +1012,9 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 		if(!length(cylinder.contents))
 			to_chat(user, SPAN_WARNING("The [name] is empty."))
 			return FALSE
-		var/obj/item/G = cylinder.contents[1]
-		if(user.faction == FACTION_MARINE && explosive_grief_check(G))
-			to_chat(user, SPAN_WARNING("\The [name]'s IFF inhibitor prevents you from firing!"))
+		var/obj/item/explosive/grenade/G = cylinder.contents[1]
+		if(G.antigrief_protection && user.faction == FACTION_MARINE && explosive_grief_check(G))
+			to_chat(user, SPAN_WARNING("\The [name]'s safe-area accident inhibitor prevents you from firing!"))
 			msg_admin_niche("[key_name(user)] attempted to prime \a [G.name] in [get_area(src)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[src.loc.x];Y=[src.loc.y];Z=[src.loc.z]'>JMP</a>)")
 			return FALSE
 
@@ -933,7 +1025,6 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 			to_chat(user, SPAN_WARNING("The grenade launcher beeps a warning noise. You are too close!"))
 			return
 		fire_grenade(target,user)
-		playsound(user.loc, cocked_sound, 25, 1)
 
 
 /obj/item/weapon/gun/launcher/grenade/proc/fire_grenade(atom/target, mob/user)
@@ -944,7 +1035,8 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	if(internal_slots > 1)
 		to_firer += " [length(cylinder.contents)-1]/[internal_slots] grenades remaining."
 	user.visible_message(SPAN_DANGER("[user] fired a grenade!"),
-	SPAN_WARNING("[to_firer]"), null, null, null, CHAT_TYPE_WEAPON_USE)
+	SPAN_WARNING("[to_firer]"), message_flags = CHAT_TYPE_WEAPON_USE)
+	playsound(user.loc, fire_sound, 50, 1)
 
 	var/angle = round(Get_Angle(user,target))
 	muzzle_flash(angle,user)
@@ -954,7 +1046,10 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	cylinder.remove_from_storage(F, user.loc)
 	var/pass_flags = NO_FLAGS
 	if(is_lobbing)
-		pass_flags |= PASS_MOB_THRU|PASS_HIGH_OVER
+		if(istype(F, /obj/item/explosive/grenade/slug/baton))
+			pass_flags |= PASS_MOB_THRU_HUMAN|PASS_MOB_IS_OTHER|PASS_OVER
+		else
+			pass_flags |= PASS_MOB_THRU|PASS_HIGH_OVER
 
 	msg_admin_attack("[key_name_admin(user)] fired a grenade ([F.name]) from \a ([name]).")
 	log_game("[key_name_admin(user)] used a grenade ([name]).")
@@ -964,7 +1059,7 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	F.activate(user, FALSE)
 	F.forceMove(get_turf(src))
 	F.throw_atom(target, 20, SPEED_VERY_FAST, user, null, NORMAL_LAUNCH, pass_flags)
-	playsound(F.loc, fire_sound, 50, 1)
+
 
 
 //Doesn't use these. Listed for reference.
@@ -973,6 +1068,8 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 /obj/item/weapon/gun/launcher/grenade/reload_into_chamber()
 	return
 
+/obj/item/weapon/gun/launcher/grenade/has_ammunition()
+	return length(cylinder.contents)
 
 //-------------------------------------------------------
 //M92 GRENADE LAUNCHER
@@ -1017,7 +1114,6 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	desc = "A lightweight, single-shot low-angle grenade launcher used by the Colonial Marines for area denial and big explosions."
 	icon_state = "m81"
 	item_state = "m81" //needs a wield sprite.
-	var/riot_version = FALSE
 
 	matter = list("metal" = 7000)
 
@@ -1032,14 +1128,10 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	..()
 	playsound(usr, unload_sound, 30, 1)
 
-/obj/item/weapon/gun/launcher/grenade/m81/able_to_fire(mob/living/user)
+/obj/item/weapon/gun/launcher/grenade/m81/riot/able_to_fire(mob/living/user)
 	. = ..()
 	if (. && istype(user))
-		if(riot_version)
-			if(!skillcheck(user, SKILL_POLICE, SKILL_POLICE_SKILLED))
-				to_chat(user, SPAN_WARNING("You don't seem to know how to use [src]..."))
-				return FALSE
-		else if(!skillcheck(user, SKILL_SPEC_WEAPONS, SKILL_SPEC_ALL) && user.skills.get_skill_level(SKILL_SPEC_WEAPONS) != SKILL_SPEC_GRENADIER)
+		if(!skillcheck(user, SKILL_POLICE, SKILL_POLICE_SKILLED))
 			to_chat(user, SPAN_WARNING("You don't seem to know how to use [src]..."))
 			return FALSE
 
@@ -1049,7 +1141,47 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	desc = "A lightweight, single-shot low-angle grenade launcher to launch tear gas grenades. Used by the Colonial Marines Military Police during riots."
 	valid_munitions = list(/obj/item/explosive/grenade/custom/teargas)
 	preload = /obj/item/explosive/grenade/custom/teargas
-	riot_version = TRUE
+
+//-------------------------------------------------------
+//M79 Grenade Launcher subtype of the M81
+
+/obj/item/weapon/gun/launcher/grenade/m81/m79//m79 variant for marines
+	name = "\improper M79 grenade launcher"
+	desc = "A heavy, low-angle 40mm grenade launcher. It's been in use since the Vietnam War, though this version has been modernized with an IFF enabled micro-computer. The wooden furniture is, in fact, made of painted hardened polykevlon."
+	icon_state = "m79"
+	item_state = "m79"
+	preload = /obj/item/explosive/grenade/slug/baton
+	is_lobbing = TRUE
+
+	fire_sound = 'sound/weapons/handling/m79_shoot.ogg'
+	cocked_sound = 'sound/weapons/handling/m79_break_open.ogg'
+	reload_sound = 'sound/weapons/handling/m79_reload.ogg'
+	unload_sound = 'sound/weapons/handling/m79_unload.ogg'
+
+	attachable_allowed = list(
+		/obj/item/attachable/magnetic_harness,
+		/obj/item/attachable/flashlight,
+		/obj/item/attachable/reddot,
+		/obj/item/attachable/reflex,
+		/obj/item/attachable/stock/m79,
+		)
+
+/obj/item/weapon/gun/launcher/grenade/m81/m79/handle_starting_attachment()
+	..()
+	var/obj/item/attachable/stock/m79/S = new(src)
+	S.hidden = FALSE
+	S.flags_attach_features &= ~ATTACH_REMOVABLE
+	S.Attach(src)
+	update_attachable(S.slot)
+
+/obj/item/weapon/gun/launcher/grenade/m81/m79/set_gun_attachment_offsets()
+	attachable_offset = list("muzzle_x" = 33, "muzzle_y" = 18,"rail_x" = 14, "rail_y" = 22, "under_x" = 19, "under_y" = 14, "stock_x" = 14, "stock_y" = 14)
+
+/obj/item/weapon/gun/launcher/grenade/m81/m79/set_bullet_traits()
+	LAZYADD(traits_to_give, list(
+		BULLET_TRAIT_ENTRY(/datum/element/bullet_trait_iff)//might not need this because of is_lobbing, but let's keep it just incase
+	))
+
 
 //-------------------------------------------------------
 //M5 RPG
@@ -1078,6 +1210,7 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	var/datum/effect_system/smoke_spread/smoke
 
 	flags_item = TWOHANDED|NO_CRYO_STORE
+	var/skill_locked = TRUE
 
 /obj/item/weapon/gun/launcher/rocket/Initialize(mapload, spawn_empty)
 	. = ..()
@@ -1114,11 +1247,11 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 			click_empty(user)
 			to_chat(user, SPAN_WARNING("You can't fire that here!"))
 			return 0*/
-		if(!skillcheck(user, SKILL_SPEC_WEAPONS, SKILL_SPEC_ALL) && user.skills.get_skill_level(SKILL_SPEC_WEAPONS) != SKILL_SPEC_ROCKET)
+		if(skill_locked && !skillcheck(user, SKILL_SPEC_WEAPONS, SKILL_SPEC_ALL) && user.skills.get_skill_level(SKILL_SPEC_WEAPONS) != SKILL_SPEC_ROCKET)
 			to_chat(user, SPAN_WARNING("You don't seem to know how to use [src]..."))
 			return 0
 		if(user.faction == FACTION_MARINE && explosive_grief_check(src))
-			to_chat(user, SPAN_WARNING("\The [name]'s IFF inhibitor prevents you from firing!"))
+			to_chat(user, SPAN_WARNING("\The [name]'s safe-area accident inhibitor prevents you from firing!"))
 			msg_admin_niche("[key_name(user)] attempted to fire \a [name] in [get_area(src)] (<A HREF='?_src_=admin_holder;adminplayerobservecoodjump=1;X=[src.loc.x];Y=[src.loc.y];Z=[src.loc.z]'>JMP</a>)")
 			return FALSE
 		if(current_mag && current_mag.current_rounds > 0)
@@ -1130,14 +1263,15 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 
 //No such thing
 /obj/item/weapon/gun/launcher/rocket/reload_into_chamber(mob/user)
-	return 1
+	return TRUE
 
 /obj/item/weapon/gun/launcher/rocket/delete_bullet(obj/item/projectile/projectile_to_fire, refund = 0)
 	if(!current_mag)
 		return
 	qdel(projectile_to_fire)
-	if(refund) current_mag.current_rounds++
-	return 1
+	if(refund)
+		current_mag.current_rounds++
+	return TRUE
 
 /obj/item/weapon/gun/launcher/rocket/proc/make_rocket(mob/user, drop_override = 0, empty = 1)
 	if(!current_mag)
@@ -1206,7 +1340,7 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 		current_mag = rocket
 		rocket.forceMove(src)
 		replace_ammo(,rocket)
-	return 1
+	return TRUE
 
 /obj/item/weapon/gun/launcher/rocket/unload(mob/user,  reload_override = 0, drop_override = 0)
 	if(user && current_mag)
@@ -1262,25 +1396,128 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 	damage_mult = BASE_BULLET_DAMAGE_MULT
 	recoil = RECOIL_AMOUNT_TIER_3
 
+
+//-------------------------------------------------------
+//AT rocket launchers, can be used by non specs
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank //reloadable
+	name = "\improper QH-4 Shoulder-Mounted Anti-Tank RPG"
+	desc = "Used to take out light-tanks and enemy structures, the QH-4 is a dangerous weapon specialised against vehicles. Requires direct hits to penetrate vehicle armour."
+	icon_state = "m83a2"
+	item_state = "m83a2"
+	unacidable = FALSE
+	indestructible = FALSE
+	skill_locked = FALSE
+
+	current_mag = /obj/item/ammo_magazine/rocket/anti_tank
+
+	attachable_allowed = null
+
+	flags_gun_features = GUN_WIELDED_FIRING_ONLY
+
+	flags_item = TWOHANDED
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/set_bullet_traits()
+	. = ..()
+	LAZYADD(traits_to_give, list(
+		BULLET_TRAIT_ENTRY_ID("vehicles", /datum/element/bullet_trait_damage_boost, 20, GLOB.damage_boost_vehicles),
+	))
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable //single shot and disposable
+	name = "\improper M83A2 SADAR"
+	desc = "The M83A2 SADAR is a lightweight one-shot anti-armour weapon capable of engaging enemy vehicles at ranges up to 1,000m. Fully disposable, the rocket's launcher is discarded after firing. When stowed (unique-action), the SADAR system consists of a watertight carbon-fiber composite blast tube, inside of which is an aluminum launch tube containing the missile. The weapon is fired by pushing a charge button on the trigger grip.  It is sighted and fired from the shoulder."
+	var/fired = FALSE
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable/examine(mob/user)
+	. = ..()
+	to_chat(user, SPAN_NOTICE("You can fold it up with unique-action."))
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable/Fire(atom/target, mob/living/user, params, reflex, dual_wield)
+	. = ..()
+	if(.)
+		fired = TRUE
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable/unique_action(mob/M)
+	if(fired)
+		to_chat(M, SPAN_WARNING("\The [src] has already been fired - you can't fold it back up again!"))
+		return
+
+	M.visible_message(SPAN_NOTICE("[M] begins to fold up \the [src]."), SPAN_NOTICE("You start to fold and collapse closed \the [src]."))
+
+	if(!do_after(M, 2 SECONDS, INTERRUPT_ALL, BUSY_ICON_GENERIC))
+		to_chat(M, SPAN_NOTICE("You stop folding up \the [src]"))
+		return
+
+	fold(M)
+	M.visible_message(SPAN_NOTICE("[M] finishes folding \the [src]."), SPAN_NOTICE("You finish folding \the [src]."))
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable/proc/fold(mob/user)
+	var/obj/item/prop/folded_anti_tank_sadar/F = new /obj/item/prop/folded_anti_tank_sadar(src.loc)
+	F.set_name_label(name_label)
+	qdel(src)
+	user.put_in_active_hand(F)
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable/reload()
+	to_chat(usr, SPAN_WARNING("You cannot reload \the [src]!"))
+	return
+
+/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable/unload()
+	to_chat(usr, SPAN_WARNING("You cannot unload \the [src]!"))
+	return
+
+//folded version of the sadar
+/obj/item/prop/folded_anti_tank_sadar
+	name = "\improper M83 SADAR (folded)"
+	desc = "An M83 SADAR Anti-Tank RPG, compacted for easier storage. Can be unfolded with the Z key."
+	icon = 'icons/obj/items/weapons/guns/gun.dmi'
+	icon_state = "m83a2_folded"
+	w_class = SIZE_MEDIUM
+	garbage = FALSE
+
+/obj/item/prop/folded_anti_tank_sadar/attack_self(mob/user)
+	user.visible_message(SPAN_NOTICE("[user] begins to unfold \the [src]."), SPAN_NOTICE("You start to unfold and expand \the [src]."))
+	playsound(src, 'sound/items/component_pickup.ogg', 20, TRUE, 5)
+
+	if(!do_after(user, 4 SECONDS, INTERRUPT_ALL, BUSY_ICON_GENERIC))
+		to_chat(user, SPAN_NOTICE("You stop unfolding \the [src]"))
+		return
+
+	unfold(user)
+
+	user.visible_message(SPAN_NOTICE("[user] finishes unfolding \the [src]."), SPAN_NOTICE("You finish unfolding \the [src]."))
+	playsound(src, 'sound/items/component_pickup.ogg', 20, TRUE, 5)
+	. = ..()
+
+/obj/item/prop/folded_anti_tank_sadar/proc/unfold(mob/user)
+	var/obj/item/weapon/gun/launcher/rocket/anti_tank/disposable/F = new /obj/item/weapon/gun/launcher/rocket/anti_tank/disposable(src.loc)
+	F.set_name_label(name_label)
+	qdel(src)
+	user.put_in_active_hand(F)
+
 //-------------------------------------------------------
 //Flare gun. Close enough to a specialist gun?
 
 /obj/item/weapon/gun/flare
 	name = "\improper M82-F flare gun"
-	desc = "A flare gun issued to JTAC operators to use with standard flares. Cannot be used with signal flares. Comes with a miniscope. One shot, one... life saved?"
+	desc = "A flare gun issued to JTAC operators to use with flares. Comes with a miniscope. One shot, one... life saved?"
 	icon_state = "m82f"
 	item_state = "m82f"
 	current_mag = /obj/item/ammo_magazine/internal/flare
 	reload_sound = 'sound/weapons/gun_shotgun_shell_insert.ogg'
 	fire_sound = 'sound/weapons/gun_flare.ogg'
 	aim_slowdown = 0
+	flags_equip_slot = SLOT_WAIST
 	wield_delay = WIELD_DELAY_VERY_FAST
 	movement_onehanded_acc_penalty_mult = MOVEMENT_ACCURACY_PENALTY_MULT_TIER_4
 	flags_gun_features = GUN_INTERNAL_MAG|GUN_CAN_POINTBLANK
 	gun_category = GUN_CATEGORY_HANDGUN
 	attachable_allowed = list(/obj/item/attachable/scope/mini/flaregun)
-	var/popped_state = "m82f_e" //Icon state that represents an unloaded flare gun. The tube's just popped out.
 
+
+/obj/item/weapon/gun/flare/Initialize(mapload, spawn_empty)
+	. = ..()
+	if(spawn_empty)
+		update_icon()
 
 /obj/item/weapon/gun/flare/handle_starting_attachment()
 	..()
@@ -1308,10 +1545,10 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 		BULLET_TRAIT_ENTRY(/datum/element/bullet_trait_iff)
 	))
 
-/obj/item/weapon/gun/flare/apply_bullet_effects(obj/item/projectile/projectile_to_fire, mob/user, bullets_fired, reflex, dual_wield)
+/obj/item/weapon/gun/flare/reload_into_chamber(mob/user)
 	. = ..()
 	to_chat(user, SPAN_WARNING("You pop out [src]'s tube!"))
-	icon_state = popped_state
+	update_icon()
 
 /obj/item/weapon/gun/flare/attackby(obj/item/I, mob/user)
 	if(istype(I, /obj/item/device/flashlight/flare))
@@ -1322,14 +1559,12 @@ obj/item/weapon/gun/launcher/grenade/update_icon()
 		if(!F.fuel)
 			to_chat(user, SPAN_WARNING("You can't put a burnt out flare in [src]!"))
 			return
-		if(istype(F, /obj/item/device/flashlight/flare/signal))
-			to_chat(user, SPAN_WARNING("You can't load a signal flare in [src]!"))
-			return
 		if(current_mag && current_mag.current_rounds == 0)
+			ammo = GLOB.ammo_list[F.ammo_datum]
 			playsound(user, reload_sound, 25, 1)
 			to_chat(user, SPAN_NOTICE("You load \the [F] into [src]."))
 			current_mag.current_rounds++
 			qdel(I)
-			icon_state = "m82f"
+			update_icon()
 		else to_chat(user, SPAN_WARNING("\The [src] is already loaded!"))
 	else to_chat(user, SPAN_WARNING("That's not a flare!"))

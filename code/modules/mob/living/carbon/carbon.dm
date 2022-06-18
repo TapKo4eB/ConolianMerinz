@@ -12,22 +12,18 @@
 /mob/living/carbon/Destroy()
 	QDEL_NULL_LIST(internal_organs)
 
-	for(var/datum/disease/virus in viruses)
-		virus.cure()
-
 	. = ..()
 
-	if(handcuffed)
-		QDEL_NULL(handcuffed)
+	QDEL_NULL(handcuffed)
+	QDEL_NULL(legcuffed)
+	QDEL_NULL(halitem)
 
-	if(legcuffed)
-		QDEL_NULL(legcuffed)
+	hunter_data?.clean_data()
+	hunter_data = null
+	stomach_contents?.Cut()
+	halimage = null
+	halbody = null
 
-	if(hunter_data)
-		hunter_data.clean_data()
-		hunter_data = null
-
-	stomach_contents.Cut() //movable atom's Dispose() deletes all content, we clear stomach_contents to be safe.
 
 /mob/living/carbon/Move(NewLoc, direct)
 	. = ..()
@@ -513,3 +509,10 @@
 			to_chat(user, SPAN_GREEN("[src] was thralled by [src.hunter_data.thralled_set.real_name] for '[src.hunter_data.thralled_reason]'."))
 		else if(src.hunter_data.gear)
 			to_chat(user, SPAN_RED("[src] was marked as carrying gear by [src.hunter_data.gear_set]."))
+
+/mob/living/carbon/get_vv_options()
+	. = ..()
+	. += "<option value>-----CARBON-----</option>"
+	. += "<option value='?_src_=vars;changehivenumber=\ref[src]'>Change Hivenumber</option>"
+	. += "<option value='?_src_=vars;addtrait=\ref[src]'>Add Trait</option>"
+	. += "<option value='?_src_=vars;removetrait=\ref[src]'>Remove Trait</option>"

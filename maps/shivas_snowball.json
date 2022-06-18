@@ -6,11 +6,12 @@
         "COLD": true
     },
     "survivor_types": [
-        "Survivor - Shivas Snowball Corporate Liaison",
-        "Survivor - Shivas Snowball Doctor",
-        "Survivor - Shivas Snowball Researcher",
-        "Survivor - Shivas Snowball Engineer",
-        "Survivor - Shivas Snowball Security Guard"
+        "/datum/equipment_preset/survivor/corporate/shiva",
+        "/datum/equipment_preset/survivor/doctor/shiva",
+        "/datum/equipment_preset/survivor/scientist/shiva",
+        "/datum/equipment_preset/survivor/engineer/shiva",
+        "/datum/equipment_preset/survivor/colonial_marshal/shiva",
+        "/datum/equipment_preset/survivor/security/shiva"
     ],
     "defcon_triggers": [
         3300,
@@ -26,10 +27,21 @@
         "yiren"
     ],
     "traits": [{ "Ground": true }],
+	"nightmare": {
+        "scenario": "maps/Nightmare/maps/Ice_Colony_v3/scenario.json",
+        "mapgen": "maps/Nightmare/maps/Ice_Colony_v3/mapgen.json"
+    },
     "xvx_hives": {
         "xeno_hive_alpha": 0,
         "xeno_hive_bravo": 0,
         "xeno_hive_charlie": 0,
         "xeno_hive_delta": 0
-    }
+    },
+    "gamemodes": [
+        "Distress Signal",
+        "Hunter Games",
+        "Hive Wars",
+        "Faction Clash",
+        "Infection"
+    ]
 }

@@ -176,7 +176,7 @@
 				/obj/item/stack/medical/advanced/bruise_pack,
 				/obj/item/tool/extinguisher/mini,
 				/obj/item/tool/shovel/etool,
-				/obj/item/tool/screwdriver,)
+				/obj/item/tool/screwdriver)
 
 /obj/structure/largecrate/random/case
 	name = "storage case"
@@ -261,7 +261,7 @@
 /obj/structure/largecrate/guns
 	name = "\improper USCM firearms crate (x3)"
 	var/num_guns = 3
-	var/num_mags = 0
+	var/num_mags = 3
 	var/list/stuff = list(
 					/obj/item/weapon/gun/pistol/m4a3 = /obj/item/ammo_magazine/pistol,
 					/obj/item/weapon/gun/pistol/m4a3 = /obj/item/ammo_magazine/pistol,
@@ -286,9 +286,9 @@
 			new new_mag(src)
 
 /obj/structure/largecrate/guns/russian
-	num_guns = 1
-	num_mags = 1
-	name = "\improper Nagant-Yamasaki firearm crate"
+	num_guns = 3
+	num_mags = 3
+	name = "\improper Hyperdyne firearm crate"
 	stuff = list(	/obj/item/weapon/gun/revolver/nagant = /obj/item/ammo_magazine/revolver/upp,
 					/obj/item/weapon/gun/pistol/c99 = /obj/item/ammo_magazine/pistol/c99,
 					/obj/item/weapon/gun/pistol/kt42 = /obj/item/ammo_magazine/pistol/automatic,
@@ -300,7 +300,7 @@
 
 /obj/structure/largecrate/guns/merc
 	num_guns = 1
-	num_mags = 1
+	num_mags = 5
 	name = "\improper Black market firearm crate"
 	stuff = list(	/obj/item/weapon/gun/pistol/holdout = /obj/item/ammo_magazine/pistol/holdout,
 					/obj/item/weapon/gun/pistol/highpower = /obj/item/ammo_magazine/pistol/highpower,
@@ -308,21 +308,82 @@
 					/obj/item/weapon/gun/pistol/heavy = /obj/item/ammo_magazine/pistol/heavy,
 					/obj/item/weapon/gun/revolver/small = /obj/item/ammo_magazine/revolver/small,
 					/obj/item/weapon/gun/revolver/cmb = /obj/item/ammo_magazine/revolver/cmb,
-					/obj/item/weapon/gun/shotgun/merc = /obj/item/ammo_magazine/shotgun,
-					/obj/item/weapon/gun/shotgun/pump/cmb = /obj/item/ammo_magazine/shotgun/incendiary,
-					/obj/item/weapon/gun/shotgun/double = /obj/item/ammo_magazine/shotgun/buckshot,
+					/obj/item/weapon/gun/shotgun/merc = /obj/item/ammo_magazine/handful/shotgun/buckshot,
+					/obj/item/weapon/gun/shotgun/pump/cmb = /obj/item/ammo_magazine/handful/shotgun/buckshot,
+					/obj/item/weapon/gun/shotgun/double = /obj/item/ammo_magazine/handful/shotgun/buckshot,
 					/obj/item/weapon/gun/smg/mp7 = /obj/item/ammo_magazine/smg/mp7,
 					/obj/item/weapon/gun/pistol/skorpion = /obj/item/ammo_magazine/pistol/skorpion,
 					/obj/item/weapon/gun/smg/uzi = /obj/item/ammo_magazine/smg/uzi,
+					/obj/item/weapon/gun/m60 = /obj/item/ammo_magazine/m60,
+					/obj/item/weapon/gun/rifle/mar40/carbine = /obj/item/ammo_magazine/rifle/mar40,
+					/obj/item/weapon/gun/smg/ppsh = /obj/item/ammo_magazine/smg/ppsh,
+					/obj/item/weapon/gun/rifle/hunting = /obj/item/ammo_magazine/rifle/hunting,
+					/obj/item/weapon/gun/smg/mp5 = /obj/item/ammo_magazine/smg/mp5,
+					/obj/item/weapon/gun/rifle/m16 = /obj/item/ammo_magazine/rifle/m16,
+					/obj/item/weapon/gun/shotgun/type23 = /obj/item/ammo_magazine/handful/shotgun/heavy/buckshot,
+					/obj/item/weapon/gun/rifle/type71 = /obj/item/ammo_magazine/rifle/type71,
 					/obj/item/weapon/gun/smg/fp9000 = /obj/item/ammo_magazine/smg/fp9000
 				)
 
+/obj/structure/largecrate/merc/clothing
+	name = "\improper Black market clothing crate"
 
+/obj/structure/largecrate/merc/clothing/New()
+	..()
+	var/i = pick(1,5)
+	switch(i)
+		if(1) //pmc
+			new /obj/item/clothing/under/marine/veteran/PMC(src)
+			new /obj/item/clothing/head/helmet/marine/veteran/PMC(src)
+			new /obj/item/clothing/suit/storage/marine/veteran/PMC(src)
+			new /obj/item/clothing/gloves/marine/veteran(src)
+			new /obj/item/clothing/mask/gas/PMC(src)
+		if(2) //dutch's
+			new /obj/item/clothing/head/helmet/marine/veteran/dutch(src)
+			new /obj/item/clothing/under/marine/veteran/dutch(src)
+			new /obj/item/clothing/suit/storage/marine/veteran/dutch(src)
+			new /obj/item/clothing/gloves/marine/veteran(src)
+		if(3) //pizza
+			new /obj/item/clothing/under/pizza(src)
+			new /obj/item/clothing/head/soft/red(src)
+		if(4) //clf
+			new /obj/item/clothing/under/colonist/clf(src)
+			new /obj/item/clothing/suit/storage/militia(src)
+			new /obj/item/clothing/head/militia(src)
+			new /obj/item/clothing/gloves/marine/veteran(src)
+		if(5) //freelancer
+			new /obj/item/clothing/under/marine/veteran/freelancer(src)
+			new /obj/item/clothing/suit/storage/marine/faction/freelancer(src)
+			new /obj/item/clothing/head/cmbandana(src)
+			new /obj/item/clothing/gloves/marine/veteran(src)
 
+/obj/structure/largecrate/merc/ammo
+	name = "\improper Black market ammo crate"
 
-
-
-
+/datum/supply_packs/merc/ammo
+	name = "Black market ammo crate"
+	randomised_num_contained = 6
+	contains = list(
+					/obj/item/ammo_magazine/pistol/holdout,
+					/obj/item/ammo_magazine/pistol/highpower,
+					/obj/item/ammo_magazine/pistol/m1911,
+					/obj/item/ammo_magazine/pistol/heavy,
+					/obj/item/ammo_magazine/revolver/small,
+					/obj/item/ammo_magazine/revolver/cmb,
+					/obj/item/ammo_magazine/handful/shotgun/buckshot,
+					/obj/item/ammo_magazine/smg/mp7,
+					/obj/item/ammo_magazine/pistol/skorpion,
+					/obj/item/ammo_magazine/smg/uzi,
+					/obj/item/ammo_magazine/m60,
+					/obj/item/ammo_magazine/rifle/mar40,
+					/obj/item/ammo_magazine/smg/ppsh,
+					/obj/item/ammo_magazine/rifle/hunting,
+					/obj/item/ammo_magazine/smg/mp5,
+					/obj/item/ammo_magazine/rifle/m16,
+					/obj/item/ammo_magazine/handful/shotgun/heavy/buckshot,
+					/obj/item/ammo_magazine/rifle/type71,
+					/obj/item/ammo_magazine/smg/fp9000,
+					)
 
 /obj/structure/largecrate/hunter_games_construction
 	name = "construction crate"
@@ -372,7 +433,6 @@
 	new /obj/item/storage/pouch/firstaid/full(src)
 	new /obj/item/storage/box/quickclot(src)
 
-
 /obj/structure/largecrate/hunter_games_surgery
 	name = "surgery crate"
 
@@ -389,6 +449,7 @@
 	new /obj/item/tool/surgery/retractor(src)
 	new /obj/item/tool/surgery/bonesetter(src)
 	new /obj/item/tool/surgery/circular_saw(src)
+	new /obj/item/tool/surgery/surgical_line(src)
 	new /obj/item/tool/surgery/scalpel/manager(src)
 
 

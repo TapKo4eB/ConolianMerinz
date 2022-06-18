@@ -22,7 +22,7 @@ Contains most of the procs that are called when a mob is attacked by something
 				msg_admin_attack("[key_name(src)] was disarmed by a stun effect in [get_area(src)] ([src.loc.x],[src.loc.y],[src.loc.z]).", src.loc.x, src.loc.y, src.loc.z)
 
 				drop_inv_item_on_ground(c_hand)
-				if (affected.status & LIMB_ROBOT)
+				if (affected.status & (LIMB_ROBOT|LIMB_SYNTHSKIN))
 					emote("me", 1, "drops what they were holding, their [affected.display_name] malfunctioning!")
 				else
 					var/emote_scream = pick("screams in pain and", "lets out a sharp cry and", "cries out and")
@@ -139,8 +139,10 @@ Contains most of the procs that are called when a mob is attacked by something
 			return TRUE
 
 	if(back && istype(back, /obj/item/weapon/shield/riot) && prob(20))
-		visible_message(SPAN_DANGER("<B>The [back] on [src]'s back blocks [attack_text]!</B>"), null, null, 5)
-		return TRUE
+		var/obj/item/weapon/shield/riot/shield = back
+		if(shield.blocks_on_back)
+			visible_message(SPAN_DANGER("<B>The [back] on [src]'s back blocks [attack_text]!</B>"), null, null, 5)
+			return TRUE
 
 	if(attack_text == "the pounce" && wear_suit && wear_suit.flags_inventory & BLOCK_KNOCKDOWN)
 		visible_message(SPAN_DANGER("<B>[src] withstands [attack_text] with their [wear_suit.name]!</B>"), null, null, 5)
@@ -210,19 +212,25 @@ Contains most of the procs that are called when a mob is attacked by something
 	var/damage = armor_damage_reduction(GLOB.marine_melee, I.force, armor, (weapon_sharp?30:0) + (weapon_edge?10:0)) // no penetration frm punches
 	apply_damage(damage, I.damtype, affecting, sharp=weapon_sharp, edge=weapon_edge, used_weapon=I)
 
+	if(damage > 5)
+		last_damage_data = create_cause_data(initial(I.name), user)
+		user.track_hit(initial(I.name))
+		if(user.faction == faction)
+			user.track_friendly_fire(initial(I.name))
+
 	var/bloody = FALSE
 	if((I.damtype == BRUTE || I.damtype == HALLOSS) && prob(I.force*2 + 25))
-		if(!(affecting.status & LIMB_ROBOT))
-			I.add_mob_blood(src)	//Make the weapon bloody, not the person.
-			if(prob(33))
-				bloody = TRUE
-				var/turf/location = loc
-				if(istype(location, /turf))
-					location.add_mob_blood(src)
-				if(ishuman(user))
-					var/mob/living/carbon/human/H = user
-					if(get_dist(H, src) <= 1) //people with TK won't get smeared with blood
-						H.add_blood(get_blood_color(), BLOOD_BODY|BLOOD_HANDS)
+		var/color_override = (affecting.status & LIMB_ROBOT) ? COLOR_OIL : null
+		I.add_mob_blood(src, color_override)	//Make the weapon bloody, not the person.
+		if(prob(33))
+			bloody = TRUE
+			var/turf/location = loc
+			if(istype(location, /turf))
+				location.add_mob_blood(src, color_override)
+			if(ishuman(user))
+				var/mob/living/carbon/human/H = user
+				if(get_dist(H, src) <= 1) //people with TK won't get smeared with blood
+					H.add_blood(color_override || get_blood_color(), BLOOD_BODY|BLOOD_HANDS)
 
 
 		switch(hit_area)
@@ -258,12 +266,10 @@ Contains most of the procs that are called when a mob is attacked by something
 
 	var/obj/O = AM
 	var/datum/launch_metadata/LM = O.launch_metadata
-	if ((O.flags_atom & ITEM_UNCATCHABLE) && !isYautja(src))
-		visible_message(SPAN_WARNING("[src] fails to catch [O]!"), null, null, 5)
-		toggle_throw_mode(THROW_MODE_OFF)
 
 	//empty active hand and we're in throw mode
-	if (throw_mode && !get_active_hand() && cur_speed <= SPEED_VERY_FAST && \
+	var/can_catch = (!(O.flags_atom & ITEM_UNCATCHABLE) || isYautja(src))
+	if (throw_mode && can_catch && !get_active_hand() && cur_speed <= SPEED_VERY_FAST && \
 		!is_mob_incapacitated() && isturf(O.loc) && put_in_active_hand(O)
 	)
 		visible_message(SPAN_WARNING("[src] catches [O]!"), null, null, 5)
@@ -320,9 +326,9 @@ Contains most of the procs that are called when a mob is attacked by something
 		var/client/assailant = M.client
 		if (damage > 5)
 			last_damage_mob = M
-			M.track_hit(initial(name))
+			M.track_hit(initial(O.name))
 			if (M.faction == faction)
-				M.track_friendly_fire(initial(name))
+				M.track_friendly_fire(initial(O.name))
 		if (assailant)
 			src.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been hit with a [O], thrown by [key_name(M)]</font>")
 			M.attack_log += text("\[[time_stamp()]\] <font color='red'>Hit [key_name(src)] with a thrown [O]</font>")

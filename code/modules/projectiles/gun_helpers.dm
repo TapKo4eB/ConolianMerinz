@@ -2,7 +2,8 @@
 ERROR CODES AND WHAT THEY MEAN:
 
 
-ERROR CODE A1: null ammo while reloading. <------------ Only appears when reloading a weapon and switching the .ammo. Somehow the argument passed a null.ammo.
+ERROR CODE A1: null ammo while reloading. <------------ Only appears when initialising or reloading a weapon and switching the ammo. Somehow the argument passed a null ammo.
+ERROR CODE A2: null caliber while reloading. <------------ Only appears when initialising or reloading a weapon and switching the calibre. Somehow the argument passed a null caliber.
 ERROR CODE I1: projectile malfunctioned while firing. <------------ Right before the bullet is fired, the actual bullet isn't present or isn't a bullet.
 ERROR CODE I2: null ammo while load_into_chamber() <------------- Somehow the ammo datum is missing or something. We need to figure out how that happened.
 ERROR CODE R1: negative current_rounds on examine. <------------ Applies to ammunition only. Ammunition should never have negative rounds after spawn.
@@ -140,12 +141,10 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 
 	turn_off_light(user)
 
-	if(fire_delay_group && flags_gun_features & GUN_FIRED_BY_USER)
+	var/delay_left = (last_fired + fire_delay + additional_fire_group_delay) - world.time
+	if(fire_delay_group && delay_left > 0)
 		for(var/group in fire_delay_group)
-			var/fire_delay = fire_delay_group[group]
-			LAZYSET(user.fire_delay_next_fire, group, world.time + fire_delay)
-
-	flags_gun_features &= ~GUN_FIRED_BY_USER
+			LAZYSET(user.fire_delay_next_fire, group, world.time + delay_left)
 
 	unwield(user)
 
@@ -253,6 +252,23 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 			wield(user) // Trying to wield it
 	else
 		unload(user) // We just unload it.
+
+//magnetic sling
+
+/obj/item/weapon/gun/proc/handle_sling(mob/living/carbon/human/user)
+	if (!ishuman(user))
+		return
+
+	addtimer(CALLBACK(src, .proc/sling_return, user), 3, TIMER_UNIQUE|TIMER_OVERRIDE)
+
+/obj/item/weapon/gun/proc/sling_return(var/mob/living/carbon/human/user)
+	if (!loc || !user)
+		return
+	if (!isturf(loc))
+		return
+
+	if(user.equip_to_slot_if_possible(src, WEAR_BACK))
+		to_chat(user, SPAN_WARNING("[src]'s magnetic sling automatically yanks it into your back."))
 
 //Clicking stuff onto the gun.
 //Attachables & Reloading
@@ -461,8 +477,10 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 	var/obj/item/weapon/gun/G = user.get_held_item()
 
 	if(!istype(G))
-		to_chat(user, SPAN_WARNING("You need a gun in your active hand to do that!"))
-		return
+		G = user.get_inactive_hand()
+		if(!istype(G))
+			to_chat(user, SPAN_WARNING("You need a gun in your active hand to do that!"))
+			return
 
 	if(G.flags_gun_features & GUN_BURST_FIRING)
 		return
@@ -475,80 +493,66 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 					//				   \\
 					//				   \\
 //----------------------------------------------------------
+/mob/living/carbon/human/
+	var/static/list/holster_default = list(
+		"s_store",
+		"belt",
+		"back",
+		"l_store",
+		"r_store",
+		"w_uniform",
+		"shoes",
+		)
 
-/mob/living/carbon/human/proc/holster_unholster_from_suit_storage()
-	if(isstorage(s_store)) //check storages(?)
-		var/obj/item/storage/S = s_store
-		for(var/obj/item/wep in S.return_inv())
-			if(isweapon(wep))
-				s_store.attack_hand(src)
-				return TRUE
-	else if(isweapon(s_store)) //then check for weapons
-		s_store.attack_hand(src)
-		return TRUE
+	var/static/list/holster_shift = list(
+		"back",
+		"belt",
+		"l_store",
+		"r_store",
+		"w_uniform",
+		"shoes",
+		"s_store",
+		)
 
-/mob/living/carbon/human/proc/holster_unholster_from_belt()
-	if(belt)
-		if(istype(belt, /obj/item/storage))
-			var/obj/item/storage/storage = belt
-			for(var/obj/item/wep in storage.return_inv())
-				if(isweapon(wep))
-					belt.attack_hand(src)
-					return TRUE
-		if(isweapon(belt)) //then check for weapons
-			belt.attack_hand(src)
+	var/static/list/holster_ctrl =  list(
+		"w_uniform",
+		"belt",
+		"l_store",
+		"r_store",
+		"shoes",
+		"s_store",
+		"back",
+		)
+
+/mob/living/carbon/human/proc/holster_unholster_from_storage_slot(var/obj/item/storage/slot)
+	if(isnull(slot)) return
+	if(slot == shoes)//Snowflakey check for shoes and uniform
+		if(shoes.stored_item && isweapon(shoes.stored_item))
+			shoes.attack_hand(src)
 			return TRUE
-
-/mob/living/carbon/human/proc/holster_unholster_from_back()
-	if(back)
-		if(istype(back, /obj/item/storage/large_holster)) //check holsters
-			var/obj/item/storage/large_holster/B = back
-			if(B.return_inv().len)
-				back.attack_hand(src)
-				return TRUE
-		if(isweapon(back)) //then check for weapons
-			back.attack_hand(src)
-			return TRUE
-
-/mob/living/carbon/human/proc/holster_unholster_from_left_pocket()
-	if(l_store)
-		if(istype(l_store, /obj/item/storage/pouch))  //check pouches
-			var/obj/item/storage/pouch/P = l_store
-			for(var/obj/item/wep in P.return_inv())
-				if(isweapon(wep))
-					l_store.attack_hand(src)
-					return TRUE
-		if(isweapon(l_store)) //then check for weapons
-			l_store.attack_hand(src)
-			return TRUE
-
-/mob/living/carbon/human/proc/holster_unholster_from_right_pocket()
-	if(r_store)
-		if(istype(r_store, /obj/item/storage/pouch))  //check pouches
-			var/obj/item/storage/pouch/P = r_store
-			for(var/obj/item/wep in P.return_inv())
-				if(isweapon(wep))
-					r_store.attack_hand(src)
-					return TRUE
-		if(isweapon(r_store)) //then check for weapons
-			r_store.attack_hand(src)
-			return TRUE
-
-/mob/living/carbon/human/proc/holster_unholster_from_uniform()
-	if(!w_uniform)
 		return
-	for(var/obj/item/clothing/accessory/holster/T in w_uniform.accessories)
-		if(T.holstered)
-			w_uniform.attack_hand(src)
-			return TRUE
 
-/mob/living/carbon/human/proc/holster_unholster_from_shoes()
-	if(shoes)
-		if(istype(shoes, /obj/item/clothing/shoes))
-			var/obj/item/clothing/shoes/S = shoes
-			if(S.stored_item && isweapon(S.stored_item))
-				shoes.attack_hand(src)
+	if(slot == w_uniform)
+		for(var/obj/item/clothing/accessory/holster/T in w_uniform.accessories)
+			if(T.holstered)
+				w_uniform.attack_hand(src)
 				return TRUE
+		for(var/obj/item/clothing/accessory/storage/holster/H in w_uniform.accessories)
+			var/obj/item/storage/internal/accessory/holster/HS = H.hold
+			if(HS.current_gun)
+				HS.current_gun.attack_hand(src)
+				return TRUE
+		return
+
+	if(istype(slot) && (slot.storage_flags & STORAGE_ALLOW_QUICKDRAW))
+		for(var/obj/wep in slot.return_inv())
+			if(isweapon(wep))
+				slot.attack_hand(src)
+				return TRUE
+
+	if(isweapon(slot)) //then check for weapons
+		slot.attack_hand(src)
+		return TRUE
 
 //For the holster hotkey
 /mob/living/silicon/robot/verb/holster_verb(var/keymod = "none" as text)
@@ -564,84 +568,37 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 		return
 
 	var/obj/item/W = get_active_hand()
-	var/obj/item/clothing/under/U = w_uniform
-	var/obj/item/clothing/accessory/holster/T
-	if(istype(U))
-		for(var/obj/item/clothing/accessory/holster/HS in U.accessories)
-			T = HS
-			break
 	if(W)
-		if(T && istype(W) && !T.holstered && T.can_holster(W))
-			T.holster(W, src)
-		else
-			quick_equip()
+		if(w_uniform)
+			for(var/obj/A in w_uniform.accessories)
+				var/obj/item/clothing/accessory/holster/H = A
+				if(istype(H) && !H.holstered && H.can_holster(W))
+					H.holster(W, src)
+					return
+
+				var/obj/item/clothing/accessory/storage/holster/HS = A
+				if(istype(HS))
+					var/obj/item/storage/internal/accessory/holster/S = HS.hold
+					if(S.can_be_inserted(W, TRUE))
+						S.handle_item_insertion(W, user = src)
+						return
+
+		quick_equip()
 	else //empty hand, start checking slots and holsters
+		var/list/slot_order
 		switch(keymod)
-			if("none") //default order: suit, belt, back, pockets, uniform, shoes
-				if(holster_unholster_from_suit_storage())
-					return
+			if("none")
+				slot_order = holster_default	//default order: suit, belt, back, pockets, uniform, shoes
 
-				if(holster_unholster_from_belt()) //if you think this code is bad see how it was beforehand
-					return
+			if("shift")			//shift keymod, do common secondary weapon locations first.
+				slot_order = holster_shift		//order: back, belt, pockets, uniform, shoes, suit.
 
-				if(holster_unholster_from_back())
-					return
+			if("ctrl", "alt")	//control and alt keymods, do common tertiary weapon locations first. In case ctrl is awkward for some people but alt is not.
+				slot_order = holster_ctrl		//order: uniform, belt, pockets, shoes, back, suit.
 
-				if(holster_unholster_from_left_pocket())
-					return
-
-				if(holster_unholster_from_right_pocket())
-					return
-
-				if(holster_unholster_from_uniform())
-					return
-
-				if(holster_unholster_from_shoes())
-					return
-
-			if("shift") //shift keymod, do common secondary weapon locations first. order: back, belt, pockets, uniform, shoes, suit.
-				if(holster_unholster_from_back())
-					return
-
-				if(holster_unholster_from_belt())
-					return
-
-				if(holster_unholster_from_left_pocket())
-					return
-
-				if(holster_unholster_from_right_pocket())
-					return
-
-				if(holster_unholster_from_uniform())
-					return
-
-				if(holster_unholster_from_shoes())
-					return
-
-				if(holster_unholster_from_suit_storage())
-					return
-
-			if("ctrl", "alt") //control and alt keymods, do common tertiary weapon locations first. order: uniform, belt, pockets, shoes, back, suit.
-				if(holster_unholster_from_uniform()) //in case ctrl is awkward for some people but alt is not.
-					return
-
-				if(holster_unholster_from_belt())
-					return
-
-				if(holster_unholster_from_left_pocket())
-					return
-
-				if(holster_unholster_from_right_pocket())
-					return
-
-				if(holster_unholster_from_shoes())
-					return
-
-				if(holster_unholster_from_suit_storage())
-					return
-
-				if(holster_unholster_from_back())
-					return
+		for(var/slot in slot_order)
+			if(holster_unholster_from_storage_slot(vars[slot]))
+				return
 
 /obj/item/weapon/gun/verb/field_strip()
 	set category = "Weapons"
@@ -660,24 +617,29 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 		return
 
 	if(zoom)
-		to_chat(usr, SPAN_WARNING("You cannot conceviably do that while looking down \the [src]'s scope!"))
+		to_chat(usr, SPAN_WARNING("You cannot conceivably do that while looking down \the [src]'s scope!"))
 		return
 
-	var/list/possible_attachments = list()
+	var/list/choices = list()
+	var/list/choice_to_attachment = list()
 	for(var/slot in attachments)
 		var/obj/item/attachable/R = attachments[slot]
 		if(R && (R.flags_attach_features & ATTACH_REMOVABLE))
-			possible_attachments += R
+			var/capitalized_name = capitalize_first_letters(R.name)
+			choices[capitalized_name] = image(icon = R.icon, icon_state = R.icon_state)
+			choice_to_attachment[capitalized_name] = R
 
-	if(!possible_attachments.len)
+	if(!length(choices))
 		to_chat(usr, SPAN_WARNING("[src] has no removable attachments."))
 		return
 
 	var/obj/item/attachable/A
-	if(possible_attachments.len == 1)
-		A = possible_attachments[1]
+	if(length(choices) == 1)
+		A = choice_to_attachment[choices[1]]
 	else
-		A = tgui_input_list(usr, "Which attachment to remove?", "Remove attachment", possible_attachments)
+		var/use_radials = usr.client.prefs?.no_radials_preference ? FALSE : TRUE
+		var/choice = use_radials ? show_radial_menu(usr, usr, choices, require_near = TRUE) : tgui_input_list(usr, "Which attachment to remove?", "Remove Attachment", choices)
+		A = choice_to_attachment[choice]
 
 	if(!A || get_active_firearm(usr) != src || usr.action_busy || zoom || (!(A == attachments[A.slot])) || !(A.flags_attach_features & ATTACH_REMOVABLE))
 		return
@@ -722,6 +684,15 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 	if(flags_gun_features & GUN_BURST_FIRING)//can't toggle mid burst
 		return
 
+	if(flags_gun_features & GUN_BURST_ONLY)
+		if(!(flags_gun_features & GUN_BURST_ON))
+			stack_trace("[src] has GUN_BUST_ONLY flag but not GUN_BURST_ON.")
+			flags_gun_features |= GUN_BURST_ON
+			return
+
+		to_chat(usr, SPAN_NOTICE("[src] can only be fired in bursts!"))
+		return
+
 	playsound(usr, 'sound/weapons/handling/gun_burst_toggle.ogg', 15, 1)
 
 	if(flags_gun_features & GUN_HAS_FULL_AUTO)
@@ -748,14 +719,9 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 			to_chat(usr, SPAN_NOTICE("[icon2html(src, usr)] You set [src] to single fire mode."))
 			return
 
-	if(!(flags_gun_features & GUN_BURST_ON))
-		flags_gun_features |= GUN_BURST_ON
 
-		to_chat(usr, SPAN_NOTICE("[icon2html(src, usr)] You set [src] to burst fire mode."))
-	else
-		flags_gun_features ^= GUN_BURST_ON
-
-		to_chat(usr, SPAN_NOTICE("[icon2html(src, usr)] You [flags_gun_features & GUN_BURST_ON ? "<B>enable</b>" : "<B>disable</b>"] [src]'s burst fire mode."))
+	flags_gun_features ^= GUN_BURST_ON
+	to_chat(usr, SPAN_NOTICE("[icon2html(src, usr)] You [flags_gun_features & GUN_BURST_ON ? "<B>enable</b>" : "<B>disable</b>"] [src]'s burst fire mode."))
 
 
 /obj/item/weapon/gun/verb/empty_mag()
@@ -771,10 +737,11 @@ As sniper rifles have both and weapon mods can change them as well. ..() deals w
 	src = G
 
 	var/drop_to_ground = TRUE
-	if (user.client && user.client.prefs && user.client.prefs.toggle_prefs & TOGGLE_EJECT_MAGAZINE_TO_HAND)
+	if(user.client && user.client.prefs && user.client.prefs.toggle_prefs & TOGGLE_EJECT_MAGAZINE_TO_HAND)
 		drop_to_ground = FALSE
 		unwield(user)
-		user.swap_hand()
+		if(!(G.flags_gun_features & GUN_INTERNAL_MAG))
+			user.swap_hand()
 
 	unload(user, FALSE, drop_to_ground) //We want to drop the mag on the ground.
 

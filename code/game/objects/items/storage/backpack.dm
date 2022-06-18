@@ -39,25 +39,6 @@
 			to_chat(H, SPAN_NOTICE("The ID lock rejects your ID"))
 	update_icon()
 
-/obj/item/storage/backpack/mob_can_equip(M as mob, slot)
-	if (!..())
-		return 0
-
-	if (!uniform_restricted)
-		return 1
-
-	if (!ishuman(M))
-		return 0
-
-	var/mob/living/carbon/human/H = M
-	var/list/equipment = list(H.wear_suit, H.w_uniform, H.shoes, H.belt, H.gloves, H.glasses, H.head, H.wear_l_ear, H.wear_r_ear, H.wear_id, H.r_store, H.l_store, H.s_store)
-
-	for (var/type in uniform_restricted)
-		if (!(locate(type) in equipment))
-			to_chat(H, SPAN_WARNING("You must be wearing [initial(type:name)] to equip [name]!"))
-			return 0
-	return 1
-
 /obj/item/storage/backpack/equipped(mob/user, slot)
 	if(slot == WEAR_BACK)
 		mouse_opacity = 2 //so it's easier to click when properly equipped.
@@ -330,15 +311,10 @@ obj/item/storage/backpack/proc/compare_id(var/mob/living/carbon/human/H)
 	desc = "The standard-issue pack of the USCM forces. Designed to lug gear into the battlefield."
 	icon_state = "marinepack"
 	item_state = "marinepack"
-	var/has_gamemode_skin = TRUE //replace this with the atom_flag NO_SNOW_TYPE at some point, just rename it to like, NO_MAP_VARIANT_SKIN
-
-/obj/item/storage/backpack/marine/Initialize()
-	. = ..()
-	if(has_gamemode_skin)
-		select_gamemode_skin(type)
+	has_gamemode_skin = TRUE //replace this with the atom_flag NO_SNOW_TYPE at some point, just rename it to like, NO_MAP_VARIANT_SKIN
 
 /obj/item/storage/backpack/marine/medic
-	name = "\improper USCM medic backpack"
+	name = "\improper USCM corpsman backpack"
 	desc = "A standard-issue backpack worn by USCM medics."
 	icon_state = "marinepack_medic"
 	item_state = "marinepack_medic"
@@ -357,8 +333,17 @@ obj/item/storage/backpack/proc/compare_id(var/mob/living/carbon/human/H)
 	storage_slots = null
 	max_storage_space = 15
 
+/obj/item/storage/backpack/marine/satchel/big //wacky squad marine loadout item, its the IO backpack.
+	name = "\improper USCM logistics IMP backpack"
+	desc = "A standard-issue backpack worn by logistics personnel. It is occasionally issued to combat personnel for longer term expeditions and deep space incursions."
+	icon_state = "marinebigsatch"
+	worn_accessible = TRUE
+	storage_slots = null
+	max_storage_space = 21 //backpack size
+
+
 /obj/item/storage/backpack/marine/satchel/medic
-	name = "\improper USCM medic satchel"
+	name = "\improper USCM corpsman satchel"
 	desc = "A heavy-duty satchel used by USCM medics. It sacrifices capacity for usability. A small patch is sewn to the top flap."
 	icon_state = "marinesatch_medic"
 
@@ -381,7 +366,10 @@ GLOBAL_LIST_EMPTY_TYPED(radio_packs, /obj/item/storage/backpack/marine/satchel/r
 	uniform_restricted = list(/obj/item/clothing/under/marine/rto)
 	var/obj/structure/transmitter/internal/internal_transmitter
 
-	var/base_icon_state
+	var/base_icon
+
+/obj/item/storage/backpack/marine/satchel/rto/post_skin_selection()
+	base_icon = icon_state
 
 /obj/item/storage/backpack/marine/satchel/rto/Initialize()
 	. = ..()
@@ -389,12 +377,7 @@ GLOBAL_LIST_EMPTY_TYPED(radio_packs, /obj/item/storage/backpack/marine/satchel/r
 	internal_transmitter.relay_obj = src
 	internal_transmitter.phone_category = "RTO"
 	internal_transmitter.enabled = FALSE
-
-	base_icon_state = icon_state
 	RegisterSignal(internal_transmitter, COMSIG_TRANSMITTER_UPDATE_ICON, .proc/check_for_ringing)
-
-	LAZYADD(actions, new /datum/action/human_action/activable/droppod())
-
 	GLOB.radio_packs += src
 
 /obj/item/storage/backpack/marine/satchel/rto/proc/check_for_ringing()
@@ -408,13 +391,13 @@ GLOBAL_LIST_EMPTY_TYPED(radio_packs, /obj/item/storage/backpack/marine/satchel/r
 
 	if(!internal_transmitter.attached_to \
 		|| internal_transmitter.attached_to.loc != internal_transmitter)
-		icon_state = "[base_icon_state]_ear"
+		icon_state = "[base_icon]_ear"
 		return
 
 	if(internal_transmitter.caller)
-		icon_state = "[base_icon_state]_ring"
+		icon_state = "[base_icon]_ring"
 	else
-		icon_state = base_icon_state
+		icon_state = base_icon
 
 /obj/item/storage/backpack/marine/satchel/rto/item_action_slot_check(mob/user, slot)
 	if(slot == WEAR_BACK)
@@ -472,12 +455,12 @@ GLOBAL_LIST_EMPTY_TYPED(radio_packs, /obj/item/storage/backpack/marine/satchel/r
 	else
 		. = ..()
 
-/obj/item/storage/backpack/marine/satchel/rto/proc/new_droppod_tech_unlocked(datum/tech/N)
+/obj/item/storage/backpack/marine/satchel/rto/proc/new_droppod_tech_unlocked(name)
 	playsound(get_turf(loc), 'sound/machines/techpod/techpod_rto_notif.ogg', 100, FALSE, 1, 4)
 
 	if(ismob(loc))
 		var/mob/M = loc
-		to_chat(M, SPAN_PURPLE("[icon2html(src, M)] New droppod available ([N.name])."))
+		to_chat(M, SPAN_PURPLE("[icon2html(src, M)] New droppod available ([name])."))
 
 /obj/item/storage/backpack/marine/satchel/rto/small
 	name = "\improper USCM Small Radio Telephone Pack"
@@ -534,6 +517,29 @@ GLOBAL_LIST_EMPTY_TYPED(radio_packs, /obj/item/storage/backpack/marine/satchel/r
 	max_w_class = SIZE_HUGE
 	storage_slots = 8
 	can_hold = list(/obj/item/mortar_shell)
+
+/// G-8-a general pouch belt
+/obj/item/storage/backpack/general_belt
+	name = "\improper G8-A general utility pouch"
+	desc = "A small, lightweight pouch that can be clipped onto Armat Systems M3 Pattern armor to provide additional storage. The newer G8-A model, while uncomfortable, can also be clipped around the waist."
+	max_storage_space = 10
+	w_class = SIZE_LARGE
+	max_w_class = SIZE_MEDIUM
+	flags_equip_slot = SLOT_WAIST
+	icon = 'icons/obj/items/clothing/belts.dmi'
+	icon_state = "g8pouch"
+	item_state = "g8pouch"
+	has_gamemode_skin = TRUE
+
+/obj/item/storage/backpack/general_belt/equipped(mob/user, slot)
+	switch(slot)
+		if(WEAR_WAIST, WEAR_J_STORE) //The G8 can be worn on several armours.
+			mouse_opacity = 2 //so it's easier to click when properly equipped.
+	..()
+
+/obj/item/storage/backpack/general_belt/dropped(mob/user)
+	mouse_opacity = initial(mouse_opacity)
+	..()
 
 // Scout Cloak
 /obj/item/storage/backpack/marine/satchel/scout_cloak
@@ -642,7 +648,7 @@ GLOBAL_LIST_EMPTY_TYPED(radio_packs, /obj/item/storage/backpack/marine/satchel/r
 	if(anim)
 		anim(H.loc, H,'icons/mob/mob.dmi', null, "uncloak", null, H.dir)
 
-	addtimer(CALLBACK(src, .proc/allow_shooting, H), 0.5 SECONDS)
+	addtimer(CALLBACK(src, .proc/allow_shooting, H), 1.5 SECONDS)
 
 // This proc is to cancel priming grenades in /obj/item/explosive/grenade/attack_self()
 /obj/item/storage/backpack/marine/satchel/scout_cloak/proc/cloak_grenade_callback(mob/user)
@@ -845,13 +851,23 @@ GLOBAL_LIST_EMPTY_TYPED(radio_packs, /obj/item/storage/backpack/marine/satchel/r
 
 /obj/item/storage/backpack/ivan/Initialize()
 	. = ..()
-	var/list/template_guns = list(/obj/item/weapon/gun/pistol, /obj/item/weapon/gun/revolver, /obj/item/weapon/gun/shotgun, /obj/item/weapon/gun/rifle, /obj/item/weapon/gun/smg, /obj/item/weapon/gun/energy, /obj/item/weapon/gun/launcher, /obj/item/weapon/gun/rifle/sniper)
-	var/list/bad_guns = typesof(/obj/item/weapon/gun/pill) + /obj/item/weapon/gun/souto + /obj/item/weapon/gun/energy/yautja/plasma_caster //guns that don't work for some reason
+	var/list/template_guns = list(/obj/item/weapon/gun/pistol, /obj/item/weapon/gun/revolver, /obj/item/weapon/gun/shotgun, /obj/item/weapon/gun/rifle, /obj/item/weapon/gun/smg, /obj/item/weapon/gun/energy, /obj/item/weapon/gun/launcher, /obj/item/weapon/gun/launcher/grenade, /obj/item/weapon/gun/rifle/sniper)
+	var/list/bad_guns = typesof(/obj/item/weapon/gun/pill) + /obj/item/weapon/gun/souto + /obj/item/weapon/gun/smg/nailgun/compact //guns that don't work for some reason
 	var/list/emplacements = list(/obj/item/device/m2c_gun , /obj/item/device/m56d_gun/mounted)
-	var/random_gun = pick(subtypesof(/obj/item/weapon/gun) - (template_guns + bad_guns) + emplacements)
+	var/list/yautja_guns = typesof(/obj/item/weapon/gun/energy/yautja) + /obj/item/weapon/gun/launcher/spike
+	var/list/smartguns = typesof(/obj/item/weapon/gun/smartgun)
+	var/list/training_guns = list(
+		/obj/item/weapon/gun/rifle/m41a/training,
+		/obj/item/weapon/gun/rifle/l42a/training,
+		/obj/item/weapon/gun/smg/m39/training,
+		/obj/item/weapon/gun/pistol/m4a3/training,
+		/obj/item/weapon/gun/pistol/mod88/training) //Ivan doesn't carry toys.
+
+	var/list/picklist = subtypesof(/obj/item/weapon/gun) - (template_guns + bad_guns + emplacements + yautja_guns + smartguns + training_guns)
+	var/random_gun = pick(picklist)
 	for(var/total_storage_slots in 1 to storage_slots) //minus templates
 		new random_gun(src)
-		random_gun = pick(subtypesof(/obj/item/weapon/gun) - (template_guns + bad_guns) + emplacements)
+		random_gun = pick(picklist)
 
 /obj/item/storage/backpack/souto
 	name = "\improper back mounted Souto vending machine"

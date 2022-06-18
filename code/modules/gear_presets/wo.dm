@@ -2,7 +2,7 @@
 	name = "WO"
 	faction = FACTION_MARINE
 	faction_group = FACTION_LIST_MARINE
-	languages = list("English")
+	languages = list(LANGUAGE_ENGLISH)
 	idtype = /obj/item/card/id/dogtag
 
 /datum/equipment_preset/wo/load_status(mob/living/carbon/human/H)
@@ -12,52 +12,80 @@
 //*****************************************************************************************************/
 
 /datum/equipment_preset/wo/commander
-	name = "WO Ground Commander"
+	name = "WO Commanding Officer"
 	flags = EQUIPMENT_PRESET_START_OF_ROUND_WO
 
 	assignment = JOB_WO_CO
 	rank = JOB_WO_CO
-	paygrade = "NO5"
-	role_comm_title = "CDR"
+	paygrade = "MO4"
+	role_comm_title = "CO"
 	skills = /datum/skills/commander
 	idtype = /obj/item/card/id/gold
 
-	utility_under = /obj/item/clothing/under/marine
-	utility_hat = /obj/item/clothing/head/cmcap
-	utility_gloves = /obj/item/clothing/gloves/marine
-	utility_shoes = /obj/item/clothing/shoes/marine
-	utility_extra = list(/obj/item/clothing/head/beret/cm, /obj/item/clothing/head/beret/cm/tan)
+	utility_under = list(/obj/item/clothing/under/marine,/obj/item/clothing/under/marine/officer/command)
+	utility_hat = list(/obj/item/clothing/head/cmcap,/obj/item/clothing/head/beret/cm/tan)
+	utility_extra = list(/obj/item/clothing/glasses/sunglasses,/obj/item/clothing/glasses/sunglasses/big,/obj/item/clothing/glasses/sunglasses/aviator,/obj/item/clothing/glasses/mbcg)
 
-	service_under = /obj/item/clothing/under/marine/officer/bridge
-	service_over = /obj/item/clothing/suit/storage/jacket/marine
-	service_hat = /obj/item/clothing/head/cmcap
-	service_shoes = /obj/item/clothing/shoes/dress
+	service_under = list(/obj/item/clothing/under/marine/officer/formal/white, /obj/item/clothing/under/marine/officer/formal/black)
+	service_shoes = list(/obj/item/clothing/shoes/dress/commander)
+	service_extra = list(/obj/item/clothing/suit/storage/jacket/marine/dress/officer/bomber)
+	service_hat = list(/obj/item/clothing/head/beret/cm, /obj/item/clothing/head/beret/marine/commander/dress, /obj/item/clothing/head/beret/marine/commander/black)
 
-	dress_under = /obj/item/clothing/under/marine/dress
-	dress_over = /obj/item/clothing/suit/storage/jacket/marine/dress
-	dress_gloves = /obj/item/clothing/gloves/marine/dress
-	dress_shoes = /obj/item/clothing/shoes/dress
+	dress_under = list(/obj/item/clothing/under/marine/dress, /obj/item/clothing/under/marine/officer/formal/servicedress)
+	dress_extra = list(/obj/item/storage/large_holster/ceremonial_sword/full)
+	dress_hat = list(/obj/item/clothing/head/marine/peaked/captain/white, /obj/item/clothing/head/marine/peaked/captain/black)
+	dress_shoes = list(/obj/item/clothing/shoes/dress/commander)
+	dress_over = list(/obj/item/clothing/suit/storage/jacket/marine/dress/officer/white, /obj/item/clothing/suit/storage/jacket/marine/dress/officer/black, /obj/item/clothing/suit/storage/jacket/marine/dress/officer/suit)
 
 /datum/equipment_preset/wo/commander/New()
 	. = ..()
 	access = get_all_marine_access()
 
 /datum/equipment_preset/wo/commander/load_gear(mob/living/carbon/human/H)
-	var/backItem = /obj/item/storage/backpack/marine/satchel
-	if (H.client && H.client.prefs && (H.client.prefs.backbag == 1))
-		backItem = /obj/item/storage/backpack/marine
+	var/sidearm = "Mateba"
+	var/kit = null
+	var/sidearmpath = /obj/item/storage/belt/gun/mateba/cmateba/full
+	var/backItem = /obj/item/storage/backpack/satchel/lockable
 
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom(H), WEAR_L_EAR)
-	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/command(H), WEAR_BODY)
-	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/dress/commander(H), WEAR_FEET)
-	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/techofficer/commander(H), WEAR_HANDS)
-	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/mateba/full(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/cm/tan(H), WEAR_HEAD)
+	if(H.client && H.client.prefs)
+		sidearm = H.client.prefs.commander_sidearm
+		switch(sidearm)
+			if("Mateba")
+				sidearmpath = /obj/item/storage/belt/gun/mateba/cmateba/full
+				kit = /obj/item/storage/mateba_case/captain
+			if("Commodore's Mateba")
+				sidearmpath = /obj/item/storage/belt/gun/mateba/commodore/full
+				kit = /obj/item/storage/mateba_case/captain/commodore
+			if("Desert Eagle")
+				sidearmpath = /obj/item/storage/belt/gun/m4a3/heavy/co
+			if("Golden Desert Eagle")
+				sidearmpath = /obj/item/storage/belt/gun/m4a3/heavy/co_golden
+			if("M4A3 Custom")
+				sidearmpath = /obj/item/storage/belt/gun/m4a3/commander
+			if("VP78")
+				sidearmpath = /obj/item/storage/belt/gun/m4a3/vp78
+
+	//back
 	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
+	if(kit)
+		H.equip_to_slot_or_del(new kit(H), WEAR_IN_BACK)
+	//head
+	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/cm(H), WEAR_HEAD)
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom/cdrcom(H), WEAR_L_EAR)
+	//uniform
+	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/command(H), WEAR_BODY)
+	//jacket
 	H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/marine/MP/SO(H), WEAR_JACKET)
-	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large(H), WEAR_R_STORE)
-	H.equip_to_slot_or_del(new /obj/item/device/binoculars(H), WEAR_L_HAND)
 	H.equip_to_slot_or_del(new /obj/item/weapon/melee/claymore/mercsword/ceremonial(H), WEAR_J_STORE)
+	//waist
+	H.equip_to_slot_or_del(new sidearmpath(H), WEAR_WAIST)
+	//limbs
+	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/techofficer/commander(H), WEAR_HANDS)
+	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/dress/commander(H), WEAR_FEET)
+	H.equip_to_slot_or_del(new /obj/item/device/binoculars/range/designator(H), WEAR_L_HAND)
+	//pockets
+	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large(H), WEAR_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/storage/pouch/pistol/command(H), WEAR_L_STORE)
 
 
 //*****************************************************************************************************/
@@ -68,8 +96,8 @@
 
 	assignment = JOB_WO_XO
 	rank = JOB_WO_XO
-	paygrade = "NO4"
-	role_comm_title = "LCDR"
+	paygrade = "MO3"
+	role_comm_title = "XO"
 	skills = /datum/skills/XO
 	idtype = /obj/item/card/id/silver
 
@@ -82,14 +110,23 @@
 	if (H.client && H.client.prefs && (H.client.prefs.backbag == 1))
 		backItem = /obj/item/storage/backpack/marine
 
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom(H), WEAR_L_EAR)
-	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/exec(H), WEAR_BODY)
-	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
-	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/m4a3/mod88(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/clothing/head/cmcap(H), WEAR_HEAD)
+	//back
 	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
-	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large(H), WEAR_R_STORE)
+	//head
+	H.equip_to_slot_or_del(new /obj/item/clothing/head/cmcap(H), WEAR_HEAD)
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom/cdrcom(H), WEAR_L_EAR)
+	//uniform
+	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/exec(H), WEAR_BODY)
+	//jacket
 	H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/marine/MP/SO(H), WEAR_JACKET)
+	//waist
+	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/m4a3/vp78(H), WEAR_WAIST)
+	//limbs
+	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
+	//pockets
+	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large(H), WEAR_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large(H), WEAR_L_STORE)
+
 
 //*****************************************************************************************************/
 
@@ -100,25 +137,33 @@
 	access = list(ACCESS_MARINE_BRIG, ACCESS_MARINE_BRIDGE, ACCESS_MARINE_DROPSHIP, ACCESS_MARINE_LOGISTICS, ACCESS_MARINE_PREP, ACCESS_MARINE_WO, ACCESS_MARINE_MEDBAY)
 	assignment = JOB_WO_CHIEF_POLICE
 	rank = JOB_WO_CHIEF_POLICE
-	paygrade = "ME9"
+	paygrade = "ME5"
 	role_comm_title = "HGSL"
 	skills = /datum/skills/honor_guard/lead
 	idtype = /obj/item/card/id/silver
 
 /datum/equipment_preset/wo/cmp/load_gear(mob/living/carbon/human/H)
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom(H), WEAR_L_EAR)
+
+	//uniform
 	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/bridge(H), WEAR_BODY)
-	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
-	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/veteran/PMC(H), WEAR_HANDS)
-	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/smartgunner/full(H), WEAR_WAIST)
+	//jacket
 	H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/marine/smartgunner(H), WEAR_JACKET)
-	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/marine/chiefofficer(H), WEAR_HEAD)
+	H.equip_to_slot_or_del(new /obj/item/weapon/gun/smartgun(H), WEAR_J_STORE)
+	//back
 	H.equip_to_slot_or_del(new /obj/item/smartgun_powerpack(H), WEAR_BACK)
+	//head
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/marine/mp_honor/com(H), WEAR_L_EAR)
+	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/marine/chiefofficer(H), WEAR_HEAD)
+	//waist
+	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/smartgunner/full(H), WEAR_WAIST)
+	//limbs
+	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/veteran/PMC(H), WEAR_HANDS)
+	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
+	//pockets
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/bayonet(H), WEAR_R_STORE)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/firstaid/full(H), WEAR_L_STORE)
-	H.equip_to_slot_or_del(new /obj/item/weapon/gun/smartgun(H), WEAR_J_STORE)
+	//SG headset
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/night/m56_goggles(H), WEAR_EYES)
-
 //*****************************************************************************************************/
 
 /datum/equipment_preset/wo/vhg
@@ -128,7 +173,7 @@
 	access = list(ACCESS_MARINE_BRIDGE, ACCESS_MARINE_BRIG, ACCESS_MARINE_DROPSHIP, ACCESS_MARINE_LOGISTICS)
 	assignment = JOB_WO_SO
 	rank = JOB_WO_SO
-	paygrade = "ME8"
+	paygrade = "ME4"
 	role_comm_title = "VHG"
 	skills = /datum/skills/honor_guard/vet
 	idtype = /obj/item/card/id/silver
@@ -138,18 +183,26 @@
 	if (H.client && H.client.prefs && (H.client.prefs.backbag == 1))
 		backItem = /obj/item/storage/backpack/security
 
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom(H), WEAR_L_EAR)
+	//back
+	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
+	//head
+	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/sec/alt(H), WEAR_HEAD)
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/marine/mp_honor/com(H), WEAR_L_EAR)
+	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses/aviator(H), WEAR_EYES)
+	//uniform
 	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/bridge(H), WEAR_BODY)
+	//jacket
+	H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/marine/leader(H), WEAR_JACKET)
+	H.equip_to_slot_or_del(new /obj/item/weapon/gun/rifle/m41aMK1(H), WEAR_J_STORE)
+	//waist
+	H.equip_to_slot_or_del(new /obj/item/storage/belt/marine/m41amk1(H), WEAR_WAIST)
+	//limbs
 	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
 	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/officer(H), WEAR_HANDS)
-	H.equip_to_slot_or_del(new /obj/item/storage/belt/marine/m41amk1(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/marine/leader(H), WEAR_JACKET)
-	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses/aviator(H), WEAR_EYES)
-	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/sec/alt(H), WEAR_HEAD)
-	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
+	//pockets
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/bayonet(H), WEAR_R_STORE)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/medium(H), WEAR_L_STORE)
-	H.equip_to_slot_or_del(new /obj/item/weapon/gun/rifle/m41aMK1(H), WEAR_J_STORE)
+
 
 //*****************************************************************************************************/
 
@@ -160,7 +213,7 @@
 	access = list(ACCESS_MARINE_BRIDGE, ACCESS_MARINE_DROPSHIP, ACCESS_MARINE_LOGISTICS)
 	assignment = JOB_WO_CREWMAN
 	rank = JOB_WO_CREWMAN
-	paygrade = "ME8"
+	paygrade = "ME3"
 	role_comm_title = "HGS"
 	skills = /datum/skills/honor_guard/spec
 	idtype = /obj/item/card/id/gold
@@ -170,17 +223,24 @@
 	if (H.client && H.client.prefs && (H.client.prefs.backbag == 1))
 		backItem = /obj/item/storage/backpack/security
 
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom(H), WEAR_L_EAR)
-	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/bridge(H), WEAR_BODY)
-	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
-	H.equip_to_slot_or_del(new /obj/item/storage/large_holster/m39/full(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/officer(H), WEAR_HANDS)
+	//back
+	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
+	//head
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/marine/mp_honor(H), WEAR_L_EAR)
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses/aviator(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/marine/logisticsofficer(H), WEAR_HEAD)
-	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
+	//uniform
+	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/bridge(H), WEAR_BODY)
+	//waist
+	H.equip_to_slot_or_del(new /obj/item/storage/large_holster/m39/full(H), WEAR_WAIST)
+	//limbs
+	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/officer(H), WEAR_HANDS)
+	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
+	H.equip_to_slot_or_del(new /obj/item/spec_kit(H), WEAR_R_HAND)
+	//pockets
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/medium(H), WEAR_R_STORE)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/magazine/large/pmc_m39(H), WEAR_L_STORE)
-	H.equip_to_slot_or_del(new /obj/item/spec_kit(H), WEAR_R_HAND)
+
 
 //*****************************************************************************************************/
 
@@ -191,7 +251,7 @@
 	access = list(ACCESS_MARINE_BRIG, ACCESS_MARINE_BRIDGE, ACCESS_MARINE_DROPSHIP, ACCESS_MARINE_LOGISTICS, ACCESS_MARINE_PREP, ACCESS_MARINE_MEDBAY)
 	assignment = JOB_WO_POLICE
 	rank = JOB_WO_POLICE
-	paygrade = "ME7"
+	paygrade = "ME2"
 	role_comm_title = "HG"
 	skills = /datum/skills/honor_guard
 
@@ -200,7 +260,7 @@
 	if (H.client && H.client.prefs && (H.client.prefs.backbag == 1))
 		backItem = /obj/item/storage/backpack/security
 
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mcom(H), WEAR_L_EAR)
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/marine/mp_honor(H), WEAR_L_EAR)
 	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/bridge(H), WEAR_BODY)
 	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
 	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/officer(H), WEAR_HANDS)
@@ -223,7 +283,7 @@
 	access = list(ACCESS_MARINE_BRIDGE, ACCESS_MARINE_DROPSHIP, ACCESS_MARINE_LOGISTICS, ACCESS_MARINE_PILOT)
 	assignment = JOB_WO_PILOT
 	rank = JOB_WO_PILOT
-	paygrade = "ME3"
+	paygrade = "ME2"
 	role_comm_title = "MC"
 	skills = /datum/skills/mortar_crew
 
@@ -232,17 +292,20 @@
 	if (H.client && H.client.prefs && (H.client.prefs.backbag == 1))
 		backItem = /obj/item/storage/backpack/marine
 
-	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/eng(H), WEAR_HEAD)
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mt(H), WEAR_L_EAR)
-	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/engineer(H), WEAR_BODY)
-	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife(H), WEAR_FEET)
-	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/black(H), WEAR_HANDS)
-	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/m4a3/mod88(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/storage/backpack/marine/satchel(H), WEAR_BACK)
-	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
-	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large(H), WEAR_R_STORE)
-	H.equip_to_slot_or_del(new /obj/item/device/binoculars/range(H), WEAR_L_STORE)
-	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses(H), WEAR_L_HAND)
+	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/eng, WEAR_HEAD)
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/marine/mortar, WEAR_L_EAR)
+	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/engineer, WEAR_BODY)
+	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine/knife, WEAR_FEET)
+	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/black, WEAR_HANDS)
+	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/m4a3/mod88, WEAR_WAIST)
+	H.equip_to_slot_or_del(new backItem, WEAR_BACK)
+	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large, WEAR_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/device/binoculars/range, WEAR_IN_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/device/flashlight, WEAR_IN_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/tool/screwdriver, WEAR_IN_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/storage/pouch/tools/mortar, WEAR_L_STORE)
+	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses, WEAR_IN_BACK)
+
 
 //*****************************************************************************************************/
 
@@ -253,7 +316,7 @@
 	access = list(ACCESS_MARINE_CARGO, ACCESS_MARINE_RO, ACCESS_MARINE_BRIDGE)
 	assignment = JOB_WO_CHIEF_REQUISITION
 	rank = JOB_WO_CHIEF_REQUISITION
-	paygrade = "ME8"
+	paygrade = "MO2"
 	role_comm_title = "QM"
 	skills = /datum/skills/RO
 	idtype = /obj/item/card/id/silver
@@ -267,7 +330,7 @@
 	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/officer/bridge(H), WEAR_BODY)
 	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine(H), WEAR_FEET)
 	H.equip_to_slot_or_del(new /obj/item/clothing/gloves/marine/techofficer(H), WEAR_HANDS)
-	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/m44/full(H), WEAR_WAIST)
+	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/m44/custom(H), WEAR_WAIST)
 	H.equip_to_slot_or_del(new /obj/item/clothing/head/cmcap/req(H), WEAR_HEAD)
 	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/general/large(H), WEAR_R_STORE)
@@ -292,7 +355,7 @@
 		backItem = /obj/item/storage/backpack/industrial
 
 	H.equip_to_slot_or_del(new /obj/item/clothing/head/beret/eng(H), WEAR_HEAD)
-	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/mt(H), WEAR_L_EAR)
+	H.equip_to_slot_or_del(new /obj/item/device/radio/headset/almayer/ct(H), WEAR_L_EAR)
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/welding(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/engineer(H), WEAR_BODY)
 	H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine(H), WEAR_FEET)
@@ -331,13 +394,15 @@
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/hud/health(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medical(H), WEAR_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/surgical_line, WEAR_IN_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/synthgraft, WEAR_IN_R_STORE)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medkit/full_advanced(H), WEAR_L_STORE)
 	H.equip_to_slot_or_del(new /obj/item/clothing/head/surgery/green(H), WEAR_HEAD)
 	//H.equip_to_slot_or_del(new /obj/item/clothing/head/cmo(H), WEAR_HEAD)//2.10.2018 Will want to work on this a bit more, it doesn't quite fit. - Joshuu
 	H.equip_to_slot_or_del(new /obj/item/device/flashlight/pen(H), WEAR_J_STORE)
 
 	H.equip_to_slot_or_del(new /obj/item/storage/belt/medical/lifesaver/full(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/device/healthanalyzer(H.back), WEAR_IN_BACK)
+	H.equip_to_slot_or_del(new /obj/item/device/healthanalyzer(H.back), WEAR_IN_BELT)
 	H.equip_to_slot_or_del(new /obj/item/device/defibrillator(H.back), WEAR_IN_BACK)
 
 //*****************************************************************************************************/
@@ -366,11 +431,13 @@
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/hud/health(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medical(H), WEAR_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/surgical_line, WEAR_IN_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/synthgraft, WEAR_IN_R_STORE)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medkit/full_advanced(H), WEAR_L_STORE)
 	H.equip_to_slot_or_del(new /obj/item/clothing/head/surgery/green(H), WEAR_HEAD)
 
 	H.equip_to_slot_or_del(new /obj/item/storage/belt/medical/lifesaver/full(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/device/healthanalyzer(H.back), WEAR_IN_BACK)
+	H.equip_to_slot_or_del(new /obj/item/device/healthanalyzer(H.back), WEAR_IN_BELT)
 	H.equip_to_slot_or_del(new /obj/item/device/defibrillator(H.back), WEAR_IN_BACK)
 
 //*****************************************************************************************************/
@@ -400,10 +467,12 @@
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/hud/health(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new backItem(H), WEAR_BACK)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medical(H), WEAR_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/surgical_line, WEAR_IN_R_STORE)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/synthgraft, WEAR_IN_R_STORE)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medkit/full_advanced(H), WEAR_L_STORE)
 
 	H.equip_to_slot_or_del(new /obj/item/storage/belt/medical/lifesaver/full(H), WEAR_WAIST)
-	H.equip_to_slot_or_del(new /obj/item/device/healthanalyzer(H.back), WEAR_IN_BACK)
+	H.equip_to_slot_or_del(new /obj/item/device/healthanalyzer(H.back), WEAR_IN_BELT)
 	H.equip_to_slot_or_del(new /obj/item/device/defibrillator(H.back), WEAR_IN_BACK)
 
 //*****************************************************************************************************/
@@ -412,10 +481,10 @@
 	name = "WO Bunker Crew Master" //CE
 	flags = EQUIPMENT_PRESET_START_OF_ROUND_WO
 
-	access = list(ACCESS_MARINE_CE, ACCESS_MARINE_ENGINEERING, ACCESS_MARINE_BRIDGE, ACCESS_CIVILIAN_ENGINEERING)
+	access = list(ACCESS_MARINE_CE, ACCESS_MARINE_ENGINEERING, ACCESS_MARINE_BRIDGE, ACCESS_CIVILIAN_ENGINEERING, ACCESS_MARINE_LOGISTICS)
 	assignment = JOB_WO_CHIEF_ENGINEER
 	rank = JOB_WO_CHIEF_ENGINEER
-	paygrade = "ME8"
+	paygrade = "ME5"
 	role_comm_title = "BCM"
 	skills = /datum/skills/CE
 	idtype = /obj/item/card/id/silver
@@ -444,7 +513,7 @@
 	name = "WO Bunker Crew" //OT
 	flags = EQUIPMENT_PRESET_START_OF_ROUND_WO
 
-	access = list(ACCESS_MARINE_CE, ACCESS_MARINE_ENGINEERING, ACCESS_MARINE_BRIDGE, ACCESS_CIVILIAN_ENGINEERING)
+	access = list(ACCESS_MARINE_CE, ACCESS_MARINE_ENGINEERING, ACCESS_MARINE_BRIDGE, ACCESS_CIVILIAN_ENGINEERING, ACCESS_MARINE_LOGISTICS)
 	assignment = JOB_WO_ORDNANCE_TECH
 	rank = JOB_WO_ORDNANCE_TECH
 	paygrade = "ME4"
@@ -519,7 +588,7 @@
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_LEADER, ACCESS_MARINE_DROPSHIP)
 	assignment = JOB_SQUAD_LEADER
 	rank = JOB_SQUAD_LEADER
-	paygrade = "ME6"
+	paygrade = "ME5"
 	role_comm_title = "SL"
 	skills = /datum/skills/SL
 
@@ -548,13 +617,13 @@
 //*****************************************************************************************************/
 
 /datum/equipment_preset/wo/marine/spec
-	name = "WO Dust Raider Squad Specialist"
+	name = "WO Dust Raider Squad Weapons Specialist"
 	flags = EQUIPMENT_PRESET_START_OF_ROUND_WO
 
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_SPECPREP)
 	assignment = JOB_SQUAD_SPECIALIST
 	rank = JOB_SQUAD_SPECIALIST
-	paygrade = "ME5"
+	paygrade = "ME3"
 	role_comm_title = "Spc"
 	skills = /datum/skills/specialist
 
@@ -589,33 +658,34 @@
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_SMARTPREP)
 	assignment = JOB_SQUAD_SMARTGUN
 	rank = JOB_SQUAD_SMARTGUN
-	paygrade = "ME4"
+	paygrade = "ME3"
 	role_comm_title = "SG"
 	skills = /datum/skills/smartgunner
 
 /datum/equipment_preset/wo/marine/sg/load_gear(mob/living/carbon/human/H)
+
 	H.equip_to_slot_or_del(new /obj/item/clothing/under/marine(H), WEAR_BODY)
 	H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/marine/smartgunner(H), WEAR_JACKET)
 	H.equip_to_slot_or_del(new /obj/item/smartgun_powerpack(H), WEAR_BACK)
-	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/night/m56_goggles(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new /obj/item/weapon/gun/smartgun(H), WEAR_J_STORE)
 	H.equip_to_slot_or_del(new /obj/item/storage/belt/gun/smartgunner/full(H), WEAR_WAIST)
 	H.equip_to_slot_or_del(new /obj/item/clothing/head/helmet/marine(H), WEAR_HEAD)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/firstaid/full(H), WEAR_L_STORE)
+	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/night/m56_goggles(H), WEAR_EYES)
 
 	add_common_wo_equipment(H)
 
 //*****************************************************************************************************/
 
 /datum/equipment_preset/wo/marine/engineer
-	name = "WO Dust Raider Squad Engineer"
+	name = "WO Dust Raider Squad Combat Technician"
 	flags = EQUIPMENT_PRESET_START_OF_ROUND_WO
 
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_ENGPREP, ACCESS_CIVILIAN_ENGINEERING)
 	assignment = JOB_SQUAD_ENGI
 	rank = JOB_SQUAD_ENGI
 	paygrade = "ME3"
-	role_comm_title = "Eng"
+	role_comm_title = "ComTech"
 	skills = /datum/skills/combat_engineer
 
 /datum/equipment_preset/wo/marine/engineer/load_gear(mob/living/carbon/human/H)
@@ -643,14 +713,14 @@
 //*****************************************************************************************************/
 
 /datum/equipment_preset/wo/marine/medic
-	name = "WO Dust Raider Squad Medic"
+	name = "WO Dust Raider Hospital Corpsman"
 	flags = EQUIPMENT_PRESET_START_OF_ROUND_WO
 
 	access = list(ACCESS_MARINE_PREP, ACCESS_MARINE_MEDPREP, ACCESS_MARINE_MEDBAY)
 	assignment = JOB_SQUAD_MEDIC
 	rank = JOB_SQUAD_MEDIC
 	paygrade = "ME3"
-	role_comm_title = "Med"
+	role_comm_title = "HM"
 	skills = /datum/skills/combat_medic
 
 /datum/equipment_preset/wo/marine/medic/load_gear(mob/living/carbon/human/H)
@@ -670,21 +740,22 @@
 	H.equip_to_slot_or_del(new /obj/item/storage/belt/medical/lifesaver/full(H), WEAR_WAIST)
 	H.equip_to_slot_or_del(new /obj/item/clothing/glasses/hud/health(H), WEAR_EYES)
 	H.equip_to_slot_or_del(new /obj/item/storage/pouch/medkit/full(H), WEAR_L_STORE)
-
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/surgical_line, WEAR_IN_JACKET)
+	H.equip_to_slot_or_del(new /obj/item/tool/surgery/synthgraft, WEAR_IN_JACKET)
 	generate_random_marine_primary_for_wo(H)
 	add_common_wo_equipment(H)
 
 //*****************************************************************************************************/
 
 /datum/equipment_preset/wo/marine/pfc
-	name = "WO Dust Raider Squad Marine (PFC)"
+	name = "WO Dust Raider Rifleman (PFC)"
 	flags = EQUIPMENT_PRESET_START_OF_ROUND_WO
 
 	access = list(ACCESS_MARINE_PREP)
 	assignment = JOB_SQUAD_MARINE
 	rank = JOB_SQUAD_MARINE
 	paygrade = "ME2"
-	role_comm_title = "PFC"
+	role_comm_title = "RFN"
 	skills = /datum/skills/pfc
 
 /datum/equipment_preset/wo/marine/pfc/load_gear(mob/living/carbon/human/H)

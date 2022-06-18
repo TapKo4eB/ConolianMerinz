@@ -289,6 +289,10 @@
 /obj/structure/machinery/door/airlock/almayer/security/autoname
 	autoname = TRUE
 
+/obj/structure/machinery/door/airlock/almayer/security/reinforced
+	name = "\improper Reinforced Security Airlock"
+	masterkey_resist = TRUE
+
 /obj/structure/machinery/door/airlock/almayer/security/glass
 	name = "\improper Security Airlock"
 	icon = 'icons/obj/structures/doors/secdoor_glass.dmi'
@@ -298,6 +302,10 @@
 /obj/structure/machinery/door/airlock/almayer/security/glass/autoname
 	autoname = TRUE
 
+/obj/structure/machinery/door/airlock/almayer/security/glass/reinforced
+	name = "\improper Reinforced Security Airlock"
+	masterkey_resist = TRUE
+
 /obj/structure/machinery/door/airlock/almayer/command
 	name = "\improper Command Airlock"
 	icon = 'icons/obj/structures/doors/comdoor.dmi'
@@ -305,6 +313,10 @@
 
 /obj/structure/machinery/door/airlock/almayer/command/autoname
 	autoname = TRUE
+
+/obj/structure/machinery/door/airlock/almayer/command/reinforced
+	name = "\improper Reinforced Command Airlock"
+	masterkey_resist = TRUE
 
 /obj/structure/machinery/door/airlock/almayer/secure
 	name = "\improper Secure Airlock"
@@ -314,6 +326,10 @@
 /obj/structure/machinery/door/airlock/almayer/secure/autoname
 	autoname = TRUE
 
+/obj/structure/machinery/door/airlock/almayer/secure/reinforced
+	name = "\improper Reinforced Secure Airlock"
+	masterkey_resist = TRUE
+
 /obj/structure/machinery/door/airlock/almayer/maint
 	name = "\improper Maintenance Hatch"
 	icon = 'icons/obj/structures/doors/maintdoor.dmi'
@@ -322,6 +338,10 @@
 
 /obj/structure/machinery/door/airlock/almayer/maint/autoname
 	autoname = TRUE
+
+/obj/structure/machinery/door/airlock/almayer/maint/reinforced
+	name = "\improper Reinforced Maintenance Hatch"
+	masterkey_resist = TRUE
 
 /obj/structure/machinery/door/airlock/almayer/engineering
 	name = "\improper Engineering Airlock"
@@ -334,6 +354,24 @@
 /obj/structure/machinery/door/airlock/almayer/engineering/autoname
 	autoname = TRUE
 
+/obj/structure/machinery/door/airlock/almayer/engineering/glass
+	name = "\improper Engineering Airlock"
+	icon = 'icons/obj/structures/doors/engidoor_glass.dmi'
+	opacity = FALSE
+	glass = TRUE
+
+/obj/structure/machinery/door/airlock/almayer/engineering/reinforced
+	name = "\improper Reinforced Engineering Airlock"
+	masterkey_resist = TRUE
+
+/obj/structure/machinery/door/airlock/almayer/engineering/reinforced/OT
+	name = "\improper Ordnance Workshop"
+	icon = 'icons/obj/structures/doors/engidoor.dmi'
+	opacity = FALSE
+	glass = TRUE
+	req_access = list()
+	req_one_access = list(ACCESS_MARINE_LOGISTICS, ACCESS_MARINE_OT)
+
 /obj/structure/machinery/door/airlock/almayer/medical
 	name = "\improper Medical Airlock"
 	icon = 'icons/obj/structures/doors/medidoor.dmi'
@@ -343,13 +381,6 @@
 /obj/structure/machinery/door/airlock/almayer/medical/autoname
 	autoname = TRUE
 
-/obj/structure/machinery/door/airlock/almayer/engineering/OT
-	name = "\improper Ordnance Workshop"
-	icon = 'icons/obj/structures/doors/engidoor.dmi'
-	opacity = 0
-	glass = 1
-	req_access = list()
-	req_one_access = list(ACCESS_MARINE_LOGISTICS, ACCESS_MARINE_OT)
 
 /obj/structure/machinery/door/airlock/almayer/medical/glass
 	name = "\improper Medical Airlock"
@@ -370,6 +401,10 @@
 /obj/structure/machinery/door/airlock/almayer/research/autoname
 	autoname = TRUE
 
+/obj/structure/machinery/door/airlock/almayer/research/reinforced
+	name = "\improper Reinforced Research Airlock"
+	masterkey_resist = TRUE
+
 /obj/structure/machinery/door/airlock/almayer/research/glass
 	name = "\improper Research Airlock"
 	icon = 'icons/obj/structures/doors/medidoor_glass.dmi'
@@ -380,12 +415,22 @@
 /obj/structure/machinery/door/airlock/almayer/research/glass/autoname
 	autoname = TRUE
 
+/obj/structure/machinery/door/airlock/almayer/research/glass/reinforced
+	name = "\improper Reinforced Research Airlock"
+	masterkey_resist = TRUE
+
 /obj/structure/machinery/door/airlock/almayer/generic
 	name = "\improper Airlock"
 	icon = 'icons/obj/structures/doors/personaldoor.dmi'
 
 /obj/structure/machinery/door/airlock/almayer/generic/autoname
 	autoname = TRUE
+
+/obj/structure/machinery/door/airlock/almayer/generic/glass
+	name = "\improper Airlock"
+	icon = 'icons/obj/structures/doors/personaldoor_glass.dmi'
+	opacity = FALSE
+	glass = TRUE
 
 /obj/structure/machinery/door/airlock/almayer/generic/corporate
 	name = "Corporate Liaison's Quarters"
@@ -434,7 +479,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/alpha/engineer
-	name = "\improper Alpha Squad Engineer Preparations"
+	name = "\improper Alpha Squad ComTech Preparations"
 	req_access = list(ACCESS_MARINE_ENGPREP, ACCESS_MARINE_ALPHA)
 	req_one_access = list()
 	dir = SOUTH
@@ -442,7 +487,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/alpha/medic
-	name = "\improper Alpha Squad Medic Preparations"
+	name = "\improper Alpha Squad Medical Preparations"
 	req_access = list(ACCESS_MARINE_MEDPREP, ACCESS_MARINE_ALPHA)
 	req_one_access = list()
 	dir = SOUTH
@@ -482,7 +527,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/bravo/engineer
-	name = "\improper Bravo Squad Engineer Preparations"
+	name = "\improper Bravo Squad ComTech Preparations"
 	req_access = list(ACCESS_MARINE_ENGPREP, ACCESS_MARINE_BRAVO)
 	req_one_access = list()
 	dir = SOUTH
@@ -490,7 +535,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/bravo/medic
-	name = "\improper Bravo Squad Medic Preparations"
+	name = "\improper Bravo Squad Medical Preparations"
 	req_access = list(ACCESS_MARINE_MEDPREP, ACCESS_MARINE_BRAVO)
 	req_one_access = list()
 	dir = SOUTH
@@ -530,7 +575,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/charlie/engineer
-	name = "\improper Charlie Squad Engineer Preparations"
+	name = "\improper Charlie Squad ComTech Preparations"
 	req_access = list(ACCESS_MARINE_ENGPREP, ACCESS_MARINE_CHARLIE)
 	req_one_access = list()
 	dir = SOUTH
@@ -538,7 +583,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/charlie/medic
-	name = "\improper Charlie Squad Medic Preparations"
+	name = "\improper Charlie Squad Medical Preparations"
 	req_access = list(ACCESS_MARINE_MEDPREP, ACCESS_MARINE_CHARLIE)
 	req_one_access = list()
 	dir = SOUTH
@@ -578,7 +623,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/delta/engineer
-	name = "\improper Delta Squad Engineer Preparations"
+	name = "\improper Delta Squad ComTech Preparations"
 	req_access = list(ACCESS_MARINE_ENGPREP, ACCESS_MARINE_DELTA)
 	req_one_access = list()
 	dir = SOUTH
@@ -586,7 +631,7 @@
 	glass = 1
 
 /obj/structure/machinery/door/airlock/almayer/marine/delta/medic
-	name = "\improper Delta Squad Medic Preparations"
+	name = "\improper Delta Squad Medical Preparations"
 	req_access = list(ACCESS_MARINE_MEDPREP, ACCESS_MARINE_DELTA)
 	req_one_access = list()
 	dir = SOUTH

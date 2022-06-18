@@ -94,7 +94,7 @@ var/datum/controller/supply/supply_controller = new()
 
 /obj/structure/machinery/computer/supplycomp
 	name = "ASRS console"
-	desc = "A console for an Automated Storage and Retrieval System"
+	desc = "A console for the Automated Storage Retrieval System"
 	icon = 'icons/obj/structures/machinery/computer.dmi'
 	icon_state = "supply"
 	density = TRUE
@@ -128,6 +128,7 @@ var/datum/controller/supply/supply_controller = new()
 	var/busy = 0 //The computer is busy launching a drop, lock controls
 	var/drop_cooldown = 5000
 	var/can_pick_squad = TRUE
+	var/faction = FACTION_MARINE
 
 /obj/structure/machinery/computer/supply_drop_console/attack_hand(mob/user)
 	if(..())  //Checks for power outages
@@ -168,7 +169,7 @@ var/datum/controller/supply/supply_controller = new()
 	dat += "<BR><BR>----------------------<br>"
 	dat += "<A href='?src=\ref[src];operation=refresh'>{Refresh}</a><br>"
 
-	show_browser(user, dat, "Supply Drop Console Console", "overwatch", "size=550x550")
+	show_browser(user, dat, "Supply Drop Console", "overwatch", "size=550x550")
 	return
 
 /obj/structure/machinery/computer/supply_drop_console/Topic(href, href_list)
@@ -181,7 +182,7 @@ var/datum/controller/supply/supply_controller = new()
 			if(can_pick_squad)
 				var/list/squad_list = list()
 				for(var/datum/squad/S in RoleAuthority.squads)
-					if(S.usable)
+					if(S.active && S.faction == faction)
 						squad_list += S.name
 
 				var/name_sel = tgui_input_list(usr, "Which squad would you like to claim for Overwatch?", "Overwatch", squad_list)
@@ -297,6 +298,7 @@ var/datum/controller/supply/supply_controller = new()
 //Can't pick squads, drops less often
 //Uses Echo squad as a placeholder to access its own drop pad
 /obj/structure/machinery/computer/supply_drop_console/limited
+	circuit = /obj/item/circuitboard/computer/supply_drop_console/limited
 	drop_cooldown = 5 MINUTES //higher cooldown than usual
 	can_pick_squad = FALSE//Can't pick squads
 

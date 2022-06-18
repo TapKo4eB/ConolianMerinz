@@ -203,9 +203,75 @@
 
 // Resin
 /datum/action/xeno_action/activable/secrete_resin/use_ability(atom/A)
+	if(!..())
+		return FALSE
 	var/mob/living/carbon/Xenomorph/X = owner
-	. = X.build_resin(A, thick, make_message, plasma_cost != 0)
-	..()
+	if(isstorage(A.loc) || X.contains(A) || istype(A, /obj/screen)) return FALSE
+	if(A.z != X.z)
+		to_chat(owner, SPAN_XENOWARNING("This area is too far away to affect!"))
+		return
+	apply_cooldown()
+	switch(X.build_resin(A, thick, make_message, plasma_cost != 0, build_speed_mod))
+		if(SECRETE_RESIN_INTERRUPT)
+			if(xeno_cooldown)
+				apply_cooldown_override(xeno_cooldown * 2)
+			return FALSE
+		if(SECRETE_RESIN_FAIL)
+			if(xeno_cooldown)
+				apply_cooldown_override(1)
+			return FALSE
+	return TRUE
+
+// leader Marker
+
+/datum/action/xeno_action/activable/info_marker/use_ability(atom/A)
+	if(!..())
+		return FALSE
+
+	if(!action_cooldown_check())
+		return
+
+	var/mob/living/carbon/Xenomorph/X = owner
+	if(!X.check_state(TRUE))
+		return FALSE
+	if(isstorage(A.loc) || X.contains(A) || istype(A, /obj/screen)) return FALSE
+	var/turf/target_turf = get_turf(A)
+
+	if(target_turf.z != X.z)
+		to_chat(X, SPAN_XENOWARNING("This area is too far away to affect!"))
+		return
+	if(!X.hive.living_xeno_queen || X.hive.living_xeno_queen.z != X.z)
+		to_chat(X, SPAN_XENOWARNING("You have no queen, the psychic link is gone!"))
+		return
+
+	var/tally = 0
+
+	for(var/obj/effect/alien/resin/marker/MRK in X.hive.resin_marks)
+		if(MRK.createdby == X.nicknumber)
+			tally++
+	if(tally >= max_markers)
+		to_chat(X, SPAN_XENOWARNING("You have reached the maximum number of resin marks."))
+		var/list/promptlist = list("Yes", "No")
+		var/obj/effect/alien/resin/marker/Goober = null
+		var/promptuser = null
+		for(var/i=1, i<=length(X.hive.resin_marks))
+			Goober = X.hive.resin_marks[i]
+			if(Goober.createdby == X.nicknumber)
+				promptuser = tgui_input_list(X, "Remove oldest placed mark: '[Goober.mark_meaning.name]!'?", "Mark limit reached.", promptlist)
+				break
+			i++
+		if(promptuser == "No")
+			return
+		else if(promptuser == "Yes")
+			qdel(Goober)
+			if(X.make_marker(target_turf))
+				apply_cooldown()
+				return TRUE
+	else if(X.make_marker(target_turf))
+		apply_cooldown()
+		return TRUE
+
+
 
 // Destructive Acid
 /datum/action/xeno_action/activable/corrosive_acid/use_ability(atom/A)
@@ -218,33 +284,56 @@
 
 /datum/action/xeno_action/onclick/emit_pheromones/use_ability(atom/A)
 	var/mob/living/carbon/Xenomorph/X = owner
-	if(!X.check_state(1))
+	if(!istype(X))
 		return
+	X.emit_pheromones(emit_cost = plasma_cost)
 
-	if(X.current_aura)
-		X.current_aura = null
-		X.visible_message(SPAN_XENOWARNING("\The [X] stops emitting pheromones."), \
-		SPAN_XENOWARNING("You stop emitting pheromones."), null, 5)
-	else
+/mob/living/carbon/Xenomorph/proc/emit_pheromones(var/pheromone, var/emit_cost = 30)
+	if(!check_state(TRUE))
+		return
+	if(!(locate(/datum/action/xeno_action/onclick/emit_pheromones) in actions))
+		to_chat(src, SPAN_XENOWARNING("You are incapable of emitting pheromones!"))
+		return
+	if(!pheromone)
+		if(current_aura)
+			current_aura = null
+			visible_message(SPAN_XENOWARNING("\The [src] stops emitting pheromones."), \
+			SPAN_XENOWARNING("You stop emitting pheromones."), null, 5)
+		else
+			if(!check_plasma(emit_cost))
+				to_chat(src, SPAN_XENOWARNING("You do not have enough plasma!"))
+				return
+			if(client.prefs && client.prefs.no_radials_preference)
+				pheromone = tgui_input_list(src, "Choose a pheromone", "Pheromone Menu", caste.aura_allowed + "help" + "cancel")
+				if(pheromone == "help")
+					to_chat(src, SPAN_NOTICE("<br>Pheromones provide a buff to all Xenos in range at the cost of some stored plasma every second, as follows:<br><B>Frenzy</B> - Increased run speed, damage and chance to knock off headhunter masks.<br><B>Warding</B> - While in critical state, increased maximum negative health and slower off weed bleedout.<br><B>Recovery</B> - Increased plasma and health regeneration.<br>"))
+					return
+				if(!pheromone || pheromone == "cancel" || current_aura || !check_state(1)) //If they are stacking windows, disable all input
+					return
+			else
+				var/static/list/phero_selections = list("Help" = image(icon = 'icons/mob/radial.dmi', icon_state = "radial_help"), "Frenzy" = image(icon = 'icons/mob/radial.dmi', icon_state = "phero_frenzy"), "Warding" = image(icon = 'icons/mob/radial.dmi', icon_state = "phero_warding"), "Recovery" = image(icon = 'icons/mob/radial.dmi', icon_state = "phero_recov"))
+				pheromone = lowertext(show_radial_menu(src, src, phero_selections))
+				if(pheromone == "help")
+					to_chat(src, SPAN_XENONOTICE("<br>Pheromones provide a buff to all Xenos in range at the cost of some stored plasma every second, as follows:<br><B>Frenzy (Red)</B> - Increased run speed, damage and chance to knock off headhunter masks.<br><B>Warding (Green)</B> - While in critical state, increased maximum negative health and slower off weed bleedout.<br><B>Recovery (Blue)</B> - Increased plasma and health regeneration.<br>"))
+					return
+				if(!pheromone || current_aura || !check_state(1)) //If they are stacking windows, disable all input
+					return
+	if(pheromone)
+		if(pheromone == current_aura)
+			to_chat(src, SPAN_XENOWARNING("You are already emitting [pheromone] pheromones!"))
+			return
+		if(!check_plasma(emit_cost))
+			to_chat(src, SPAN_XENOWARNING("You do not have enough plasma!"))
+			return
+		use_plasma(emit_cost)
+		current_aura = pheromone
+		visible_message(SPAN_XENOWARNING("\The [src] begins to emit strange-smelling pheromones."), \
+		SPAN_XENOWARNING("You begin to emit '[pheromone]' pheromones."), null, 5)
+		playsound(loc, "alien_drool", 25)
 
-		var/choice = tgui_input_list(X, "Choose a pheromone", "Pheromone Menu", X.caste.aura_allowed + "help" + "cancel")
-		if(choice == "help")
-			to_chat(X, SPAN_NOTICE("<br>Pheromones provide a buff to all Xenos in range at the cost of some stored plasma every second, as follows:<br><B>Frenzy</B> - Increased run speed, damage and tackle chance.<br><B>Warding</B> - Increased armor, reduced incoming damage and critical bleedout.<br><B>Recovery</B> - Increased plasma and health regeneration.<br>"))
-			return
-		if(!choice || choice == "cancel" || X.current_aura || !X.check_state(1)) //If they are stacking windows, disable all input
-			return
-		if (!check_and_use_plasma_owner())
-			return
-		X.current_aura = choice
-		X.visible_message(SPAN_XENOWARNING("\The [X] begins to emit strange-smelling pheromones."), \
-		SPAN_XENOWARNING("You begin to emit '[choice]' pheromones."), null, 5)
-		playsound(X.loc, "alien_drool", 25)
-
-	if(isXenoQueen(X) && X.hive && X.hive.xeno_leader_list.len && X.anchored)
-		for(var/mob/living/carbon/Xenomorph/L in X.hive.xeno_leader_list)
+	if(isXenoQueen(src) && hive && hive.xeno_leader_list.len && anchored)
+		for(var/mob/living/carbon/Xenomorph/L in hive.xeno_leader_list)
 			L.handle_xeno_leader_pheromones()
-
-
 
 /datum/action/xeno_action/activable/pounce/use_ability(atom/A)
 	var/mob/living/carbon/Xenomorph/X = owner
@@ -306,7 +395,7 @@
 			X.update_canmove()
 		post_windup_effects()
 
-	X.visible_message(SPAN_XENOWARNING("\The [X] [ability_name]s at [A]!"), SPAN_XENOWARNING("You [ability_name] at [A]!"))
+	X.visible_message(SPAN_XENOWARNING("\The [X] [ability_name][findtext(ability_name, "e", -1) ? "s" : "es"] at [A]!"), SPAN_XENOWARNING("You [ability_name] at [A]!"))
 
 	// ok so basically the way this code works is godawful
 	// what happens next is if we hit anything
@@ -326,7 +415,7 @@
 	additional_effects_always()
 	..()
 
-	return
+	return TRUE
 
 // Massive, customizable spray_acid
 /datum/action/xeno_action/activable/spray_acid/use_ability(atom/A)
@@ -409,7 +498,7 @@
 
 	var/area/AR = get_area(T)
 
-	if(istype(AR,/area/shuttle/drop1/lz1) || istype(AR,/area/shuttle/drop2/lz2))
+	if(istype(AR,/area/shuttle/drop1/lz1) || istype(AR,/area/shuttle/drop2/lz2) || GLOB.interior_manager.interior_z == X.z)
 		to_chat(X, SPAN_WARNING("You sense this is not a suitable area for creating a resin hole."))
 		return
 
@@ -444,6 +533,8 @@
 	if(!X.check_state())
 		return FALSE
 
+	if(isstorage(A.loc) || X.contains(A) || istype(A, /obj/screen)) return FALSE
+
 	//Make sure construction is unrestricted
 	if(X.hive && X.hive.construction_allowed == XENO_LEADER && X.hive_pos == NORMAL_XENO)
 		to_chat(X, SPAN_WARNING("Construction is currently restricted to Leaders only!"))
@@ -459,41 +550,37 @@
 		to_chat(X, SPAN_XENOWARNING("It's too early to spread the hive this far."))
 		return FALSE
 
+	if(T.z != X.z)
+		to_chat(X, SPAN_XENOWARNING("This area is too far away to affect!"))
+		return FALSE
+
+	if(GLOB.interior_manager.interior_z == X.z)
+		to_chat(X, SPAN_XENOWARNING("It's too tight in here to build."))
+		return FALSE
+
 	var/choice = XENO_STRUCTURE_CORE
 	if(X.hive.has_structure(XENO_STRUCTURE_CORE) || !X.hive.can_build_structure(XENO_STRUCTURE_CORE))
-		choice = tgui_input_list(X, "Choose a structure to build", "Build structure", X.hive.hive_structure_types + "help" + "cancel")
-	if(choice == "help")
-		var/message = "<br>Placing a construction node creates a template for special structures that can benefit the hive, which require the insertion of [MATERIAL_CRYSTAL] to construct the following:<br>"
-		for(var/structure_name in X.hive.hive_structure_types)
-			message += "[get_xeno_structure_desc(structure_name)]<br>"
-		to_chat(X, SPAN_NOTICE(message))
-		return
-	if(choice == "cancel" || !X.check_state(1) || !X.check_plasma(400))
+		choice = tgui_input_list(X, "Choose a structure to build", "Build structure", X.hive.hive_structure_types + "help")
+		if(!choice)
+			return
+		if(choice == "help")
+			var/message = "<br>Placing a construction node creates a template for special structures that can benefit the hive, which require the insertion of [MATERIAL_CRYSTAL] to construct the following:<br>"
+			for(var/structure_name in X.hive.hive_structure_types)
+				message += "[get_xeno_structure_desc(structure_name)]<br>"
+			to_chat(X, SPAN_NOTICE(message))
+			return
+	if(!X.check_state(1) || !X.check_plasma(400))
 		return FALSE
 	var/structure_type = X.hive.hive_structure_types[choice]
 	var/datum/construction_template/xenomorph/structure_template = new structure_type()
 
+	if(!spacecheck(X,T,structure_template))
+		return FALSE
+
 	if(!do_after(X, XENO_STRUCTURE_BUILD_TIME, INTERRUPT_NO_NEEDHAND|BEHAVIOR_IMMOBILE, BUSY_ICON_BUILD))
 		return FALSE
 
-	if(structure_template.block_range)
-		for(var/turf/TA in range(T, structure_template.block_range))
-			if(!X.check_alien_construction(TA, FALSE, TRUE))
-				to_chat(X, SPAN_WARNING("You need more open space to build here."))
-				qdel(structure_template)
-				return FALSE
-		if(!X.check_alien_construction(T))
-			to_chat(X, SPAN_WARNING("You need more open space to build here."))
-			qdel(structure_template)
-			return FALSE
-		var/obj/effect/alien/weeds/alien_weeds = locate() in T
-		if(!alien_weeds || alien_weeds.weed_strength < WEED_LEVEL_HIVE || alien_weeds.linked_hive.hivenumber != X.hivenumber)
-			to_chat(X, SPAN_WARNING("You can only shape on [lowertext(GLOB.hive_datum[X.hivenumber].prefix)]hive weeds. Find a hive node or core before you start building!"))
-			qdel(structure_template)
-			return FALSE
-
-	else if(T.density)
-		to_chat(X, SPAN_WARNING("You need an empty space to build this."))
+	if(!spacecheck(X,T,structure_template)) //doublechecking
 		return FALSE
 
 	if((choice == XENO_STRUCTURE_CORE) && isXenoQueen(X) && X.hive.has_structure(XENO_STRUCTURE_CORE))
@@ -524,6 +611,11 @@
 		qdel(structure_template)
 		return FALSE
 
+	if(GLOB.interior_manager.interior_z == X.z)
+		to_chat(X, SPAN_WARNING("It's too tight in here to build."))
+		qdel(structure_template)
+		return FALSE
+
 	if(!T.is_weedable())
 		to_chat(X, SPAN_WARNING("It's too early to be placing [structure_template.name] here!"))
 		qdel(structure_template)
@@ -531,6 +623,33 @@
 
 	X.use_plasma(400)
 	X.place_construction(T, structure_template)
+
+
+
+
+// XSS Spacecheck
+
+/datum/action/xeno_action/activable/place_construction/proc/spacecheck(var/mob/living/carbon/Xenomorph/X, var/turf/T, datum/construction_template/xenomorph/tem)
+	if(tem.block_range)
+		for(var/turf/TA in range(T, tem.block_range))
+			if(!X.check_alien_construction(TA, FALSE, TRUE))
+				to_chat(X, SPAN_WARNING("You need more open space to build here."))
+				qdel(tem)
+				return FALSE
+		if(!X.check_alien_construction(T))
+			to_chat(X, SPAN_WARNING("You need more open space to build here."))
+			qdel(tem)
+			return FALSE
+		var/obj/effect/alien/weeds/alien_weeds = locate() in T
+		if(!alien_weeds || alien_weeds.weed_strength < WEED_LEVEL_HIVE || alien_weeds.linked_hive.hivenumber != X.hivenumber)
+			to_chat(X, SPAN_WARNING("You can only shape on [lowertext(GLOB.hive_datum[X.hivenumber].prefix)]hive weeds. Find a hive node or core before you start building!"))
+			qdel(tem)
+			return FALSE
+		if(T.density)
+			qdel(tem)
+			to_chat(X, SPAN_WARNING("You need an empty space to build this."))
+			return FALSE
+	return TRUE
 
 /datum/action/xeno_action/activable/xeno_spit/use_ability(atom/A)
 	var/mob/living/carbon/Xenomorph/X = owner

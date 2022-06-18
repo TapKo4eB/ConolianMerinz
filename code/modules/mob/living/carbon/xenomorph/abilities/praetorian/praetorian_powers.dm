@@ -82,8 +82,9 @@
 
 	if(!activated_once)
 		. = ..()
-		activated_once = TRUE
-		addtimer(CALLBACK(src, .proc/timeout), time_until_timeout)
+		if(.)
+			activated_once = TRUE
+			addtimer(CALLBACK(src, .proc/timeout), time_until_timeout)
 	else
 		damage_nearby_targets()
 
@@ -207,11 +208,8 @@
 	if(!X.check_state())
 		return
 
-	if(!check_and_use_plasma_owner())
+	if(!check_plasma_owner())
 		return
-
-	X.visible_message(SPAN_XENODANGER("[X] prepares to fire its resin spurs at [A]!"), SPAN_XENODANGER("You prepare to fire your resin spurs at [A]!"))
-	X.emote("roar")
 
 	// Build our turflist
 	var/list/turf/turflist = list()
@@ -221,6 +219,12 @@
 	var/turf/temp = X.loc
 	for(var/x in 0 to max_distance)
 		temp = get_step(T, facing)
+		if(facing in diagonals) // check if it goes through corners
+			var/reverse_face = reverse_dir[facing]
+			var/turf/back_left = get_step(temp, turn(reverse_face, 45))
+			var/turf/back_right = get_step(temp, turn(reverse_face, -45))
+			if((!back_left || back_left.density) && (!back_right || back_right.density))
+				break
 		if(!temp || temp.density || temp.opacity)
 			break
 
@@ -241,6 +245,13 @@
 		facing = get_dir(T, A)
 		telegraph_atom_list += new /obj/effect/xenomorph/xeno_telegraph/brown/abduct_hook(T, windup)
 
+	if(!length(turflist))
+		to_chat(X, SPAN_XENOWARNING("You don't have any room to do your abduction!"))
+		return
+
+	X.visible_message(SPAN_XENODANGER("[X] prepares to fire its resin spurs at [A]!"), SPAN_XENODANGER("You prepare to fire your resin spurs at [A]!"))
+	X.emote("roar")
+
 	var/throw_target_turf = get_step(X.loc, facing)
 
 	X.frozen = TRUE
@@ -256,6 +267,9 @@
 		X.frozen = FALSE
 		X.update_canmove()
 
+		return
+
+	if(!check_and_use_plasma_owner())
 		return
 
 	X.frozen = FALSE
@@ -382,7 +396,7 @@
 	if(!A || A.layer >= FLY_LAYER || !isturf(X.loc))
 		return
 
-	if (!check_and_use_plasma_owner())
+	if (!check_plasma_owner())
 		return
 
 	// Transient turf list
@@ -394,11 +408,15 @@
 	var/turf/root = get_turf(X)
 	var/facing = Get_Compass_Dir(X, A)
 	var/turf/infront = get_step(root, facing)
+	var/turf/left = get_step(root, turn(facing, 90))
+	var/turf/right = get_step(root, turn(facing, -90))
 	var/turf/infront_left = get_step(root, turn(facing, 45))
 	var/turf/infront_right = get_step(root, turn(facing, -45))
 	temp_turfs += infront
-	temp_turfs += infront_left
-	temp_turfs += infront_right
+	if(!(!infront || infront.density) && !(!left || left.density))
+		temp_turfs += infront_left
+	if(!(!infront || infront.density) && !(!right || right.density))
+		temp_turfs += infront_right
 
 	for(var/turf/T in temp_turfs)
 		if (!istype(T))
@@ -417,6 +435,10 @@
 		target_turfs += next_turf
 		telegraph_atom_list += new /obj/effect/xenomorph/xeno_telegraph/brown/lash(next_turf, windup)
 
+	if(!length(target_turfs))
+		to_chat(X, SPAN_XENOWARNING("You don't have any room to do your tail lash!"))
+		return
+
 	if(!do_after(X, windup, INTERRUPT_NO_NEEDHAND, BUSY_ICON_HOSTILE))
 		to_chat(X, SPAN_XENOWARNING("You cancel your tail lash."))
 
@@ -425,7 +447,7 @@
 			qdel(XT)
 		return
 
-	if (!action_cooldown_check())
+	if(!action_cooldown_check() || !check_and_use_plasma_owner())
 		return
 
 	apply_cooldown()
@@ -718,7 +740,7 @@
 	if (!action_cooldown_check())
 		return
 
-	if(!A || A.layer >= FLY_LAYER || !isturf(X.loc) || !X.check_state())
+	if(!A || A.layer >= FLY_LAYER || !isturf(X.loc) || !X.check_state(TRUE))
 		return
 
 	if (!isXeno(A) || !X.can_not_harm(A))
@@ -738,7 +760,7 @@
 	if(targetXeno.stat == DEAD)
 		to_chat(X, SPAN_WARNING("[targetXeno] is already dead!"))
 		return
-	
+
 	if (!check_plasma_owner())
 		return
 
@@ -759,7 +781,7 @@
 			if (!BD.use_internal_hp_ability(shield_cost))
 				return
 
-			bonus_shield = BD.internal_hitpoints/2
+			bonus_shield = BD.internal_hitpoints*0.5
 			if (!BD.use_internal_hp_ability(bonus_shield))
 				bonus_shield = 0
 
@@ -777,11 +799,17 @@
 		targetXeno.add_xeno_shield(total_shield_amount, XENO_SHIELD_SOURCE_WARDEN_PRAE, duration = shield_duration, decay_amount_per_second = shield_decay)
 		targetXeno.xeno_jitter(1 SECONDS)
 		targetXeno.flick_heal_overlay(3 SECONDS, "#FFA800") //D9F500
+		X.add_xeno_shield(total_shield_amount*0.5, XENO_SHIELD_SOURCE_WARDEN_PRAE, duration = shield_duration, decay_amount_per_second = shield_decay) // X is the prae itself
+		X.xeno_jitter(1 SECONDS)
+		X.flick_heal_overlay(3 SECONDS, "#FFA800") //D9F500
 		use_plasma = TRUE
 
 	else if (curr_effect_type == WARDEN_HEAL_HP)
 		if (!X.Adjacent(A))
 			to_chat(X, SPAN_XENODANGER("You must be within touching distance of [targetXeno]!"))
+			return
+		if (targetXeno.mutation_type == PRAETORIAN_WARDEN)
+			to_chat(X, SPAN_XENODANGER("You cannot heal a sister of the same strain!"))
 			return
 		if (SEND_SIGNAL(targetXeno, COMSIG_XENO_PRE_HEAL) & COMPONENT_CANCEL_XENO_HEAL)
 			to_chat(X, SPAN_XENOWARNING("You cannot heal this xeno!"))
@@ -797,7 +825,7 @@
 			if (!BD.use_internal_hp_ability(heal_cost))
 				return
 
-			bonus_heal = BD.internal_hitpoints/2
+			bonus_heal = BD.internal_hitpoints*0.5
 			if (!BD.use_internal_hp_ability(bonus_heal))
 				bonus_heal = 0
 
@@ -805,6 +833,8 @@
 		to_chat(targetXeno, SPAN_XENOHIGHDANGER("You are healed by [X]!"))
 		targetXeno.gain_health(heal_amount + bonus_heal)
 		targetXeno.visible_message(SPAN_BOLDNOTICE("[X] places its claws on [targetXeno], and its wounds are quickly sealed!"))	//marines probably should know if a xeno gets healed
+		X.gain_health(heal_amount*0.5 + bonus_heal*0.5)
+		X.flick_heal_overlay(3 SECONDS, "#00B800")
 		use_plasma = TRUE	//it's already hard enough to gauge health without hp showing on the mob
 		targetXeno.flick_heal_overlay(3 SECONDS, "#00B800")//so the visible_message and recovery overlay will warn marines and possibly predators that the xenomorph has been healed!
 

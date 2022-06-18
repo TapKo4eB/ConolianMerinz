@@ -3,6 +3,8 @@ var/world_view_size = 7
 var/lobby_view_size = 16
 
 var/internal_tick_usage = 0
+
+var/list/reboot_sfx = file2list("config/reboot_sfx.txt")
 /world
 	mob = /mob/new_player
 	turf = /turf/open/space/basic
@@ -33,7 +35,8 @@ var/internal_tick_usage = 0
 	round_scheduler_stats << "[log_end]\nStarting up - [time2text(world.realtime,"YYYY-MM-DD (hh:mm:ss)")][log_end]\n---------------------[log_end]"
 	mutator_logs = file("data/logs/[year_string]/mutator_logs.log")
 	mutator_logs << "[log_end]\nStarting up - [time2text(world.realtime,"YYYY-MM-DD (hh:mm:ss)")][log_end]\n---------------------[log_end]"
-	changelog_hash = md5('html/changelog.html')					//used for telling if the changelog has changed recently
+	var/latest_changelog = file("[global.config.directory]/../html/changelogs/archive/" + time2text(world.timeofday, "YYYY-MM") + ".yml")
+	GLOB.changelog_hash = fexists(latest_changelog) ? md5(latest_changelog) : 0 //for telling if the changelog has changed recently
 
 	initialize_marine_armor()
 
@@ -49,6 +52,7 @@ var/internal_tick_usage = 0
 	load_mode()
 	loadShuttleInfoDatums()
 	populate_gear_list()
+	initialize_global_regex()
 
 	//Emergency Fix
 	//end-emergency fix
@@ -189,7 +193,7 @@ var/world_topic_spam_protect_time = world.timeofday
 
 /world/Reboot(var/reason)
 	Master.Shutdown()
-
+	send_reboot_sound()
 	var/server = CONFIG_GET(string/server)
 	for(var/thing in GLOB.clients)
 		if(!thing)
@@ -199,11 +203,9 @@ var/world_topic_spam_protect_time = world.timeofday
 		if(server)	//if you set a server location in config.txt, it sends you there instead of trying to reconnect to the same world address. -- NeoFite
 			C << link("byond://[server]")
 
-	var/round_extra_data = ""
-	// Notify helper daemon of reboot, regardless of reason.
-	if(SSticker.mode)
-		round_extra_data = "&message=[SSticker.mode.end_round_message()]"
-	world.Export("http://127.0.0.1:8888/?rebooting=1[round_extra_data]")
+
+	if(!notify_manager(restarting = TRUE))
+		log_debug("Failed to notify manager daemon of restart")
 
 	if(CONFIG_GET(flag/no_restarts))
 		shutdown()
@@ -212,8 +214,38 @@ var/world_topic_spam_protect_time = world.timeofday
 	TgsReboot()
 	..(reason)
 
+/world/proc/send_reboot_sound()
+	var/reboot_sound = SAFEPICK(reboot_sfx)
+	if(reboot_sound)
+		var/sound/reboot_sound_ref = sound(reboot_sound)
+		for(var/client/client as anything in GLOB.clients)
+			if(client?.prefs.toggles_sound & SOUND_REBOOT)
+				SEND_SOUND(client, reboot_sound_ref)
 
+/world/proc/notify_manager(restarting = FALSE)
+	. = FALSE
+	var/manager = CONFIG_GET(string/manager_url)
+	if(!manager)
+		return TRUE
 
+	var/list/payload = list()
+	payload["round_time"] = world.time
+	payload["drift"] = Master.tickdrift
+	if(restarting)
+		payload["restarting"] = TRUE
+		if(SSticker?.mode)
+			payload["round_result"] = SSticker.mode.end_round_message()
+	if(round_statistics?.round_name)
+		payload["mission_name"] = round_statistics.round_name
+	if(SSmapping.next_map_configs)
+		var/datum/map_config/next_map = SSmapping.next_map_configs[GROUND_MAP]
+		if(next_map)
+			payload["next_map"] = next_map.map_name
+	payload["avg_players"] = SSstats_collector.get_avg_players()
+
+	var/payload_ser = url_encode(json_encode(payload))
+	world.Export("[manager]/?payload=[payload_ser]")
+	return TRUE
 
 /world/proc/load_mode()
 	var/list/Lines = file2list("data/mode.txt")

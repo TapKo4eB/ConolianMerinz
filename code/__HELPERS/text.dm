@@ -24,6 +24,9 @@
 			index = findtext(t, char)
 	return t
 
+/// Removes characters incompatible with file names.
+#define SANITIZE_FILENAME(text) (GLOB.filename_forbidden_chars.Replace(text, ""))
+
 //Removes a few problematic characters
 /proc/sanitize_simple(var/t, var/list/repl_chars = list("\n"=" ","\t"=" ","�"=" "))
 	for(var/char in repl_chars)
@@ -40,6 +43,11 @@
 /proc/sanitize(var/t,var/list/repl_chars = list("\n"=" ","\t"=" ","�"=" "))
 	var/msg = html_encode(sanitize_simple(t, repl_chars))
 	return readd_quotes(msg)
+
+//Removes control chars like "\n"
+/proc/sanitize_control_chars(var/stuff)
+	var/static/regex/whitelistedWords = regex(@{"([^\u0020-\u8000]+)"}, "g")
+	return whitelistedWords.Replace(stuff, "")
 
 //Runs sanitize and strip_html_simple
 //I believe strip_html_simple() is required to run first to prevent '<' from displaying as '&lt;' after sanitize() calls byond's html_encode()
@@ -232,13 +240,13 @@
 //Used in preferences' SetFlavorText and human's set_flavor verb
 //Previews a string of len or less length
 proc/TextPreview(var/string,var/len=40)
-	if(length(string) <= len)
-		if(!length(string))
-			return "\[...\]"
-		else
-			return string
+	var/string_length = length(string)
+	if(!string_length)
+		return "\[...\]"
+	else if(string_length <= len)
+		return string
 	else
-		return "[copytext(string, 1, 37)]..."
+		return "[copytext(string, 1, len - 3)]..."
 
 proc/strip_improper(input_text)
 	return replacetext(replacetext(input_text, "\proper", ""), "\improper", "")
@@ -326,3 +334,44 @@ proc/strip_improper(input_text)
 	var/charcount = count - length_char(text)
 	var/list/chars_to_add[max(charcount + 1, 0)]
 	return jointext(chars_to_add, char) + text
+
+/// Finds the first letter of each word in the provided string and capitalize them
+/proc/capitalize_first_letters(var/string)
+	var/list/text = splittext_char(string, " ")
+	var/list/finalized_text = list()
+	for(var/word in text)
+		finalized_text += capitalize(word)
+	return jointext(finalized_text, " ")
+
+// Aurorastation Markup System
+// For processing simple markup, similar to what Skype and Discord use.
+// Enabled from a config setting.
+/proc/process_chat_markup(var/message, var/list/ignore_tags = list())
+	if (!message)
+		return ""
+
+	// ---Begin URL caching.
+	var/list/urls = list()
+	var/i = 1
+	while (url_find_lazy.Find_char(message))
+		urls["\ref[urls]-[i]"] = url_find_lazy.match
+		i++
+
+	for (var/ref in urls)
+		message = replacetextEx_char(message, urls[ref], ref)
+	// ---End URL caching
+
+	var/regex/tag_markup
+	for (var/tag in (markup_tags - ignore_tags))
+		tag_markup = markup_regex[tag]
+		message = tag_markup.Replace_char(message, "$2[markup_tags[tag][1]]$3[markup_tags[tag][2]]$5")
+
+	// ---Unload URL cache
+	for (var/ref in urls)
+		message = replacetextEx_char(message, ref, urls[ref])
+
+	return message
+
+#define SMALL_FONTS(FONTSIZE, MSG) "<span style=\"font-family: 'Small Fonts'; -dm-text-outline: 1 black; font-size: [FONTSIZE]px;\">[MSG]</span>"
+#define SMALL_FONTS_CENTRED(FONTSIZE, MSG) "<center><span style=\"font-family: 'Small Fonts'; -dm-text-outline: 1 black; font-size: [FONTSIZE]px;\">[MSG]</span></center>"
+#define SMALL_FONTS_COLOR(FONTSIZE, MSG, COLOR) "<span style=\"font-family: 'Small Fonts'; -dm-text-outline: 1 black; font-size: [FONTSIZE]px; color: [COLOR];\">[MSG]</span>"

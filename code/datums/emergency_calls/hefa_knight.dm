@@ -8,8 +8,8 @@
 	probability = 0
 	hostility = TRUE
 
-/datum/emergency_call/hefa_knight/create_member(datum/mind/M)
-	var/turf/spawn_loc = get_spawn_point()
+/datum/emergency_call/hefa_knight/create_member(datum/mind/M, var/turf/override_spawn_loc)
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
 	if(!istype(spawn_loc))
 		return //Didn't find a useable spawn point.
@@ -17,5 +17,5 @@
 	var/mob/living/carbon/human/H = new(spawn_loc)
 	M.transfer_to(H, TRUE)
 
-	arm_equipment(H, "HEFA Knight - Melee", FALSE, TRUE)
+	arm_equipment(H, /datum/equipment_preset/fun/hefa/melee, FALSE, TRUE)
 	addtimer(CALLBACK(GLOBAL_PROC, .proc/to_chat, H, SPAN_BOLD("Objectives: [objectives]")), 1 SECONDS)

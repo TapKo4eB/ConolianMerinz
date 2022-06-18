@@ -152,20 +152,16 @@
 /obj/item/explosive/grenade/HE/airburst/launch_impact(atom/hit_atom)
 	..()
 	var/detonate = TRUE
-	var/turf/hit_turf = null
 	if(isobj(hit_atom) && !rebounding)
 		detonate = FALSE
-	if(isturf(hit_atom))
-		hit_turf = hit_atom
-		if(hit_turf.density && !rebounding)
-			detonate = FALSE
+	if(isturf(hit_atom) && hit_atom.density && !rebounding)
+		detonate = FALSE
 	if(active && detonate) // Active, and we reached our destination.
-		if(hit_turf)
-			for(var/mob/M in hit_turf)
-				create_shrapnel(loc, direct_hit_shrapnel, last_move_dir , dispersion_angle ,shrapnel_type, cause_data, FALSE, 100)
-				M.Superslow(3.0)
-				shrapnel_count -= direct_hit_shrapnel
-				continue
+		if(ismob(hit_atom))
+			var/mob/M = hit_atom
+			create_shrapnel(loc, min(direct_hit_shrapnel, shrapnel_count), last_move_dir , dispersion_angle ,shrapnel_type, cause_data, FALSE, 100)
+			M.Superslow(3.0)
+			shrapnel_count -= direct_hit_shrapnel
 		if(shrapnel_count)
 			create_shrapnel(loc, shrapnel_count, last_move_dir , dispersion_angle ,shrapnel_type, cause_data, FALSE, 0)
 			sleep(2) //so that mobs are not knocked down before being hit by shrapnel. shrapnel might also be getting deleted by explosions?
@@ -173,6 +169,27 @@
 		if(explosion_power)
 			cell_explosion(loc, explosion_power, explosion_falloff, falloff_mode, last_move_dir, cause_data)
 		qdel(src)
+
+/obj/item/explosive/grenade/HE/airburst/hornet_shell
+	name = "\improper M74 AGM-H 40mm Hornet Shell"
+	desc = "Functions identically to the standard AGM-F 40mm grenade, except instead of exploding into shrapnel, the hornet shell shoots off holo-targetting .22lr rounds. The equivalent to buckshot at-range."
+	icon_state = "grenade_hornet"
+	item_state = "grenade_hornet_active"
+	shrapnel_count = 5
+	shrapnel_type = /datum/ammo/bullet/shrapnel/hornet_rounds
+	direct_hit_shrapnel = 5
+	dispersion_angle = 15//tight cone
+
+/obj/item/explosive/grenade/HE/airburst/starshell
+	name = "\improper M74 AGM-S Star Shell"
+	desc = "Functions identically to the standard AGM-F 40mm grenade, except instead of exploding into shrapnel, the star shells bursts into burning phosphor that illuminates the area."
+	icon_state = "grenade_starshell"
+	item_state = "grenade_starshell_active"
+	shrapnel_count = 8
+	shrapnel_type = /datum/ammo/flare/starshell
+	direct_hit_shrapnel = 5
+	dispersion_angle = 360 //beeg circle
+
 /*
 //================================================
 				Incendiary Grenades
@@ -290,6 +307,7 @@
 	item_state = "grenade_smoke"
 	underslug_launchable = TRUE
 	harmful = FALSE
+	antigrief_protection = FALSE
 	var/datum/effect_system/smoke_spread/bad/smoke
 
 /obj/item/explosive/grenade/smokebomb/New()
@@ -314,9 +332,17 @@
 	dangerous = 1
 	harmful = TRUE
 
-/obj/item/explosive/grenade/phosphorus/New()
+/obj/item/explosive/grenade/phosphorus/weak
+	desc = "The M40 HPDP is a small, but powerful phosphorus grenade. Word on the block says that the HPDP doesn't actually release White Phosphorus, but some other chemical developed in W-Y labs."
+
+/obj/item/explosive/grenade/phosphorus/Initialize()
 	..()
 	smoke = new /datum/effect_system/smoke_spread/phosphorus
+	smoke.attach(src)
+
+/obj/item/explosive/grenade/phosphorus/weak/Initialize()
+	..()
+	smoke = new /datum/effect_system/smoke_spread/phosphorus/weak
 	smoke.attach(src)
 
 /obj/item/explosive/grenade/phosphorus/prime()
@@ -339,6 +365,76 @@
 
 /*
 //================================================
+				Baton Slugs
+//================================================
+*/
+
+/obj/item/explosive/grenade/slug
+	name = "slug shell"
+	desc = "It doesn't actually explode. Fancy that."
+	icon_state = "chemg"
+	hand_throwable = FALSE
+	var/impact_damage = 10
+	var/impact_sound = 'sound/weapons/baton_slug_impact.ogg'
+	var/slowdown_time = 2
+	var/knockout_time = 0.1
+	var/dazed_time = 0.5
+	var/inactive_icon = "chemg"
+	has_arm_sound = FALSE
+	throwforce = 10
+	antigrief_protection = FALSE
+
+/obj/item/explosive/grenade/slug/prime()
+	active = 0
+	overlays.Cut()
+	icon_state = initial(icon_state)
+	w_class = initial(w_class)
+	throwforce = initial(throwforce)
+
+/obj/item/explosive/grenade/slug/launch_impact(atom/hit_atom)
+	if(!active)
+		return
+	if(ismob(hit_atom))
+		impact_mob(hit_atom)
+	icon_state = inactive_icon
+
+/obj/item/explosive/grenade/slug/proc/impact_mob(mob/living/M)
+	playsound(M.loc, impact_sound, 75, 1)
+	M.apply_damage(impact_damage, BRUTE)
+
+	if(isYautja(M)|| isSynth(M))
+		M.Slow(slowdown_time * 0.5)
+		M.Daze(dazed_time * 0.5)
+
+	if(M.mob_size >= MOB_SIZE_BIG)//big xenos not KO'ed
+		M.Slow(slowdown_time * 1.5)//They are slowed more :trol:
+		M.Daze(dazed_time * 1.5)
+		return
+
+	M.KnockDown(knockout_time)//but little xenos and humans are
+	M.Slow(slowdown_time)
+	M.Daze(dazed_time)
+	return
+
+/obj/item/explosive/grenade/slug/baton
+	name = "\improper HIRR baton slug"
+	desc = "Cousin to the M15 Rubber pellet, the HIRR baton slug was recalled from military and civilian police forces due to over-packed propellant in the sabot casing. Now it is utilized as a less-than-lethal option in engagements with human, and sometimes non-human, forces. Historically, the HIRR was incredibly popular during the Arcturus conflict, as the impact force was found to reliably incapacitate Arcturian resistance forces by breaking their ribs into their lungs."
+	icon_state = "baton_slug"
+	item_state = "baton_slug"
+	inactive_icon = "baton_slug"
+	antigrief_protection = FALSE
+	impact_damage = 15
+	slowdown_time = 1.6
+	knockout_time = 0.4
+	dazed_time = 1.5
+
+/obj/item/explosive/grenade/slug/baton/Initialize()
+	. = ..()
+	setDir(NORTH) //so they're oriented properly in our inventory
+
+
+/*
+//================================================
 					Other
 //================================================
 */
@@ -350,7 +446,7 @@
 	item_state = "grenade_training"
 	dangerous = 0
 	harmful = FALSE
-	has_iff = FALSE
+	antigrief_protection = FALSE
 
 /obj/item/explosive/grenade/HE/training/prime()
 	spawn(0)
@@ -373,7 +469,20 @@
 	item_state = "rubber_grenade"
 	explosion_power = 0
 	shrapnel_type = /datum/ammo/bullet/shrapnel/rubber
+	antigrief_protection = FALSE
 
+/// Baton slugs
+/obj/item/explosive/grenade/baton
+	name = "\improper HIRR baton slug"
+	desc = "Cousin to the M15 Rubber pellet, the HIRR baton slug was recalled from military and civilian police forces due to over-packed propellant in the sabot casing. Now it is utilized as a less-than-lethal option in engagements with human, and sometimes non-human, forces. Historically, the HIRR was incredibly popular during the Arcturus conflict, as the impact force was found to reliably incapacitate Arcturian resistance forces by breaking their ribs into their lungs."
+	icon_state = "baton_slug"
+	item_state = "rubber_grenade"
+	hand_throwable = FALSE
+	antigrief_protection = FALSE
+
+
+/obj/item/explosive/grenade/baton/flamer_fire_act()
+	return
 
 /obj/item/explosive/grenade/HE/holy_hand_grenade
 	name = "\improper Holy Hand Grenade of Antioch"
@@ -388,3 +497,19 @@
 	unacidable = TRUE
 	arm_sound = 'sound/voice/holy_chorus.ogg'//https://www.youtube.com/watch?v=hNV5sPZFuGg
 	falloff_mode = EXPLOSION_FALLOFF_SHAPE_LINEAR
+
+/obj/item/explosive/grenade/metal_foam
+	name = "\improper M40 MFHS grenade"
+	desc = "A Metal-Foam Hull-Sealant grenade originally used for emergency repairs but have found other practical applications on the field. Based off the same platform as the M40 HEDP. Has a 2 second fuse."
+	icon_state = "grenade_metal_foam"
+	item_state = "grenade_metal_foam"
+	det_time = 20
+	underslug_launchable = TRUE
+	harmful = FALSE
+	var/foam_metal_type = FOAM_METAL_TYPE_ALUMINIUM
+
+/obj/item/explosive/grenade/metal_foam/prime()
+	var/datum/effect_system/foam_spread/s = new()
+	s.set_up(12, get_turf(src), metal_foam = foam_metal_type) //Metalfoam 1 for aluminum foam, 2 for iron foam (Stronger), 12 amt = 2 tiles radius (5 tile length diamond)
+	s.start()
+	qdel(src)

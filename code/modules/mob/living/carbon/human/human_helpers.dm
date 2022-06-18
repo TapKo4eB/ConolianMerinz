@@ -167,8 +167,11 @@
 		L.icon_name = get_limb_icon_name(species, b_icon, gender, L.display_name, e_icon)
 
 /mob/living/carbon/human/can_inject(var/mob/user, var/error_msg, var/target_zone)
-	. = 1
-
+	if(species?.flags & IS_SYNTHETIC)
+		if(user && error_msg)
+			to_chat(user, SPAN_WARNING("[src] has no flesh to inject."))
+		return FALSE
+	. = TRUE
 	if(!user)
 		target_zone = pick("chest","chest","chest","left leg","right leg","left arm", "right arm", "head")
 	else if(!target_zone)
@@ -176,10 +179,10 @@
 
 	switch(target_zone)
 		if("head")
-			if(head && head.flags_inventory & BLOCKSHARPOBJ)
+			if(head && head.flags_inventory & NOPRESSUREDMAGE)
 				. = 0
 		else
-			if(wear_suit && wear_suit.flags_inventory & BLOCKSHARPOBJ)
+			if(wear_suit && wear_suit.flags_inventory & NOPRESSUREDMAGE)
 				. = 0
 	if(!. && error_msg && user)
 		// Might need re-wording.
@@ -258,6 +261,10 @@
 			var/obj/item/clothing/suit/storage/marine/S = wear_suit
 			if(S.turn_off_light(src))
 				light_off++
+		for(var/obj/item/clothing/head/helmet/marine/H in contents)
+			for(var/obj/item/attachable/flashlight/FL in H.pockets)
+				if(FL.activate_attachment(H, src, TRUE))
+					light_off++
 	if(guns)
 		for(var/obj/item/weapon/gun/G in contents)
 			if(G.turn_off_light(src))
@@ -296,7 +303,7 @@
 
 /mob/living/carbon/human/a_intent_change(intent as num)
 	. = ..()
-	if(HAS_TRAIT(src, TRAIT_INTENT_EYES)) //1st gen synths change eye colour based on intent
+	if(HAS_TRAIT(src, TRAIT_INTENT_EYES) && (src.stat != DEAD)) //1st gen synths change eye colour based on intent. But not when they're dead.
 		switch(a_intent)
 			if(INTENT_HELP) //Green, defalt
 				r_eyes = 0
@@ -393,3 +400,43 @@
 
 /mob/living/carbon/human/proc/has_item_in_ears(item)
 	return (item == wear_l_ear) || (item == wear_r_ear)
+
+/mob/living/carbon/human/can_be_pulled_by(var/mob/M)
+	var/ignores_stripdrag_flag = FALSE
+	if(ishuman(M))
+		var/mob/living/carbon/human/H = M
+		ignores_stripdrag_flag = H.species.ignores_stripdrag_flag
+	if(MODE_HAS_TOGGLEABLE_FLAG(MODE_NO_STRIPDRAG_ENEMY) && !ignores_stripdrag_flag && (stat == DEAD || health < HEALTH_THRESHOLD_CRIT) && !get_target_lock(M.faction_group))
+		to_chat(M, SPAN_WARNING("You can't pull a crit or dead member of another faction!"))
+		return FALSE
+	return TRUE
+
+/mob/living/carbon/human/proc/get_brute_mod()
+	if(LAZYLEN(brute_mod_override))
+		var/lowest_brute_mod = INFINITY
+		for(var/thing in brute_mod_override)
+			var/brute_mod = brute_mod_override[thing]
+			if(brute_mod < lowest_brute_mod)
+				lowest_brute_mod = brute_mod
+		return lowest_brute_mod
+	return species?.brute_mod
+
+/mob/living/carbon/human/proc/get_burn_mod()
+	if(LAZYLEN(burn_mod_override))
+		var/lowest_burn_mod = INFINITY
+		for(var/thing in burn_mod_override)
+			var/burn_mod = burn_mod_override[thing]
+			if(burn_mod < lowest_burn_mod)
+				lowest_burn_mod = burn_mod
+		return lowest_burn_mod
+	return species?.burn_mod
+
+/mob/living/carbon/human/proc/show_hud_tracker()
+	if(hud_used && !hud_used.locate_leader.alpha)
+		hud_used.locate_leader.alpha = 255
+		hud_used.locate_leader.mouse_opacity = 1
+
+/mob/living/carbon/human/proc/hide_hud_tracker()
+	if(hud_used && hud_used.locate_leader.alpha)
+		hud_used.locate_leader.alpha = 0
+		hud_used.locate_leader.mouse_opacity = 0

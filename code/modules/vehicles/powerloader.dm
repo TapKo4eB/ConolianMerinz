@@ -120,6 +120,11 @@
 	var/obj/vehicle/powerloader/linked_powerloader
 	var/obj/loaded
 
+/obj/item/powerloader_clamp/Destroy()
+	if(loaded)
+		loaded.forceMove(get_turf(src))
+	return ..()
+
 /obj/item/powerloader_clamp/dropped(mob/user)
 	if(!linked_powerloader)
 		qdel(src)
@@ -166,6 +171,10 @@
 						if(AM.density)
 							to_chat(user, SPAN_WARNING("You can't drop [loaded] here, [AM] blocks the way."))
 							return
+				if(istype(loaded, /obj/structure/bed/chair))
+					var/obj/structure/bed/chair/unloading_chair = loaded
+					unloading_chair.dir = user.dir
+					unloading_chair.update_overlays()
 				user.visible_message(SPAN_NOTICE("[user] drops [loaded] on [T] with [src]."),
 				SPAN_NOTICE("You drop [loaded] on [T] with [src]."))
 				loaded.forceMove(T)
@@ -202,6 +211,18 @@
 				SPAN_NOTICE("You grab [loaded] with [src]."))
 		else
 			to_chat(user, SPAN_WARNING("Can't grab [loaded]."))
+
+	else if(istype(target, /obj/structure/bed/chair))
+		var/obj/structure/bed/chair/CS = target
+		if(!CS.stacked_size)
+			return
+		if(linked_powerloader)
+			CS.forceMove(linked_powerloader)
+			loaded = CS
+			playsound(src, 'sound/machines/hydraulics_2.ogg', 40, 1)
+			update_icon()
+			user.visible_message(SPAN_NOTICE("[user] grabs [loaded] with [src]."),
+			SPAN_NOTICE("You grab [loaded] with [src]."))
 
 /obj/item/powerloader_clamp/update_icon()
 	if(loaded) icon_state = "loader_clamp_full"

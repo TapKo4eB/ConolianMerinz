@@ -58,15 +58,21 @@
 		return
 	X.visible_message(SPAN_XENONOTICE("\The [X] digs out a tunnel entrance."), \
 	SPAN_XENONOTICE("You dig out an entrance to the tunnel network."), null, 5)
-	X.start_dig = new /obj/structure/tunnel(T, X.hivenumber)
+
+	var/obj/structure/tunnel/tunnelobj = new(T, X.hivenumber)
 	X.tunnel_delay = 1
 	addtimer(CALLBACK(src, .proc/cooldown_end), 4 MINUTES)
 	var/msg = strip_html(input("Add a description to the tunnel:", "Tunnel Description") as text|null)
+	var/description
 	if(msg)
-		msg = "[msg] ([get_area_name(X.start_dig)])"
+		description = msg
+		msg = "[msg] ([get_area_name(tunnelobj)])"
 		log_admin("[key_name(X)] has named a new tunnel \"[msg]\".")
 		msg_admin_niche("[X]/([key_name(X)]) has named a new tunnel \"[msg]\".")
-		X.start_dig.tunnel_desc = "[msg]"
+		tunnelobj.tunnel_desc = "[msg]"
+
+	if(X.hive.living_xeno_queen || X.hive.allow_no_queen_actions)
+		xeno_message("Hive: A new tunnel[description ? " ([description])" : ""] has been created at <b>[get_area_name(tunnelobj)]</b>.", 3, X.hivenumber)
 
 	X.use_plasma(plasma_cost)
 	to_chat(X, SPAN_NOTICE("You will be ready to dig a new tunnel in 4 minutes."))
@@ -165,8 +171,8 @@
 	plasma_cost = 0
 
 /datum/action/xeno_action/onclick/psychic_whisper/use_ability(atom/A)
-	var/mob/living/carbon/Xenomorph/Queen/X = owner
-	if(!X.check_state())
+	var/mob/living/carbon/Xenomorph/X = owner
+	if(!X.check_state(TRUE))
 		return
 	var/list/target_list = list()
 	for(var/mob/living/possible_target in view(7, X))
@@ -176,14 +182,44 @@
 	var/mob/living/M = tgui_input_list(usr, "Target", "Send a Psychic Whisper to whom?", target_list)
 	if(!M) return
 
-	if(!X.check_state())
+	if(!X.check_state(TRUE))
 		return
 
 	var/msg = strip_html(input("Message:", "Psychic Whisper") as text|null)
 	if(msg)
 		log_say("PsychicWhisper: [key_name(X)]->[M.key] : [msg]")
-		to_chat(M, SPAN_XENO("You hear a strange, alien voice in your head. \"[msg]\""))
+		if(!istype(M, /mob/living/carbon/Xenomorph))
+			to_chat(M, SPAN_XENO("You hear a strange, alien voice in your head. \"[msg]\""))
+		else
+			to_chat(M, SPAN_XENO("You hear the voice of [X] resonate in your head. \"[msg]\""))
 		to_chat(X, SPAN_XENONOTICE("You said: \"[msg]\" to [M]"))
+
+/datum/action/xeno_action/onclick/psychic_radiance
+	name = "Psychic Radiance"
+	action_icon_state = "psychic_radiance"
+	plasma_cost = 100
+
+/datum/action/xeno_action/onclick/psychic_radiance/use_ability(atom/A)
+	var/mob/living/carbon/Xenomorph/X = owner
+	if(!X.check_state(TRUE))
+		return
+	var/list/target_list = list()
+	var/msg = strip_html(input("Message:", "Psychic Radiance") as text|null)
+	if(!msg || !X.check_state(TRUE))
+		return
+	for(var/mob/living/possible_target in view(12, X))
+		if(possible_target == X || !possible_target.client)
+			continue
+		target_list += possible_target
+		if(!istype(possible_target, /mob/living/carbon/Xenomorph))
+			to_chat(possible_target, SPAN_XENO("You hear a strange, alien voice in your head. \"[msg]\""))
+		else
+			to_chat(possible_target, SPAN_XENO("You hear the voice of [X] resonate in your head. \"[msg]\""))
+	if(!length(target_list))
+		return
+	var/targetstring = english_list(target_list)
+	to_chat(X, SPAN_XENONOTICE("You said: \"[msg]\" to [targetstring]"))
+	log_say("PsychicRadiance: [key_name(X)]->[targetstring] : [msg]")
 
 /datum/action/xeno_action/activable/queen_give_plasma
 	name = "Give Plasma (400)"
@@ -259,6 +295,24 @@
 	else
 		to_chat(X, SPAN_WARNING("You must overwatch the Xenomorph you want to give orders to."))
 
+/datum/action/xeno_action/onclick/queen_word
+	name = "Word of the Queen (50)"
+	action_icon_state = "queen_word"
+	plasma_cost = 50
+
+/datum/action/xeno_action/onclick/queen_word/use_ability(atom/A)
+	var/mob/living/carbon/Xenomorph/Queen/X = owner
+	X.hive_message()
+
+/datum/action/xeno_action/onclick/queen_tacmap
+	name = "View Xeno Tacmap"
+	action_icon_state = "toggle_queen_zoom"
+	plasma_cost = 0
+
+/datum/action/xeno_action/onclick/queen_tacmap/use_ability(atom/A)
+	var/mob/living/carbon/Xenomorph/Queen/X = owner
+	X.xeno_tacmap()
+
 /datum/action/xeno_action/deevolve
 	name = "De-Evolve a Xenomorph"
 	action_icon_state = "xeno_deevolve"
@@ -284,11 +338,20 @@
 			to_chat(X, SPAN_XENOWARNING("[T] is too weak to be deevolved."))
 			return
 
-		if(!T.caste.deevolves_to)
+		if(length(T.caste.deevolves_to) < 1)
 			to_chat(X, SPAN_XENOWARNING("[T] can't be deevolved."))
 			return
 
-		var/newcaste = T.caste.deevolves_to
+		var/newcaste
+
+		if(length(T.caste.deevolves_to) == 1)
+			newcaste = T.caste.deevolves_to[1]
+		else if(length(T.caste.deevolves_to) > 1)
+			newcaste = tgui_input_list(X, "Choose a caste you want to de-evolve [T] to.", "De-evolve", T.caste.deevolves_to)
+
+		if(!newcaste)
+			return
+
 		if(newcaste == "Larva")
 			to_chat(X, SPAN_XENOWARNING("You cannot deevolve xenomorphs to larva."))
 			return
@@ -357,7 +420,8 @@
 
 		//Regenerate the new mob's name now that our player is inside
 		new_xeno.generate_name()
-
+		if(new_xeno.client)
+			new_xeno.set_lighting_alpha_from_prefs(new_xeno.client)
 		// If the player has self-deevolved before, don't allow them to do it again
 		if(!(/mob/living/carbon/Xenomorph/verb/Deevolve in T.verbs))
 			remove_verb(new_xeno, /mob/living/carbon/Xenomorph/verb/Deevolve)

@@ -1,5 +1,4 @@
 
-
 /obj/structure/reagent_dispensers
 	name = "dispenser"
 	desc = "..."
@@ -10,7 +9,7 @@
 	flags_atom = CAN_BE_SYRINGED
 
 	var/amount_per_transfer_from_this = 10
-	var/possible_transfer_amounts = list(5,10,20,30,40,50,60,100)
+	var/possible_transfer_amounts = list(5,10,20,30,40,50,60,100,200,300)
 	var/chemical = ""
 	var/dispensing = TRUE
 
@@ -134,6 +133,13 @@
 	icon_state = "pacidtank"
 	chemical = "pacid"
 
+/obj/structure/reagent_dispensers/ethanoltank
+	name = "ethanol tank"
+	desc = "An ethanol tank."
+	icon = 'icons/obj/objects.dmi'
+	icon_state = "ethanoltank"
+	chemical = "ethanol"
+
 /obj/structure/reagent_dispensers/fueltank
 	name = "fueltank"
 	desc = "A fueltank"
@@ -242,7 +248,7 @@
 
 		user.visible_message(SPAN_DANGER("[user] removes the shielding from [src]."),\
 		SPAN_NOTICE("You remove the shielding from [src]."))
-		new /obj/item/stack/sheet/metal(loc, STACK_5)
+		new /obj/item/stack/sheet/plasteel(loc, STACK_10)
 
 		reinforced = FALSE
 		update_icon()

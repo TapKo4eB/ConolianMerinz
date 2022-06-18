@@ -10,6 +10,8 @@
 #define COMSIG_GLOB_NEW_Z "!new_z"
 ///from base of datum/controller/subsystem/mapping/proc/add_new_zlevel(): (list/args)
 #define COMSIG_GLOB_VEHICLE_ORDERED "!vehicle_ordered"
+/// from /datum/controller/subsystem/ticker/fire
+#define COMSIG_GLOB_MODE_PREGAME_LOBBY "!mode_pregame_lobby"
 ///from /datum/game_mode/proc/pre_setup
 #define COMSIG_GLOB_MODE_PRESETUP "!mode_presetup"
 ///from /datum/game_mode/proc/post_setup
@@ -122,6 +124,11 @@
 #define COMSIG_MOB_DRAGGED "mob_dragged"
 /// From /mob/living/verb/resist()
 #define COMSIG_MOB_RESISTED "mob_resist"
+/// From /mob/living/verb/resist()
+#define COMSIG_MOB_RECALCULATE_CLIENT_COLOR "mob_recalc_client_color"
+
+/// From /obj/item/proc/unequipped()
+#define COMSIG_MOB_ITEM_UNEQUIPPED "mob_item_unequipped"
 
 /// For when a mob is devoured by a Xeno
 #define COMSIG_MOB_DEVOURED "mob_devoured"
@@ -136,12 +143,15 @@
 #define COMSIG_HUMAN_TAKE_DAMAGE "human_take_damage"
 	#define COMPONENT_BLOCK_DAMAGE (1<<0)
 
-#define COMSIG_ITEM_ATTEMPT_ATTACK "item_attempt_attack"
+#define COMSIG_ITEM_ATTACK "item_attack" //Triggered on the item.
+#define COMSIG_ITEM_ATTEMPT_ATTACK "item_attempt_attack" //Triggered on the target mob.
 	#define COMPONENT_CANCEL_ATTACK (1<<0)
 
 ///Called in /mob/reset_view(): (atom/A)
 #define COMSIG_MOB_RESET_VIEW "mob_reset_view"
 #define COMSIG_CLIENT_RESET_VIEW "client_reset_view"
+///called in /client/change_view()
+#define COMSIG_MOB_CHANGE_VIEW "mob_change_view"
 	#define COMPONENT_OVERRIDE_VIEW	(1<<0)
 
 #define COMSIG_MOB_POST_CLICK "mob_post_click"
@@ -250,6 +260,8 @@
 #define COMSIG_ITEM_DROPPED "item_drop"
 /// From base of /obj/item/proc/equipped(): (mob/user, slot)
 #define COMSIG_ITEM_EQUIPPED "item_equipped"
+/// From base of /obj/item/proc/unequipped(): (mob/user, slot)
+#define COMSIG_ITEM_UNEQUIPPED "item_unequipped"
 ///from /obj/item/proc/unwield
 #define COMSIG_ITEM_UNWIELD "item_unwield"
 /// From base of /obj/item/proc/attack_self(): (mob/user)
@@ -275,6 +287,9 @@
 
 #define COMSIG_CLIENT_MOB_MOVE	"client_mob_move"
 	#define COMPONENT_OVERRIDE_MOVE	(1<<0)
+
+#define COMSIG_MOB_MOVE_OR_LOOK "mob_move_or_look"
+	#define COMPONENT_OVERRIDE_MOB_MOVE_OR_LOOK (1<<0)
 
 #define COMSIG_MOVABLE_TURF_ENTER "movable_turf_enter"
 #define COMSIG_TURF_ENTER "turf_enter"
@@ -320,6 +335,8 @@
 #define COMSIG_MOB_SCREECH_ACT "mob_screech_act"
 	#define COMPONENT_SCREECH_ACT_CANCEL (1<<0)
 
+/// Called when a bullet hits a living mob on a sprite click (original target is final target)
+#define COMSIG_DIRECT_BULLET_HIT "direct_bullet_hit"
 // Bullet trait signals
 /// Called when a bullet hits a living mob
 #define COMSIG_BULLET_ACT_LIVING "bullet_act_living"
@@ -393,3 +410,29 @@
 #define COMSIG_MOB_DEAFENED "mob_deafened"
 //from /mob/proc/on_deafness_loss()
 #define COMSIG_MOB_REGAINED_HEARING "mob_regained_hearing"
+//from /mob/living/carbon/human/equip_to_slot()
+#define COMSIG_HUMAN_EQUIPPED_ITEM "human_equipped_item"
+
+///from /datum/component/bonus_damage_stack
+#define COMSIG_BONUS_DAMAGE "bonus_damage"
+
+/// from /datum/squad/proc/put_marine_in_squad
+#define COMSIG_SET_SQUAD "set_squad"
+
+// From obj/limb/proc/take_damage()
+// Sent after the limb has taken damage
+#define COMSIG_LIMB_TAKEN_DAMAGE "limb_taken_damage"
+
+// From /datum/surgery_step/tend_wounds/success()
+// Sent to command the limb's suture datum to add sutures, NOT when sutures are added.
+#define COMSIG_LIMB_ADD_SUTURES "limb_add_sutures"
+// Sent to check if the limb can be sutured.
+#define COMSIG_LIMB_SUTURE_CHECK "limb_suture_check"
+// Sent to remove all sutures.
+#define COMSIG_LIMB_REMOVE_SUTURES "limb_clear_sutures"
+
+
+// Used in resin_constructions.dm
+// Checks whether the xeno can build a thick structure regardless of hive weeds
+#define COMSIG_XENO_THICK_RESIN_BYPASS "xeno_thick_resin_bypass"
+	#define COMPONENT_THICK_BYPASS (1<<0)

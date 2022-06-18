@@ -72,7 +72,6 @@
 		var/datum/reagent/D = new path()
 		D.save_chemclass()
 		chemical_reagents_list[D.id] = D
-	chemical_data.initialize_saved_chem_data() //load and initialize chems that have been saved to DB
 
 	//Chemical Reactions - Initialises all /datum/chemical_reaction into a list
 	// It is filtered into multiple lists within a list.
@@ -177,7 +176,8 @@
 	var/datum/reagents/R = target.reagents
 	amount = min(min(amount, total_volume), R.maximum_volume - R.total_volume)
 	trans_to_datum(V, amount, reaction = FALSE)
-
+	if(isSynth(target))
+		return
 	to_chat(target, SPAN_NOTICE("You taste [pick(V.reagent_list)]."))
 
 	for(var/datum/reagent/RG in V.reagent_list) // If it can't be ingested, remove it.
@@ -293,7 +293,7 @@
 					total_matching_catalysts++
 
 				if(isliving(my_atom) && !C.mob_react) //Makes it so some chemical reactions don't occur in mobs
-					return
+					continue
 
 				if(!C.required_container)
 					matching_container = 1
@@ -565,6 +565,8 @@
 //////////////////////////////EXPLOSIONS AND FIRE//////////////////////////////
 
 /datum/reagents/proc/handle_volatiles()
+	if(isliving(my_atom))
+		return
 	var/turf/sourceturf = get_turf(my_atom)
 	//For explosion
 	var/ex_power = 0

@@ -296,8 +296,8 @@
 
 
 /obj/item/weapon/melee/twohanded/breacher
-	name = "Breach B5"
-	desc = "An extremely heavy tool, used to smash things. The top piece is specially designed to take down walls."
+	name = "\improper B5 Breaching Hammer"
+	desc = "This 100-pound monstrosity of a sledgehammer is made of solid tungsten carbide, and packs enough force in its swing to take down walls with ease. It can punch through steel and concrete, hit like a truck, and is utterly unusable by anyone who isn't superhuman."
 	icon = 'icons/obj/items/experimental_tools.dmi'
 	icon_state = "breacher"
 	item_state = "breacher"
@@ -307,44 +307,16 @@
 	flags_item = TWOHANDED
 	flags_equip_slot = SLOT_BACK
 
-/obj/item/weapon/melee/twohanded/breacher/afterattack(var/atom/A, var/mob/user, var/proximity)
-	if(!(flags_item & WIELDED))
-		return ..()
+	attack_verb = list("pulverized", "smashed", "thwacked", "crushed", "hammered", "wrecked")
 
-	if(!isSynth(user))
-		return ..()
-
-	if(istype(A, /turf/closed/wall))
-		var/turf/closed/wall/W = A
-		if(W.hull)
-			return ..()
-
-		var/time_to_destroy = 50
-		if(istype(W, /turf/closed/wall/r_wall))
-			time_to_destroy = 100
-
-		breach_action(W, user, time_to_destroy)
-
-		W.take_damage(W.damage_cap)
+/obj/item/weapon/melee/twohanded/breacher/pickup(mob/user)
+	if(!HAS_TRAIT(user, TRAIT_SUPER_STRONG))
+		to_chat(user, SPAN_WARNING("You barely manage to lift \the [src] above your knees. This thing will probably be useless to you."))
 		return
-
-	if(istype(A, /obj/structure/girder))
-		var/obj/structure/girder/G = A
-
-		breach_action(G, user, 30)
-
-		G.dismantle()
-		return
-
 	..()
 
-/obj/item/weapon/melee/twohanded/breacher/proc/breach_action(var/atom/A, var/mob/user, var/time_to_destroy)
-	if(user.action_busy || !user.Adjacent(A))
+/obj/item/weapon/melee/twohanded/breacher/attack(target as mob, mob/living/user as mob)
+	if(!HAS_TRAIT(user, TRAIT_SUPER_STRONG))
+		to_chat(user, SPAN_WARNING("\The [src] is too heavy for you to use as a weapon!"))
 		return
-
-	to_chat(user, SPAN_NOTICE("You start taking down the [A.name]."))
-	if(!do_after(user, time_to_destroy, INTERRUPT_ALL, BUSY_ICON_BUILD))
-		return
-
-	to_chat(user, SPAN_NOTICE("You tear down the [A.name]."))
-	playsound(user, 'sound/effects/woodhit.ogg', 40, 1)
+	..()

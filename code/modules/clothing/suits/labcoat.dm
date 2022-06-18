@@ -145,7 +145,7 @@
 	armor_laser = CLOTHING_ARMOR_LOW
 	armor_energy = CLOTHING_ARMOR_LOW
 	armor_bomb = CLOTHING_ARMOR_NONE
-	armor_bio = CLOTHING_ARMOR_NONE
+	armor_bio = CLOTHING_ARMOR_MEDIUM
 	armor_rad = CLOTHING_ARMOR_NONE
 	armor_internaldamage = CLOTHING_ARMOR_LOW
 	min_cold_protection_temperature = ICE_PLANET_min_cold_protection_temperature
@@ -156,6 +156,37 @@
 /obj/item/clothing/suit/storage/snow_suit/doctor
 	name = "doctor's snow suit"
 
+/obj/item/clothing/suit/storage/snow_suit/synth
+	name = "synthetic's snow suit"
+	desc = "A snow suit designed for keeping synthetic units within acceptable temperature ranges in extremely cold environments to prevent power supply inefficiency. Due to advancements made in synthetic insulation, they are not required for most cold environments."
+	armor_melee = CLOTHING_ARMOR_NONE //no free armour for synths
+	armor_bullet = CLOTHING_ARMOR_NONE
+	armor_laser = CLOTHING_ARMOR_NONE
+	armor_energy = CLOTHING_ARMOR_NONE
+	armor_bio = CLOTHING_ARMOR_NONE
+	armor_internaldamage = CLOTHING_ARMOR_NONE
+	allowed = list(
+		/obj/item/device/analyzer,
+		/obj/item/device/multitool,
+		/obj/item/device/pipe_painter,
+		/obj/item/device/t_scanner,
+		/obj/item/tool/screwdriver,
+		/obj/item/tool/weldingtool,
+		/obj/item/tool/wirecutters,
+		/obj/item/tool/wrench,
+		/obj/item/clothing/mask/gas,
+
+		/obj/item/device/flashlight,
+		/obj/item/device/healthanalyzer,
+		/obj/item/device/radio,
+		/obj/item/tank/emergency_oxygen,
+		/obj/item/tool/crowbar,
+		/obj/item/tool/pen,
+		/obj/item/device/binoculars,
+		/obj/item/tool/crew_monitor,
+		/obj/item/reagent_container/hypospray,
+	)
+
 /obj/item/clothing/suit/storage/snow_suit/survivor
 	name = "robust snow suit"
 	icon_state = "snowsuit" //needs new cool sprite
@@ -165,9 +196,10 @@
 	armor_laser = CLOTHING_ARMOR_LOW
 	armor_energy = CLOTHING_ARMOR_LOW
 	armor_bomb = CLOTHING_ARMOR_NONE
-	armor_bio = CLOTHING_ARMOR_LOW //<- this one is different
+	armor_bio = CLOTHING_ARMOR_MEDIUM 
 	armor_rad = CLOTHING_ARMOR_NONE
 	armor_internaldamage = CLOTHING_ARMOR_LOW
+	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_ARMS
 	allowed = list(/obj/item/weapon/gun,
 		/obj/item/tank/emergency_oxygen,
 		/obj/item/device/flashlight,
@@ -175,7 +207,7 @@
 		/obj/item/explosive/grenade,
 		/obj/item/device/binoculars,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/storage/large_holster/machete,
 		/obj/item/weapon/melee/baseballbat,
 		/obj/item/weapon/melee/baseballbat/metal,
@@ -228,7 +260,7 @@
 	armor_laser = CLOTHING_ARMOR_LOW
 	armor_energy = CLOTHING_ARMOR_LOW
 	armor_bomb = CLOTHING_ARMOR_NONE
-	armor_bio = CLOTHING_ARMOR_LOW
+	armor_bio = CLOTHING_ARMOR_MEDIUM
 	armor_rad = CLOTHING_ARMOR_NONE
 	armor_internaldamage = CLOTHING_ARMOR_LOW
 	min_cold_protection_temperature = ICE_PLANET_min_cold_protection_temperature
@@ -241,7 +273,7 @@
 		/obj/item/explosive/grenade,
 		/obj/item/device/binoculars,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/storage/large_holster/machete,
 		/obj/item/weapon/melee/baseballbat,
 		/obj/item/weapon/melee/baseballbat/metal,

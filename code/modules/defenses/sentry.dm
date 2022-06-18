@@ -17,6 +17,9 @@
 	var/immobile = FALSE //Used for prebuilt ones.
 	var/obj/item/ammo_magazine/ammo = new /obj/item/ammo_magazine/sentry
 	var/sentry_type = "sentry" //Used for the icon
+	display_additional_stats = TRUE
+
+	var/omni_directional = FALSE
 	var/sentry_range = SENTRY_RANGE
 
 	var/damage_mult = 1
@@ -62,6 +65,9 @@
 	return TRUE
 
 /obj/structure/machinery/defenses/sentry/proc/set_range()
+	if(omni_directional)
+		range_bounds = RECT(x, y, 8, 8)
+		return
 	switch(dir)
 		if(EAST)
 			range_bounds = RECT(x + 4, y, 7, 7)
@@ -91,12 +97,13 @@
 	else
 		overlays += "[defense_type] uac_[sentry_type]"
 
-/obj/structure/machinery/defenses/sentry/attack_hand(mob/user as mob)
+
+/obj/structure/machinery/defenses/sentry/attack_hand_checks(var/mob/user)
 	if(immobile)
 		to_chat(user, SPAN_WARNING("[src]'s panel is completely locked, you can't do anything."))
-		return
+		return FALSE
 
-	..()
+	return TRUE
 
 /obj/structure/machinery/defenses/sentry/examine(mob/user)
 	. = ..()
@@ -115,6 +122,7 @@
 	set_range()
 
 /obj/structure/machinery/defenses/sentry/power_off_action()
+	SetLuminosity(0)
 	visible_message("[icon2html(src, viewers(src))] [SPAN_NOTICE("The [name] powers down and goes silent.")]")
 	stop_processing()
 	unset_range()
@@ -209,13 +217,16 @@
 	if(QDELETED(owner_mob))
 		owner_mob = src
 
+	if(omni_directional)
+		setDir(get_dir(src, A))
+
 	actual_fire(A)
 
 	if(targets.len)
 		addtimer(CALLBACK(src, .proc/get_target), fire_delay)
 
 /obj/structure/machinery/defenses/sentry/proc/actual_fire(var/atom/A)
-	var/obj/item/projectile/P = new(create_cause_data(initial(name), owner_mob))
+	var/obj/item/projectile/P = new(src, create_cause_data(initial(name), owner_mob, src))
 	P.generate_bullet(new ammo.default_ammo)
 	P.damage *= damage_mult
 	P.accuracy *= accuracy_mult
@@ -223,10 +234,14 @@
 	P.fire_at(A, src, owner_mob, P.ammo.max_range, P.ammo.shell_speed, null, FALSE)
 	muzzle_flash(Get_Angle(get_turf(src), A))
 	ammo.current_rounds--
+	track_shot()
 	if(ammo.current_rounds == 0)
-		visible_message("[icon2html(src, viewers(src))] <span class='warning'>The [name] beeps steadily and its ammo light blinks red.</span>")
-		playsound(loc, 'sound/weapons/smg_empty_alarm.ogg', 25, 1)
-		update_icon()
+		handle_empty()
+
+/obj/structure/machinery/defenses/sentry/proc/handle_empty()
+	visible_message("[icon2html(src, viewers(src))] <span class='warning'>The [name] beeps steadily and its ammo light blinks red.</span>")
+	playsound(loc, 'sound/weapons/smg_empty_alarm.ogg', 25, 1)
+	update_icon()
 
 //Mostly taken from gun code.
 /obj/structure/machinery/defenses/sentry/proc/muzzle_flash(var/angle)
@@ -279,31 +294,32 @@
 			targets.Remove(A)
 			continue
 
-		var/opp
-		var/adj
-		switch(dir)
-			if(NORTH)
-				opp = x-A.x
-				adj = A.y-y
-			if(SOUTH)
-				opp = x-A.x
-				adj = y-A.y
-			if(EAST)
-				opp = y-A.y
-				adj = A.x-x
-			if(WEST)
-				opp = y-A.y
-				adj = x-A.x
+		if(!omni_directional)
+			var/opp
+			var/adj
+			switch(dir)
+				if(NORTH)
+					opp = x-A.x
+					adj = A.y-y
+				if(SOUTH)
+					opp = x-A.x
+					adj = y-A.y
+				if(EAST)
+					opp = y-A.y
+					adj = A.x-x
+				if(WEST)
+					opp = y-A.y
+					adj = x-A.x
 
-		var/r = 9999
-		if(adj != 0)
-			r = abs(opp/adj)
-		var/angledegree = arcsin(r/sqrt(1+(r*r)))
-		if(adj < 0 || (angledegree*2) > SENTRY_FIREANGLE)
-			if(A == target)
-				target = null
-			targets.Remove(A)
-			continue
+			var/r = 9999
+			if(adj != 0)
+				r = abs(opp/adj)
+			var/angledegree = arcsin(r/sqrt(1+(r*r)))
+			if(adj < 0 || (angledegree*2) > SENTRY_FIREANGLE)
+				if(A == target)
+					target = null
+				targets.Remove(A)
+				continue
 
 		var/list/turf/path = getline2(src, A, include_from_atom = FALSE)
 		if(!path.len || get_dist(src, A) > sentry_range)
@@ -323,7 +339,25 @@
 					blocked = TRUE
 					break
 
+			for(var/obj/vehicle/multitile/V in T)
+				blocked = TRUE
+				break
+
 			for(var/obj/effect/particle_effect/smoke/S in T)
+				blocked = TRUE
+				break
+
+		if(!omni_directional)
+			var/turf/F = get_step(src, src.dir)
+			if(F.density || F.opacity)
+				blocked = TRUE
+
+			for(var/obj/structure/S in F)
+				if(F.opacity)
+					blocked = TRUE
+					break
+
+			for(var/obj/vehicle/multitile/V in F)
 				blocked = TRUE
 				break
 
@@ -354,8 +388,16 @@
 	name = "UA-577 Gauss Turret"
 	immobile = TRUE
 	turned_on = TRUE
-	icon_state = "sentry_on"
+	icon_state = "premade" //for the map editor only
+	faction_group = FACTION_LIST_MARINE
 	static = TRUE
+
+/obj/structure/machinery/defenses/sentry/premade/examine(mob/user)
+	. = ..()
+	to_chat(user, SPAN_NOTICE("It seems this one's bolts have been securely welded into the floor, and the access panel locked. You can't interact with it."))
+
+/obj/structure/machinery/defenses/sentry/premade/attackby(var/obj/item/O, var/mob/user)
+	return
 
 /obj/structure/machinery/defenses/sentry/premade/power_on()
 	return
@@ -394,6 +436,7 @@ obj/structure/machinery/defenses/sentry/premade/damaged_action()
 //the turret inside the shuttle sentry deployment system
 /obj/structure/machinery/defenses/sentry/premade/dropship
 	density = TRUE
+	faction_group = FACTION_LIST_MARINE
 	var/obj/structure/dropship_equipment/sentry_holder/deployment_system
 
 /obj/structure/machinery/defenses/sentry/premade/dropship/Destroy()
@@ -407,7 +450,9 @@ obj/structure/machinery/defenses/sentry/premade/damaged_action()
 	name = "UA 725-D Sniper Sentry"
 	desc = "A fully-automated defence turret with long-range targeting capabilities. Armed with a modified M32-S Autocannon and an internal belt feed."
 	defense_type = "DMR"
-	fire_delay = 2.5 SECONDS
+	health = 150
+	health_max = 150
+	fire_delay = 2 SECONDS
 	ammo = new /obj/item/ammo_magazine/sentry
 	sentry_range = SENTRY_SNIPER_RANGE
 	accuracy_mult = 5
@@ -429,20 +474,65 @@ obj/structure/machinery/defenses/sentry/premade/damaged_action()
 /obj/structure/machinery/defenses/sentry/shotgun
 	name = "UA 12-G Shotgun Sentry"
 	defense_type = "Shotgun"
-	fire_delay = 2.5 SECONDS
-	sentry_range = 2
+	health = 250
+	health_max = 250
+	fire_delay = 2 SECONDS
+	sentry_range = 3
 	ammo = new /obj/item/ammo_magazine/sentry/shotgun
+
 	accuracy_mult = 2 // Misses a lot since shotgun ammo has low accuracy, this should ensure a lot of shots actually hit.
 	handheld_type = /obj/item/defenses/handheld/sentry/shotgun
+	disassemble_time = 1.5 SECONDS
+
+/obj/structure/machinery/defenses/sentry/shotgun/attack_alien(mob/living/carbon/Xenomorph/M)
+	. = ..()
+	if(. == XENO_ATTACK_ACTION && turned_on)
+		M.visible_message(SPAN_DANGER("The sentry's steel tusks cut into [M]!"),
+		SPAN_DANGER("The sentry's steel tusks cut into you!"), null, 5, CHAT_TYPE_XENO_COMBAT)
+		M.apply_damage(20)
+
+/obj/structure/machinery/defenses/sentry/shotgun/hitby(atom/movable/AM)
+	if(AM.throwing && turned_on)
+		if(ismob(AM))
+			var/mob/living/L = AM
+			L.apply_damage(20)
+			playsound(L, "bonk", 75, FALSE)
+			L.visible_message(SPAN_DANGER("The sentry's steel tusks impale [L]!"),
+			SPAN_DANGER("The sentry's steel tusks impale you!"))
+			if(L.mob_size <= MOB_SIZE_XENO_SMALL)
+				L.KnockDown(1)
 
 /obj/structure/machinery/defenses/sentry/mini
 	name = "UA 512-M mini sentry"
 	defense_type = "Mini"
 	fire_delay = 0.15 SECONDS
+	health = 150
+	health_max = 150
 	damage_mult = 0.4
 	density = FALSE
 	disassemble_time = 0.75 SECONDS
 	handheld_type = /obj/item/defenses/handheld/sentry/mini
+	composite_icon = FALSE
+
+/obj/structure/machinery/defenses/sentry/launchable
+	name = "\improper UA 571-O sentry post"
+	desc = "A deployable, omni-directional automated turret with AI targeting capabilities. Armed with an M30 Autocannon and a 1500-round drum magazine.  Due to the deployment method it is incapable of being moved."
+	ammo = new /obj/item/ammo_magazine/sentry/dropped
+	faction_group = FACTION_LIST_MARINE
+	luminosity = 5
+	omni_directional = TRUE
+	immobile = TRUE
+	static = TRUE
+
+/obj/structure/machinery/defenses/sentry/launchable/attack_hand_checks(var/mob/user)
+	return TRUE // We want to be able to turn it on / off while keeping it immobile
+
+/obj/structure/machinery/defenses/sentry/launchable/handle_empty()
+	visible_message("[icon2html(src, viewers(src))] <span class='warning'>The [name] beeps steadily and its ammo light blinks red. It rapidly deconstructs itself!</span>")
+	playsound(loc, 'sound/weapons/smg_empty_alarm.ogg', 25, 1)
+	new /obj/item/stack/sheet/metal/medium_stack(loc)
+	new /obj/item/stack/sheet/plasteel/medium_stack(loc)
+	qdel(src)
 
 #undef SENTRY_FIREANGLE
 #undef SENTRY_RANGE

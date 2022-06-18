@@ -17,8 +17,8 @@
 	objectives = "Secure the Corporate Liaison and the [MAIN_SHIP_NAME] Captain, and eliminate any hostile threats. Do not damage Wey-Yu property."
 
 
-/datum/emergency_call/pmc/create_member(datum/mind/M)
-	var/turf/spawn_loc = get_spawn_point()
+/datum/emergency_call/pmc/create_member(datum/mind/M, var/turf/override_spawn_loc)
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
 	if(!istype(spawn_loc))
 		return //Didn't find a useable spawn point.
@@ -29,22 +29,22 @@
 	if(!leader)       //First one spawned is always the leader.
 		leader = mob
 		to_chat(mob, SPAN_ROLE_HEADER("You are a Weyland-Yutani squad leader!"))
-		arm_equipment(mob, "Weyland-Yutani PMC (Leader)", TRUE, TRUE)
+		arm_equipment(mob, /datum/equipment_preset/pmc/pmc_leader, TRUE, TRUE)
 	else if(medics < max_medics)
 		medics++
 		to_chat(mob, SPAN_ROLE_HEADER("You are a Weyland-Yutani medic!"))
-		arm_equipment(mob, "Weyland-Yutani PMC (Medic)", TRUE, TRUE)
+		arm_equipment(mob, /datum/equipment_preset/pmc/pmc_medic, TRUE, TRUE)
 	else if(heavies < max_heavies*ERT_PMC_GUNNER_FRACTION)
 		heavies++
 		to_chat(mob, SPAN_ROLE_HEADER("You are a Weyland-Yutani heavy gunner!"))
-		arm_equipment(mob, "Weyland-Yutani PMC (Gunner)", TRUE, TRUE)
+		arm_equipment(mob, /datum/equipment_preset/pmc/pmc_gunner, TRUE, TRUE)
 	else if(heavies < max_heavies)
 		heavies++
 		to_chat(mob, SPAN_ROLE_HEADER("You are a Weyland-Yutani sniper!"))
-		arm_equipment(mob, "Weyland-Yutani PMC (Sniper)", TRUE, TRUE)
+		arm_equipment(mob, /datum/equipment_preset/pmc/pmc_sniper, TRUE, TRUE)
 	else
 		to_chat(mob, SPAN_ROLE_HEADER("You are a Weyland-Yutani mercenary!"))
-		arm_equipment(mob, "Weyland-Yutani PMC (Standard)", TRUE, TRUE)
+		arm_equipment(mob, /datum/equipment_preset/pmc/pmc_standard, TRUE, TRUE)
 
 	print_backstory(mob)
 
@@ -96,8 +96,8 @@
 	objectives += "Assume at least 30 units are located within the department. If they can not make more that should be all. Cooperate with the onboard CL to ensure all who know the complete recipe are kept silenced with a contract of confidentiality. All humans who have ingested the chemical must be brought back dead or alive. Viral scan is required for any humans who is suspected of ingestion. Full termination of the department is authorized if they do not cooperate, but this should be avoided UNLESS ABSOLUTELY NECESSARY. Assisting with [MAIN_SHIP_NAME] current operation is only allowed after successful retrieval and with a signed contract between the CL and acting commander of [MAIN_SHIP_NAME]."
 	checked_objective = TRUE
 
-/datum/emergency_call/pmc/chem_retrieval/create_member(datum/mind/M)
-	var/turf/spawn_loc = get_spawn_point()
+/datum/emergency_call/pmc/chem_retrieval/create_member(datum/mind/M, var/turf/override_spawn_loc)
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
 	if(!istype(spawn_loc))
 		return //Didn't find a useable spawn point.
@@ -113,18 +113,18 @@
 	if(!leader)       //First one spawned is always the leader.
 		leader = H
 		to_chat(H, SPAN_ROLE_HEADER("You are a Weyland-Yutani squad leader!"))
-		arm_equipment(H, "Weyland-Yutani PMC (Lead Investigator)", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/pmc_lead_investigator, TRUE, TRUE)
 	else if(medics < max_medics)
 		medics++
 		to_chat(H, SPAN_ROLE_HEADER("You are a Weyland-Yutani medical investigator!"))
-		arm_equipment(H, "Weyland-Yutani PMC (Medical Investigator)", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/pmc_med_investigator, TRUE, TRUE)
 	else if(heavies < max_heavies)
 		heavies++
 		to_chat(H, SPAN_ROLE_HEADER("You are a Weyland-Yutani heavy gunner!"))
-		arm_equipment(H, "Weyland-Yutani PMC (Gunner)", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/pmc_gunner, TRUE, TRUE)
 	else
 		to_chat(H, SPAN_ROLE_HEADER("You are a Weyland-Yutani detainer!"))
-		arm_equipment(H, "Weyland-Yutani PMC (Detainer)", TRUE, TRUE)
+		arm_equipment(H, /datum/equipment_preset/pmc/pmc_detainer, TRUE, TRUE)
 
 	print_backstory(H)
 

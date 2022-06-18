@@ -1,23 +1,17 @@
 //DEFINITIONS FOR ASSET DATUMS START HERE.
 
-/datum/asset/simple/tgui_common
-	keep_local_name = TRUE
-	assets = list(
-		"tgui-common.bundle.js" = 'tgui/public/tgui-common.bundle.js',
-	)
-
 /datum/asset/simple/tgui
 	keep_local_name = TRUE
 	assets = list(
-		"tgui.bundle.js" = 'tgui/public/tgui.bundle.js',
-		"tgui.bundle.css" = 'tgui/public/tgui.bundle.css',
+		"tgui.bundle.js" = file("tgui/public/tgui.bundle.js"),
+		"tgui.bundle.css" = file("tgui/public/tgui.bundle.css"),
 	)
 
 /datum/asset/simple/tgui_panel
 	keep_local_name = TRUE
 	assets = list(
-		"tgui-panel.bundle.js" = 'tgui/public/tgui-panel.bundle.js',
-		"tgui-panel.bundle.css" = 'tgui/public/tgui-panel.bundle.css',
+		"tgui-panel.bundle.js" = file("tgui/public/tgui-panel.bundle.js"),
+		"tgui-panel.bundle.css" = file("tgui/public/tgui-panel.bundle.css"),
 	)
 
 /datum/asset/simple/fontawesome
@@ -27,27 +21,8 @@
 		"fa-regular-400.woff" = 'html/font-awesome/webfonts/fa-regular-400.woff',
 		"fa-solid-900.eot"    = 'html/font-awesome/webfonts/fa-solid-900.eot',
 		"fa-solid-900.woff"   = 'html/font-awesome/webfonts/fa-solid-900.woff',
-		"font-awesome.css" = 'html/font-awesome/css/all.min.css'
-	)
-
-/datum/asset/simple/changelog
-	keep_local_name = TRUE
-	assets = list(
-		"88x31.png" = 'html/88x31.png',
-		"bug-minus.png" = 'html/bug-minus.png',
-		"cross-circle.png" = 'html/cross-circle.png',
-		"hard-hat-exclamation.png" = 'html/hard-hat-exclamation.png',
-		"image-minus.png" = 'html/image-minus.png',
-		"image-plus.png" = 'html/image-plus.png',
-		"music-minus.png" = 'html/music-minus.png',
-		"music-plus.png" = 'html/music-plus.png',
-		"tick-circle.png" = 'html/tick-circle.png',
-		"wrench-screwdriver.png" = 'html/wrench-screwdriver.png',
-		"spell-check.png" = 'html/spell-check.png',
-		"burn-exclamation.png" = 'html/burn-exclamation.png',
-		"chevron.png" = 'html/chevron.png',
-		"chevron-expand.png" = 'html/chevron-expand.png',
-		"changelog.css" = 'html/changelog.css'
+		"font-awesome.css" = 'html/font-awesome/css/all.min.css',
+		"v4shim.css" = 'html/font-awesome/css/v4-shims.min.css',
 	)
 
 /datum/asset/simple/common
@@ -203,6 +178,73 @@
 				else
 					icon_states_string += ", [json_encode(an_icon_state)](\ref[an_icon_state])"
 			stack_trace("[RC] does not have a valid icon state, icon=[icon_file], icon_state=[json_encode(icon_state)](\ref[icon_state]), icon_states=[icon_states_string]")
+			icon_file = 'icons/turf/floors/floors.dmi'
+			icon_state = ""
+
+		var/icon/iconNormal = icon(icon_file, icon_state, SOUTH)
+		Insert(icon_name, iconNormal)
+
+		var/icon/iconBig = icon(icon_file, icon_state, SOUTH)
+		iconBig.Scale(iconNormal.Width()*2, iconNormal.Height()*2)
+		Insert("[icon_name]_big", iconBig)
+	return ..()
+
+
+/datum/asset/spritesheet/choose_mark
+	name = "choosemark"
+
+/datum/asset/spritesheet/choose_mark/register()
+	for (var/k in GLOB.resin_mark_meanings)
+		var/datum/xeno_mark_define/RC = k
+
+		var/icon_file = 'icons/mob/hud/xeno_markers.dmi'
+		var/icon_state = initial(RC.icon_state)
+		var/icon_name = icon_state
+
+		if (sprites[icon_name])
+			continue
+
+		var/icon_states_list = icon_states(icon_file)
+		if(!(icon_state in icon_states_list))
+			var/icon_states_string
+			for (var/an_icon_state in icon_states_list)
+				if (!icon_states_string)
+					icon_states_string = "[json_encode(an_icon_state)](\ref[an_icon_state])"
+				else
+					icon_states_string += ", [json_encode(an_icon_state)](\ref[an_icon_state])"
+			stack_trace("[RC] does not have a valid icon state, icon=[icon_file], icon_state=[json_encode(icon_state)](\ref[icon_state]), icon_states=[icon_states_string]")
+			icon_file = 'icons/turf/floors/floors.dmi'
+			icon_state = ""
+
+		var/icon/iconNormal = icon(icon_file, icon_state, SOUTH)
+		Insert(icon_name, iconNormal)
+
+		var/icon/iconBig = icon(icon_file, icon_state, SOUTH)
+		iconBig.Scale(iconNormal.Width()*2, iconNormal.Height()*2)
+		Insert("[icon_name]_big", iconBig)
+	return ..()
+
+/datum/asset/spritesheet/choose_fruit
+	name = "choosefruit"
+
+/datum/asset/spritesheet/choose_fruit/register()
+	var/icon_file = 'icons/mob/hostiles/fruits.dmi'
+	var/icon_states_list = icon_states(icon_file)
+	for(var/obj/effect/alien/resin/fruit/fruit as anything in typesof(/obj/effect/alien/resin/fruit))
+		var/icon_state = initial(fruit.mature_icon_state)
+		var/icon_name = replacetext(icon_state, " ", "-")
+
+		if (sprites[icon_name])
+			continue
+
+		if(!(icon_state in icon_states_list))
+			var/icon_states_string
+			for (var/an_icon_state in icon_states_list)
+				if (!icon_states_string)
+					icon_states_string = "[json_encode(an_icon_state)](\ref[an_icon_state])"
+				else
+					icon_states_string += ", [json_encode(an_icon_state)](\ref[an_icon_state])"
+			stack_trace("[fruit] does not have a valid icon state, icon=[icon_file], icon_state=[json_encode(icon_state)](\ref[icon_state]), icon_states=[icon_states_string]")
 			icon_file = 'icons/turf/floors/floors.dmi'
 			icon_state = ""
 

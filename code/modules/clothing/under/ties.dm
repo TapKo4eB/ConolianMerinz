@@ -20,6 +20,7 @@
 /obj/item/clothing/accessory/Initialize()
 	. = ..()
 	inv_overlay = image("icon" = 'icons/obj/items/clothing/ties_overlay.dmi', "icon_state" = "[item_state? "[item_state]" : "[icon_state]"]")
+	flags_atom |= USES_HEARING
 
 /obj/item/clothing/accessory/Destroy()
 	if(has_suit)
@@ -244,6 +245,7 @@
 /obj/item/clothing/accessory/medal/bronze/conduct
 	name = "distinguished conduct medal"
 	desc = "A bronze medal awarded for distinguished conduct. Whilst a great honor, this is the most basic award given by the USCM"
+	icon_state = "bronze_b"
 
 /obj/item/clothing/accessory/medal/bronze/heart
 	name = "bronze heart medal"
@@ -257,7 +259,7 @@
 /obj/item/clothing/accessory/medal/silver
 	name = "silver medal"
 	desc = "A silver medal."
-	icon_state = "silver"
+	icon_state = "silver_b"
 
 /obj/item/clothing/accessory/medal/silver/valor
 	name = "medal of valor"
@@ -270,7 +272,7 @@
 /obj/item/clothing/accessory/medal/gold
 	name = "gold medal"
 	desc = "A prestigious golden medal."
-	icon_state = "gold"
+	icon_state = "gold_b"
 
 /obj/item/clothing/accessory/medal/gold/captain
 	name = "medal of captaincy"
@@ -283,24 +285,25 @@
 /obj/item/clothing/accessory/medal/platinum
 	name = "platinum medal"
 	desc = "A very prestigious platinum medal, only able to be handed out by admirals due to special circumstances."
-	icon_state = "platinum"
+	icon_state = "platinum_b"
 
 /obj/item/clothing/accessory/medal/bronze/service
 	name = "bronze service medal"
 	desc = "A bronze medal awarded for a marine's service within the USCM. It is a very common medal, and is typically the first medal a marine would receive."
+	icon_state = "bronze"
 
 /obj/item/clothing/accessory/medal/silver/service
 	name = "silver service medal"
 	desc = "A shiny silver medal awarded for a marine's service within the USCM. It is a somewhat common medal which signifies the amount of time a marine has spent in the line of duty."
-
+	icon_state = "silver"
 /obj/item/clothing/accessory/medal/gold/service
 	name = "gold service medal"
 	desc = "A prestigious gold medal awarded for a marine's service within the USCM. It is a rare medal which signifies the amount of time a marine has spent in the line of duty."
-
+	icon_state = "gold"
 /obj/item/clothing/accessory/medal/platinum/service
 	name = "platinum service medal"
 	desc = "The highest service medal that can be awarded to a marine; such medals are hand-given by USCM Admirals to a marine. It signifies the sheer amount of time a marine has spent in the line of duty."
-
+	icon_state = "platinum"
 //Armbands
 /obj/item/clothing/accessory/armband
 	name = "red armband"
@@ -365,30 +368,28 @@
 	. = ..()
 
 //subtypes can override this to specify what can be holstered
-/obj/item/clothing/accessory/holster/proc/can_holster(obj/item/weapon/gun/W)
-	if(!istype(W))
-		return 0 //Only for guns
-	if(W.w_class <= SIZE_MEDIUM) return 1
-	return 0
+/obj/item/clothing/accessory/holster/proc/can_holster(obj/item/I, mob/user)
+	if(!isgun(I) && !isbanana(I))
+		to_chat(user, SPAN_DANGER("Only guns can be holstered!"))
+		return FALSE
+	if(I.w_class > SIZE_MEDIUM)
+		to_chat(user, SPAN_DANGER("\The [I] won't fit in \the [src]!"))
+		return FALSE
+	return TRUE
 
-/obj/item/clothing/accessory/holster/proc/holster(obj/item/I, mob/user as mob)
+/obj/item/clothing/accessory/holster/proc/holster(obj/item/I, mob/user)
 	if(holstered)
 		to_chat(user, SPAN_DANGER("There is already a [holstered] holstered here!"))
 		return
 
-	if (!isgun(I))
-		to_chat(user, SPAN_DANGER("Only guns can be holstered!"))
-		return
-
 	var/obj/item/weapon/gun/W = I
-	if (!can_holster(W))
-		to_chat(user, SPAN_DANGER("This [W] won't fit in the [src]!"))
+	if(!can_holster(W, user))
 		return
 
 	holstered = W
 	user.drop_inv_item_to_loc(holstered, src)
 	holstered.add_fingerprint(user)
-	user.visible_message(SPAN_NOTICE("[user] holsters the [holstered]."), "You holster the [holstered].")
+	user.visible_message(SPAN_NOTICE("[user] holsters \the [holstered]."), "You holster \the [holstered].")
 
 /obj/item/clothing/accessory/holster/proc/unholster(mob/user as mob)
 	if(!holstered)
@@ -534,6 +535,12 @@
 	icon_state = "webbing"
 	hold = /obj/item/storage/internal/accessory/webbing
 
+/obj/item/clothing/accessory/storage/webbing/five_slots
+	hold = /obj/item/storage/internal/accessory/webbing/five_slots
+
+/obj/item/storage/internal/accessory/webbing/five_slots
+	storage_slots = 5
+
 /obj/item/storage/internal/accessory/black_vest
 	storage_slots = 5
 
@@ -544,7 +551,7 @@
 	hold = /obj/item/storage/internal/accessory/black_vest
 
 /obj/item/clothing/accessory/storage/black_vest/attackby(obj/item/W, mob/living/user)
-	if(HAS_TRAIT(W, TRAIT_TOOL_SCREWDRIVER) && skillcheck(user, SKILL_RESEARCH, SKILL_RESEARCH_TRAINED))
+	if(HAS_TRAIT(W, TRAIT_TOOL_WIRECUTTERS) && skillcheck(user, SKILL_RESEARCH, SKILL_RESEARCH_TRAINED))
 		var/components = 0
 		var/obj/item/reagent_container/glass/beaker/vial
 		var/obj/item/cell/battery
@@ -581,13 +588,67 @@
 	desc = "Worn brownish synthcotton vest with lots of pockets to unload your hands."
 	icon_state = "vest_brown"
 
+/obj/item/clothing/accessory/storage/black_vest/waistcoat
+	name = "tactical waistcoat"
+	desc = "A stylish black waistcoat with plenty of discreet pouches, to be both utilitarian and fashionable without compromising looks."
+	icon_state = "waistcoat"
+
+/obj/item/clothing/accessory/storage/black_vest/tool_webbing
+	hold = /obj/item/storage/internal/accessory/black_vest/tool_webbing
+
+/obj/item/storage/internal/accessory/black_vest/tool_webbing
+	storage_slots = 7
+
+/obj/item/storage/internal/accessory/black_vest/tool_webbing/fill_preset_inventory()
+	new /obj/item/tool/screwdriver(src)
+	new /obj/item/tool/wrench(src)
+	new /obj/item/tool/weldingtool(src)
+	new /obj/item/tool/crowbar(src)
+	new /obj/item/tool/wirecutters(src)
+	new /obj/item/stack/cable_coil(src)
+	new /obj/item/device/multitool(src)
+
 /obj/item/storage/internal/accessory/surg_vest
-	storage_slots = 12
+	storage_slots = 13
 	can_hold = list(
 		/obj/item/tool/surgery,
 		/obj/item/stack/medical/advanced/bruise_pack,
 		/obj/item/stack/nanopaste
 	)
+
+/obj/item/storage/internal/accessory/surg_vest/attackby(obj/item/W, mob/user)
+	if(istype(W, /obj/item/storage/surgical_tray))
+		var/obj/item/storage/surgical_tray/ST = W
+		if(!length(ST.contents))
+			return
+		if(length(contents) >= storage_slots)
+			to_chat(user, SPAN_WARNING("The surgical webbing vest is already full."))
+			return
+		if(!do_after(user, 5 SECONDS * user.get_skill_duration_multiplier(SKILL_MEDICAL), INTERRUPT_ALL, BUSY_ICON_GENERIC))
+			return
+		for(var/obj/item/I in ST)
+			if(length(contents) >= storage_slots)
+				break
+			ST.remove_from_storage(I)
+			attempt_item_insertion(I, TRUE, user)
+		user.visible_message("[user] transfers the tools from \the [ST] to the surgical webbing vest.", SPAN_NOTICE("You transfer the tools from \the [ST] to the surgical webbing vest."), max_distance = 3)
+		return
+	return ..()
+
+/obj/item/storage/internal/accessory/surg_vest/equipped/fill_preset_inventory()
+	new /obj/item/tool/surgery/scalpel/pict_system(src)
+	new /obj/item/tool/surgery/scalpel(src)
+	new /obj/item/tool/surgery/hemostat(src)
+	new /obj/item/tool/surgery/retractor(src)
+	new /obj/item/stack/medical/advanced/bruise_pack(src)
+	new /obj/item/tool/surgery/cautery(src)
+	new /obj/item/tool/surgery/circular_saw(src)
+	new /obj/item/tool/surgery/surgicaldrill(src)
+	new /obj/item/tool/surgery/bonegel(src)
+	new /obj/item/tool/surgery/bonesetter(src)
+	new /obj/item/tool/surgery/FixOVein(src)
+	new /obj/item/stack/nanopaste(src)
+	new /obj/item/tool/surgery/surgical_line(src)
 
 /obj/item/clothing/accessory/storage/surg_vest
 	name = "surgical webbing vest"
@@ -595,33 +656,148 @@
 	icon_state = "vest_surg"
 	hold = /obj/item/storage/internal/accessory/surg_vest
 
+/obj/item/clothing/accessory/storage/surg_vest/equipped
+	hold = /obj/item/storage/internal/accessory/surg_vest/equipped
+
+/obj/item/clothing/accessory/storage/knifeharness
+	name = "M272 pattern knife vest"
+	desc = "An older generation M272 pattern knife vest once employed by the USCM. Can hold up to 5 knives. It is made of synthcotton."
+	icon_state = "vest_knives"
+	hold = /obj/item/storage/internal/accessory/knifeharness
 
 /obj/item/storage/internal/accessory/knifeharness
-	storage_slots = 2
-	max_storage_space = 4
+	storage_slots = 5
+	max_storage_space = 5
 	can_hold = list(
-		/obj/item/weapon/melee/unathiknife,
 		/obj/item/tool/kitchen/utensil/knife,
 		/obj/item/tool/kitchen/utensil/pknife,
 		/obj/item/tool/kitchen/knife,
+		/obj/item/attachable/bayonet,
+		/obj/item/weapon/melee/throwing_knife,
 	)
 
-/obj/item/storage/internal/accessory/knifeharness/Initialize(mapload, obj/item/MI)
-	. = ..()
-	new /obj/item/weapon/melee/unathiknife(src)
-	new /obj/item/weapon/melee/unathiknife(src)
-
-/obj/item/clothing/accessory/storage/knifeharness
+/obj/item/clothing/accessory/storage/knifeharness/duelling
 	name = "decorated harness"
 	desc = "A heavily decorated harness of sinew and leather with two knife-loops."
 	icon_state = "unathiharness2"
-	hold = /obj/item/storage/internal/accessory/knifeharness
+	hold = /obj/item/storage/internal/accessory/knifeharness/duelling
 
+obj/item/storage/internal/accessory/knifeharness/duelling
+	storage_slots = 2
+	max_storage_space = 2
+	can_hold = list(
+		/obj/item/weapon/melee/unathiknife,
+	)
 
+/obj/item/storage/internal/accessory/knifeharness/duelling/fill_preset_inventory()
+	new /obj/item/weapon/melee/unathiknife(src)
+	new /obj/item/weapon/melee/unathiknife(src)
 
+/obj/item/clothing/accessory/storage/droppouch
+	name = "drop pouch"
+	desc = "A convenient pouch to carry loose items around."
+	icon_state = "drop_pouch"
 
+	hold = /obj/item/storage/internal/accessory/drop_pouch
 
+/obj/item/storage/internal/accessory/drop_pouch
+	w_class = SIZE_LARGE	//Allow storage containers that's medium or below
+	storage_slots = null
+	max_w_class = SIZE_MEDIUM
+	max_storage_space = 6	//weight system like backpacks, hold enough for 2 medium (normal) size items, or 3 small items, or 6 tiny items
+	cant_hold = list(	//Prevent inventory powergame
+		/obj/item/storage/firstaid,
+		/obj/item/storage/bible,
+		)
+	storage_flags = NONE	//no verb, no quick draw, no tile gathering
 
+/obj/item/clothing/accessory/storage/holster
+	name = "shoulder holster"
+	desc = "A handgun holster with an attached pouch, allowing two magazines or speedloaders to be stored along with it."
+	icon_state = "holster"
+	slot = ACCESSORY_SLOT_UTILITY
+	high_visibility = TRUE
+	hold = /obj/item/storage/internal/accessory/holster
+
+/obj/item/storage/internal/accessory/holster
+	w_class = SIZE_LARGE
+	max_w_class = SIZE_MEDIUM
+	var/obj/item/weapon/gun/current_gun
+	var/sheatheSound = 'sound/weapons/gun_pistol_sheathe.ogg'
+	var/drawSound = 'sound/weapons/gun_pistol_draw.ogg'
+	storage_flags = STORAGE_ALLOW_QUICKDRAW|STORAGE_FLAGS_POUCH
+	can_hold = list(
+		/obj/item/weapon/gun/pistol,
+		/obj/item/ammo_magazine/pistol,
+		/obj/item/ammo_magazine/pistol/heavy,
+		/obj/item/ammo_magazine/pistol/heavy/super,
+		/obj/item/ammo_magazine/pistol/heavy/super/highimpact,
+		/obj/item/weapon/gun/revolver/m44,
+		/obj/item/ammo_magazine/revolver,
+		/obj/item/weapon/gun/pistol/smart,
+		/obj/item/ammo_magazine/pistol/smart,
+		/obj/item/weapon/gun/energy/taser,
+		/obj/item/weapon/gun/flare
+	)
+
+/obj/item/storage/internal/accessory/holster/on_stored_atom_del(atom/movable/AM)
+	if(AM == current_gun)
+		current_gun = null
+
+/obj/item/clothing/accessory/storage/holster/attack_hand(mob/user, mods)
+	var/obj/item/storage/internal/accessory/holster/H = hold
+	if(H.current_gun && ishuman(user) && (loc == user || has_suit))
+		if(mods && mods["alt"] && length(H.contents) > 1) //Withdraw the most recently inserted magazine, if possible.
+			var/obj/item/I = H.contents[length(H.contents)]
+			if(isgun(I))
+				I = H.contents[length(H.contents) - 1]
+			I.attack_hand(user)
+		else
+			H.current_gun.attack_hand(user)
+		return
+
+	..()
+
+/obj/item/storage/internal/accessory/holster/can_be_inserted(obj/item/W, stop_messages)
+	if( ..() ) //If the parent did their thing, this should be fine. It pretty much handles all the checks.
+		if(isgun(W))
+			if(current_gun)
+				if(!stop_messages)
+					to_chat(usr, SPAN_WARNING("[src] already holds a gun."))
+				return
+		else //Must be ammo.
+			var/ammo_slots = storage_slots - 1 //We have a slot reserved for the gun
+			var/ammo_stored = length(contents)
+			if(current_gun)
+				ammo_stored -= 1
+			if(ammo_stored >= ammo_slots)
+				if(!stop_messages)
+					to_chat(usr, SPAN_WARNING("[src] can't hold any more magazines."))
+				return
+		return 1
+
+/obj/item/storage/internal/accessory/holster/_item_insertion(obj/item/W)
+	if(isgun(W))
+		current_gun = W //If there's no active gun, we want to make this our gun
+		playsound(src, sheatheSound, 15, TRUE)
+	. = ..()
+
+/obj/item/storage/internal/accessory/holster/_item_removal(obj/item/W)
+	if(isgun(W))
+		current_gun = null
+		playsound(src, drawSound, 15, TRUE)
+	. = ..()
+
+/obj/item/clothing/accessory/storage/holster/armpit
+	name = "shoulder holster"
+	desc = "A worn-out handgun holster. Perfect for concealed carry"
+	icon_state = "holster"
+
+/obj/item/clothing/accessory/storage/holster/waist
+	name = "shoulder holster"
+	desc = "A handgun holster. Made of expensive leather."
+	icon_state = "holster"
+	item_state = "holster_low"
 
 /*
 	Holobadges are worn on the belt or neck, and can be used to show that the holder is an authorized

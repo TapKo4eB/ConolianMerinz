@@ -90,12 +90,14 @@ However, this might break the tacmap. This entire system might be replaced by Sl
 	icon_state = "landingzone_1"
 	weather_enabled = FALSE
 	unlimited_power = 1 //So the DS computer always works for the Queen
+	is_landing_zone = TRUE
 
 /area/strata/ag/exterior/landingzone_2
 	name = "Landing Zone 2 Pad - Ice Fields"
 	icon_state = "landingzone_2"
 	weather_enabled = FALSE
 	unlimited_power = 1 //So the DS computer always works for the Queen
+	is_landing_zone = TRUE
 
 /area/strata/ag/interior/nearlz1
 	name = "Landing Zone 1 - Mining Aerodrome"
@@ -127,18 +129,6 @@ However, this might break the tacmap. This entire system might be replaced by Sl
 	name = "Outpost Decks"
 	icon_state = "rdecks"
 	is_resin_allowed = TRUE
-
-/area/strata/ag/exterior/research_decks/north
-	name = "North Outpost Decks"
-
-/area/strata/ag/exterior/research_decks/south
-	name = "South Outpost Decks"
-
-/area/strata/ag/exterior/research_decks/east
-	name = "East Outpost Decks"
-
-/area/strata/ag/exterior/research_decks/west
-	name = "West Outpost Decks"
 
 /area/strata/ag/exterior/research_decks/center //The decks on the deck.
 	name = "Seconday Outpost Decks"
@@ -387,17 +377,8 @@ However, this might break the tacmap. This entire system might be replaced by Sl
 	name = "Ice Path"
 	icon_state = "path"
 
-/area/strata/ag/exterior/paths/northadmin
-	name = "North Of Flight Control"
-
-/area/strata/ag/exterior/paths/eastadmin
-	name = "East Of Flight Control"
-
-/area/strata/ag/exterior/paths/southadmin
-	name = "South Of Flight Control"
-
-/area/strata/ag/exterior/paths/westadmin
-	name = "West Of Flight Control"
+/area/strata/ag/exterior/paths/adminext
+	name = "Flight Control Exterior"
 
 /area/strata/ag/exterior/paths/dorms_quad //The area between the deck.
 	name = "Mining Dormitories Quad"

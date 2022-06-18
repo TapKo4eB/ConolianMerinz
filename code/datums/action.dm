@@ -2,6 +2,7 @@
 /datum/action
 	var/name = "Generic Action"
 	var/action_icon_state
+	var/button_icon_state
 	var/obj/target = null
 	var/obj/screen/action_button/button = null
 	var/mob/owner
@@ -24,11 +25,9 @@
 		button.overlays += IMG
 	button.source_action = src
 	button.name = name
-
-	if(override_icon_state)
-		button.overlays += image('icons/mob/hud/actions.dmi', button, override_icon_state)
-	else if(action_icon_state)
-		button.overlays += image('icons/mob/hud/actions.dmi', button, action_icon_state)
+	if(button_icon_state)
+		button.icon_state = button_icon_state
+	button.overlays += image('icons/mob/hud/actions.dmi', button, override_icon_state || action_icon_state)
 
 /datum/action/Destroy()
 	if(owner)
@@ -103,7 +102,7 @@
 /datum/action/proc/remove_from(mob/L)
 	SHOULD_CALL_PARENT(TRUE)
 	SEND_SIGNAL(src, COMSIG_ACTION_REMOVED, L)
-	L.actions.Remove(src)
+	L.actions?.Remove(src)
 	if(L.client)
 		L.client.screen -= button
 	owner = null
@@ -171,11 +170,10 @@
 
 /datum/action/item_action/update_button_icon()
 	button.overlays.Cut()
-	var/obj/item/I = target
-	var/old = I.layer
-	I.layer = FLOAT_LAYER
-	button.overlays += I
-	I.layer = old
+	var/mutable_appearance/item_appearance = mutable_appearance(target.icon, target.icon_state, plane = ABOVE_HUD_PLANE)
+	for(var/overlay in target.overlays)
+		item_appearance.overlays += overlay
+	button.overlays += item_appearance
 
 /datum/action/item_action/toggle/New(Target)
 	..()

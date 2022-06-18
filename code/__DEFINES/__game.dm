@@ -6,7 +6,6 @@
 
 //Admin perms are in global.dm.
 
-#define DEBUG 0
 #define NO_FLAGS 0 // To make it even more clear that something is a bitfield
 
 #define GLOBAL_PROC		"magic BS"
@@ -36,6 +35,8 @@
 #define MAP_CORSAT "CORSAT" // Highpop only
 #define MAP_KUTJEVO "Kutjevo Refinery"
 #define MAP_ICE_COLONY_V3 "Shivas Snowball" //Ice Rework, low pop enabled.
+#define MAP_HAUNTED_HOUSE_V2 "Haunted House V2"
+#define MAP_RUNTIME "USS Runtime"
 
 #define PLAYERCOUNT_LOWPOP_MAP_LIMIT 130 // number of players before we switch to lowpop maps only (LV, BR, Prison)
 
@@ -91,6 +92,8 @@
 #define SOUND_MIDI		2
 #define SOUND_AMBIENCE	4
 #define SOUND_LOBBY		8
+#define SOUND_INTERNET	16
+#define SOUND_REBOOT	32
 
 //toggles_chat
 #define CHAT_OOC			1
@@ -107,11 +110,26 @@
 #define CHAT_FFATTACKLOGS 	2048
 #define CHAT_GHOSTHIVEMIND	4096
 #define CHAT_NICHELOGS		8192
+
+//toggles_ghost
+#define GHOST_HEALTH_SCAN  (1<<0)
+
+//toggles_flashing
+#define FLASH_ROUNDSTART		(1<<0)
+#define FLASH_ROUNDEND			(1<<1)
+#define FLASH_CORPSEREVIVE		(1<<2)
+#define FLASH_ADMINPM			(1<<3)
+#define FLASH_UNNEST			(1<<4)
+#define FLASH_POOLSPAWN			(1<<5)
 //=================================================
 
 #define TOGGLES_CHAT_DEFAULT (CHAT_OOC|CHAT_DEAD|CHAT_GHOSTEARS|CHAT_GHOSTSIGHT|CHAT_PRAYER|CHAT_RADIO|CHAT_ATTACKLOGS|CHAT_LOOC|CHAT_GHOSTHIVEMIND)
 
-#define TOGGLES_SOUND_DEFAULT (SOUND_ADMINHELP|SOUND_MIDI|SOUND_AMBIENCE|SOUND_LOBBY)
+#define TOGGLES_GHOST_DEFAULT (GHOST_HEALTH_SCAN)
+
+#define TOGGLES_SOUND_DEFAULT (SOUND_ADMINHELP|SOUND_MIDI|SOUND_AMBIENCE|SOUND_LOBBY|SOUND_INTERNET)
+
+#define TOGGLES_FLASHING_DEFAULT (FLASH_ROUNDSTART|FLASH_ROUNDEND|FLASH_CORPSEREVIVE|FLASH_ADMINPM|FLASH_UNNEST)
 
 
 // Game Intents
@@ -129,6 +147,8 @@
 // note that this is multiplied by 10 in the shuttle controller. Hence, this is not defined in deciseconds but in real seconds
 
 #define DOCK_ATTEMPT_TIMEOUT 			20 SECONDS	//how long in ticks we wait before assuming the docking controller is broken or blown up.
+#define DROPSHIP_WARMUP_TIME			10 SECONDS
+#define DROPSHIP_DROP_MSG_DELAY			30 SECONDS
 #define DROPSHIP_TRANSIT_DURATION		100 SECONDS	// 100 seconds
 #define DROPSHIP_CORSAT_DURATION		30 SECONDS  // 30 seconds
 #define ELEVATOR_TRANSIT_DURATION		5 SECONDS	// 5 seconds
@@ -160,11 +180,12 @@
 #define SEC_LEVEL_DELTA	3
 
 //Alarm levels.
-#define ALARM_WARNING_FIRE 	1
-#define ALARM_WARNING_ATMOS	2
-#define ALARM_WARNING_EVAC	4
-#define ALARM_WARNING_READY	8
-#define ALARM_WARNING_DOWN	16
+#define ALARM_WARNING_FIRE 	(1<<0)
+#define ALARM_WARNING_ATMOS	(1<<1)
+#define ALARM_WARNING_EVAC	(1<<2)
+#define ALARM_WARNING_READY	(1<<3)
+#define ALARM_WARNING_DOWN	(1<<4)
+#define ALARM_LOCKDOWN		(1<<5)
 
 //some arbitrary defines to be used by self-pruning global lists. (see master_controller)
 #define PROCESS_KILL 26	//Used to trigger removal from a processing list
@@ -292,6 +313,7 @@
 #define WALL_CULT "cult"
 #define WALL_STONE "stone"
 #define WALL_STRATA_ICE "strata_ice"
+#define WALL_STRATA_ICE_DIRTY "strata_ice_dirty"
 #define WALL_JUNGLE_UPDATED "jungle_veg"
 #define WALL_STRATA_OUTPOST_RIBBED "strata_ribbed_outpost_"
 #define WALL_STRATA_OUTPOST_BARE "strata_bare_outpost_"
@@ -351,7 +373,7 @@
 #define SHUTTLE_GROUND   3
 
 // Misc game defines
-#define EXTINGUISHER_WATER_USE_AMT	5 // Amount of water consumed by extinguisher per use
+#define EXTINGUISHER_WATER_USE_AMT	5 // Amount of water consumed by extinguisher per use //why is this a define let alone a GLOBAL define oh my good lord
 
 // Chat delay amounts
 #define CHAT_SAY_DELAY      2
@@ -390,9 +412,14 @@
 
 // Quadtree values
 
-#define QUADTREE_CAPACITY 4
-#define QUADTREE_BOUNDARY_MINIMUM_WIDTH 15
-#define QUADTREE_BOUNDARY_MINIMUM_HEIGHT 15
+/// Max amount of player coordinates in a quadtree cell
+#define QUADTREE_CAPACITY 12
+/// Minimum X width up to which we keep dividing the tree (meaning cells can be half that)
+#define QUADTREE_BOUNDARY_MINIMUM_WIDTH 12
+/// Minimum Y height up to which we keep dividing the tree (meaning cells can be half that)
+#define QUADTREE_BOUNDARY_MINIMUM_HEIGHT 12
+
+
 #define QTREE_EXCLUDE_OBSERVER 1
 #define QTREE_SCAN_MOBS 2 //Return mob list instead of client list
 
@@ -441,3 +468,20 @@
 /// `time` - The time period in which to gain this amount
 /// To be used with delta_time. Multiplied by 10 to convert from deciseconds to seconds
 #define AMOUNT_PER_TIME(amount, time) ((amount / (time))*10)
+
+// Local message mode. Used to decide wheter message should be dispatched on the radio.
+#define MESSAGE_MODE_LOCAL 1
+// The number of channels you can multibroadcast at a time
+#define MULTIBROADCAST_MAX_CHANNELS 4
+
+// Performance toggle flags
+/// Set conservative MC timings on game start
+#define PERF_TOGGLE_LAZYSS (1<<0)
+/// Disable bloody footprints
+#define PERF_TOGGLE_NOBLOODPRINTS (1<<1)
+/// Disable file-based attacklogs
+#define PERF_TOGGLE_ATTACKLOGS (1<<2)
+/// Disables loading/ticking shuttle controllers
+#define PERF_TOGGLE_SHUTTLES (1<<3)
+/// Disables loading Techwebs and additional Z-Levels
+#define PERF_TOGGLE_TECHWEBS (1<<4)

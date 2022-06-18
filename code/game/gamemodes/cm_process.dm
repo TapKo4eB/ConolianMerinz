@@ -75,28 +75,22 @@ of predators), but can be added to include variant game modes (like humans vs. h
 /datum/game_mode/proc/declare_completion_announce_predators()
 	set waitfor = 0
 	sleep(2 SECONDS)
-	if(predators.len)
+	if(length(predators))
 		var/dat = "<br>"
 		dat += SPAN_ROUNDBODY("<br>The Predators were:")
-		var/mob/M
-		for(var/datum/mind/P in predators)
-			if(istype(P))
-				M = P.current
-				if(!M || !M.loc) M = P.original
-				if(M && M.loc) 	dat += "<br>[P.key] was [M.real_name] [SPAN_BOLDNOTICE("([M.stat == DEAD? "DIED":"SURVIVED"])")]"
-				else 			dat += "<br>[P.key]'s body was destroyed... [SPAN_BOLDNOTICE("(DIED)")]"
-
+		for(var/entry in predators)
+			dat += "<br>[entry] was [predators[entry]["Name"]] [SPAN_BOLDNOTICE("([predators[entry]["Status"]])")]"
 		to_world("[dat]")
 
 
 /datum/game_mode/proc/declare_completion_announce_medal_awards()
 	set waitfor = 0
 	sleep(2 SECONDS)
-	if(medal_awards.len)
+	if(GLOB.medal_awards.len)
 		var/dat = "<br>"
 		dat +=  SPAN_ROUNDBODY("<br>Medal Awards:")
-		for(var/recipient in medal_awards)
-			var/datum/recipient_awards/RA = medal_awards[recipient]
+		for(var/recipient in GLOB.medal_awards)
+			var/datum/recipient_awards/RA = GLOB.medal_awards[recipient]
 			for(var/i in 1 to RA.medal_names.len)
 				dat += "<br><b>[RA.recipient_rank] [recipient]</b> is awarded [RA.posthumous[i] ? "posthumously " : ""]the <span class='boldnotice'>[RA.medal_names[i]]</span>: \'<i>[RA.medal_citations[i]]</i>\'."
 		to_world(dat)
@@ -202,16 +196,17 @@ var/nextAdminBioscan = 30 MINUTES//30 minutes in
 
 
 	for (var/i in GLOB.alive_human_list)
-		var/mob/M = i
-		var/atom/where = M
-		if (where == 0 && M.loc)
-			where = M.loc
-		if(where.z in SSmapping.levels_by_any_trait(list(ZTRAIT_GROUND, ZTRAIT_LOWORBIT)))
-			numHostsPlanet++
-			hostsPlanetLocations += where
-		else if(is_mainship_level(where.z))
-			numHostsShip++
-			hostsShipLocations += where
+		var/mob/living/carbon/human/H = i
+		var/atom/where = H
+		if(isSpeciesHuman(H))
+			if (where == 0 && H.loc)
+				where = H.loc
+			if(where.z in SSmapping.levels_by_any_trait(list(ZTRAIT_GROUND, ZTRAIT_LOWORBIT)))
+				numHostsPlanet++
+				hostsPlanetLocations += where
+			else if(is_mainship_level(where.z))
+				numHostsShip++
+				hostsShipLocations += where
 
 	if (world.time > nextAdminBioscan)
 		nextAdminBioscan += 30 MINUTES//every 30 minutes, straight

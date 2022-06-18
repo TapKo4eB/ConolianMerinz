@@ -7,7 +7,7 @@
 		return
 
 	if(undefibbable && stat == DEAD || spawned_corpse)
-		GLOB.data_core.manifest_modify(real_name, null, null, "*Deceased*")
+		GLOB.data_core.manifest_modify(real_name, WEAKREF(src), null, null, "*Deceased*")
 		SShuman.processable_human_list -= src
 		if(hardcore)
 			qdel(src) //We just delete the corpse on WO to keep things simple and lag-free
@@ -28,10 +28,8 @@
 	life_tick++
 
 	if(stat == DEAD && species.name == "Zombie")
-		var/datum/species/zombie/zs = species
-		if(zs.to_revive[src])
-			handle_chemicals_in_body(delta_time)
-			return
+		handle_chemicals_in_body(delta_time)
+		return
 
 	//No need to update all of these procs if the guy is dead.
 	if(!in_stasis)
@@ -50,6 +48,9 @@
 			if(!stat && getToxLoss() >= 45 && nutrition > 20)
 				vomit()
 
+			if(on_fire)
+				INVOKE_ASYNC(src, /mob.proc/emote, pick("pain", "scream"))
+
 			//effects of being grabbed aggressively by another mob
 			if(pulledby && pulledby.grab_level)
 				handle_grabbed()
@@ -61,7 +62,7 @@
 
 		else //Dead
 			if(!undefibbable)
-				handle_necro_chemicals_in_body() //Specifically for chemicals that still work while dead.
+				handle_necro_chemicals_in_body(delta_time) //Specifically for chemicals that still work while dead.
 				if(life_tick > 5 && timeofdeath && (timeofdeath < 5 || world.time - timeofdeath > revive_grace_period) && !isSynth(src))	//We are dead beyond revival, or we're junk mobs spawned like the clowns on the clown shuttle
 					undefibbable = TRUE
 					med_hud_set_status()

@@ -72,6 +72,7 @@ SUBSYSTEM_DEF(ticker)
 				start_at = time_left || world.time + (CONFIG_GET(number/lobby_countdown) * 10)
 			to_chat_spaced(world, type = MESSAGE_TYPE_SYSTEM, margin_top = 2, margin_bottom = 0, html = SPAN_ROUNDHEADER("Welcome to the pre-game lobby of [CONFIG_GET(string/servername)]!"))
 			to_chat_spaced(world, type = MESSAGE_TYPE_SYSTEM, margin_top = 0, html = SPAN_ROUNDBODY("Please, setup your character and select ready. Game will start in [round(time_left / 10) || CONFIG_GET(number/lobby_countdown)] seconds."))
+			SEND_GLOBAL_SIGNAL(COMSIG_GLOB_MODE_PREGAME_LOBBY)
 			current_state = GAME_STATE_PREGAME
 			fire()
 
@@ -93,6 +94,7 @@ SUBSYSTEM_DEF(ticker)
 			if(time_left <= 40 SECONDS && !tipped)
 				send_tip_of_the_round()
 				tipped = TRUE
+				flash_clients()
 
 			if(time_left <= 0)
 				request_start()
@@ -104,6 +106,7 @@ SUBSYSTEM_DEF(ticker)
 				current_state = GAME_STATE_FINISHED
 				ooc_allowed = TRUE
 				mode.declare_completion(force_ending)
+				flash_clients()
 				if(text2num(SSperf_logging?.round?.id) % CONFIG_GET(number/gamemode_rounds_needed) == 0)
 					addtimer(CALLBACK(
 						SSvote,
@@ -130,6 +133,11 @@ SUBSYSTEM_DEF(ticker)
 		setup_nightmare()
 	else
 		INVOKE_ASYNC(src, .proc/setup_start)
+
+	for(var/client/C in GLOB.admins)
+		remove_verb(C, roundstart_mod_verbs)
+	admin_verbs_mod -= roundstart_mod_verbs
+
 	return TRUE
 
 /// Request to start nightmare setup before moving on to regular setup
@@ -197,6 +205,13 @@ SUBSYSTEM_DEF(ticker)
 
 	CHECK_TICK
 	mode.announce()
+	if(mode.taskbar_icon)
+		RegisterSignal(SSdcs, COMSIG_GLOB_CLIENT_LOGIN, .proc/handle_mode_icon)
+		set_clients_taskbar_icon(mode.taskbar_icon)
+
+	if(GLOB.perf_flags & PERF_TOGGLE_LAZYSS)
+		apply_lazy_timings()
+
 
 	if(CONFIG_GET(flag/autooocmute))
 		ooc_allowed = FALSE
@@ -207,6 +222,9 @@ SUBSYSTEM_DEF(ticker)
 		cb.InvokeAsync()
 	LAZYCLEARLIST(round_start_events)
 	CHECK_TICK
+
+	// We need stats to track roundstart role distribution.
+	mode.setup_round_stats()
 
 	//Configure mode and assign player to special mode stuff
 	if (!(mode.flags_round_type & MODE_NO_SPAWN))
@@ -228,6 +246,7 @@ SUBSYSTEM_DEF(ticker)
 
 	current_state = GAME_STATE_PLAYING
 	Master.SetRunLevel(RUNLEVEL_GAME)
+	SSatoms.lateinit_roundstart_atoms()
 
 	CHECK_TICK
 
@@ -236,7 +255,7 @@ SUBSYSTEM_DEF(ticker)
 
 	setup_economy()
 
-	shuttle_controller.setup_shuttle_docks()
+	shuttle_controller?.setup_shuttle_docks()
 
 	PostSetup()
 	return TRUE
@@ -246,7 +265,6 @@ SUBSYSTEM_DEF(ticker)
 	set waitfor = FALSE
 	mode.initialize_emergency_calls()
 	mode.post_setup()
-	mode.setup_round_stats()
 
 	begin_game_recording()
 
@@ -333,16 +351,15 @@ SUBSYSTEM_DEF(ticker)
 /datum/controller/subsystem/ticker/proc/load_mode()
 	var/mode = trim(file2text("data/mode.txt"))
 	if(mode)
-		GLOB.master_mode = mode
+		GLOB.master_mode = SSmapping.configs[GROUND_MAP].force_mode ? SSmapping.configs[GROUND_MAP].force_mode : mode
 	else
 		GLOB.master_mode = "Extended"
 	log_game("Saved mode is '[GLOB.master_mode]'")
 
 
 /datum/controller/subsystem/ticker/proc/save_mode(the_mode)
-	var/F = file("data/mode.txt")
-	fdel(F)
-	WRITE_FILE(F, the_mode)
+	fdel("data/mode.txt")
+	WRITE_FILE(file("data/mode.txt"), the_mode)
 
 
 /datum/controller/subsystem/ticker/proc/Reboot(reason, delay)
@@ -390,16 +407,18 @@ SUBSYSTEM_DEF(ticker)
 
 /datum/controller/subsystem/ticker/proc/spawn_and_equip_char(var/mob/new_player/player)
 	var/datum/job/J = RoleAuthority.roles_for_mode[player.job]
-	var/mob/M = J.spawn_in_player(player)
-	if(istype(M))
-		J.equip_job(M)
-		EquipCustomItems(M)
+	if(J.handle_spawn_and_equip)
+		J.spawn_and_equip(player)
+	else
+		var/mob/M = J.spawn_in_player(player)
+		if(istype(M))
+			J.equip_job(M)
+			EquipCustomItems(M)
 
-		if(M.client)
-			var/client/C = M.client
-			if(C.player_data && C.player_data.playtime_loaded && length(C.player_data.playtimes) == 0)
-				msg_admin_niche("NEW PLAYER: <b>[key_name(player, 1, 1, 0)] (<A HREF='?_src_=admin_holder;ahelp=adminmoreinfo;extra=\ref[player]'>?</A>)</b>. IP: [player.lastKnownIP], CID: [player.computer_id]")
-
+			if(M.client)
+				var/client/C = M.client
+				if(C.player_data && C.player_data.playtime_loaded && length(C.player_data.playtimes) == 0)
+					msg_admin_niche("NEW PLAYER: <b>[key_name(player, 1, 1, 0)] (<A HREF='?_src_=admin_holder;ahelp=adminmoreinfo;extra=\ref[player]'>?</A>)</b>. IP: [player.lastKnownIP], CID: [player.computer_id]")
 	QDEL_IN(player, 5)
 
 /datum/controller/subsystem/ticker/proc/old_create_characters()
@@ -429,6 +448,8 @@ SUBSYSTEM_DEF(ticker)
 				var/client/C = player.client
 				if(C.player_data && C.player_data.playtime_loaded && length(C.player_data.playtimes) == 0)
 					msg_admin_niche("NEW PLAYER: <b>[key_name(player, 1, 1, 0)] (<A HREF='?_src_=admin_holder;ahelp=adminmoreinfo;extra=\ref[player]'>?</A>)</b>. IP: [player.lastKnownIP], CID: [player.computer_id]")
+				if(C.player_data && C.player_data.playtime_loaded && ((round(C.get_total_human_playtime() DECISECONDS_TO_HOURS, 0.1)) <= 5))
+					msg_sea(("NEW PLAYER: <b>[key_name(player, 0, 1, 0)] has less than 5 hours as a human. Current role: [get_actual_job_name(player)] - Current location: [get_area(player)]"), TRUE)
 	if(captainless)
 		for(var/mob/M in GLOB.player_list)
 			if(!istype(M,/mob/new_player))
@@ -448,3 +469,29 @@ SUBSYSTEM_DEF(ticker)
 		return TRUE
 	else
 		return FALSE
+
+/// Placeholder proc to apply slower SS timings for performance. Should be refactored to be included in Master/SS probably. Note we can't change prios after MC init.
+/datum/controller/subsystem/ticker/proc/apply_lazy_timings()
+	/* Notes:
+	 * SSsound: lowering SSsound freq probably won't help because it's just a worker for the sound queue, same amount of work gets queued anyway
+	 * SSmob/SShuman/SSxeno: you don't want to touch these, because several systems down the line rely on the timing (2 SECONDS) for gameplay logic
+	 * SSchat/SSinput: these are perf intensive but need to be SS_TICKER, changing wait would be troublesome and/or inconsequential for perf
+	 * SScellauto: can't touch this because it would directly affect explosion spread speed
+	 */
+
+	SSquadtree?.wait           = 0.8 SECONDS // From 0.5, relevant based on player movement speed (higher = more error in sound location, motion detector pings, sentries target acquisition)
+	SSlighting?.wait           = 0.6 SECONDS // From 0.4, same but also heavily scales on player/scene density (higher = less frequent lighting updates which is very noticeable as you move)
+	SSstatpanels?.wait         = 1.5 SECONDS // From 0.6, refresh rate mainly matters for ALT+CLICK turf contents (which gens icons, intensive)
+	SSsoundscape?.wait         =   2 SECONDS // From 1, soudscape triggering checks, scales on player count
+	SStgui?.wait               = 1.2 SECONDS // From 0.9, UI refresh rate
+
+	log_debug("Switching to lazy Subsystem timings for performance")
+
+/datum/controller/subsystem/ticker/proc/set_clients_taskbar_icon(var/taskbar_icon)
+	for(var/client/C as anything in GLOB.clients)
+		winset(C, null, "mainwindow.icon=[taskbar_icon]")
+
+/datum/controller/subsystem/ticker/proc/handle_mode_icon(var/dcs, var/client/C)
+	SIGNAL_HANDLER
+
+	winset(C, null, "mainwindow.icon=[SSticker.mode.taskbar_icon]")

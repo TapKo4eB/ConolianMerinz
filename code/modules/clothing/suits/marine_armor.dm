@@ -24,20 +24,24 @@
 #define CHARLIE		3
 #define DELTA		4
 #define ECHO		5
-#define NOSQUAD 	6
+#define CRYO		6
+#define MARSOC		7
+#define NOSQUAD 	8
 
 var/list/armormarkings = list()
 var/list/armormarkings_sql = list()
 var/list/helmetmarkings = list()
 var/list/helmetmarkings_sql = list()
-var/list/squad_colors = list(rgb(230,25,25), rgb(255,195,45), rgb(200,100,200), rgb(65,72,200), rgb(103,214,146))
-var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150,255), rgb(130,140,255), rgb(103,214,146))
+var/list/glovemarkings = list()
+var/list/squad_colors = list(rgb(230,25,25), rgb(255,195,45), rgb(200,100,200), rgb(65,72,200), rgb(103,214,146), rgb(133, 115, 75), rgb(64, 0, 0))
+var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150,255), rgb(130,140,255), rgb(103,214,146), rgb(133, 115, 75), rgb(64, 0, 0))
 
 /proc/initialize_marine_armor()
 	var/i
-	for(i=1, i<6, i++)
+	for(i=1, i<(length(squad_colors) + 1), i++)
 		var/image/armor
 		var/image/helmet
+		var/image/glove
 		armor = image('icons/mob/humans/onmob/suit_1.dmi',icon_state = "std-armor")
 		armor.color = squad_colors[i]
 		armormarkings += armor
@@ -52,6 +56,9 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		helmet.color = squad_colors[i]
 		helmetmarkings_sql += helmet
 
+		glove = image('icons/mob/humans/onmob/hands_garb.dmi',icon_state = "std-gloves")
+		glove.color = squad_colors[i]
+		glovemarkings += glove
 
 
 
@@ -92,7 +99,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		/obj/item/tool/lighter,
 		/obj/item/storage/bible,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/storage/large_holster/machete,
 		/obj/item/storage/belt/gun/m4a3,
 		/obj/item/storage/belt/gun/m44,
@@ -267,7 +274,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 
 /obj/item/clothing/suit/storage/marine/rto
 	icon_state = "io"
-	name = "\improper XM4 pattern radio operator armor"
+	name = "\improper M4 pattern marine armor"
 	desc = "A well tinkered and crafted hybrid of Smart-Gunner mesh and M3 pattern plates. Robust, yet nimble, with room for all your pouches. Required for carrying a Radio Telephone Pack."
 	armor_melee = CLOTHING_ARMOR_MEDIUM
 	armor_bullet = CLOTHING_ARMOR_MEDIUM
@@ -278,8 +285,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUM
 	storage_slots = 4
 	brightness_on = 7 //slightly higher
-	uniform_restricted = list(/obj/item/clothing/under/marine/officer, /obj/item/clothing/under/rank/ro_suit, /obj/item/clothing/under/marine/rto)
-	specialty = "XM4 pattern radio operator"
+	specialty = "M4 pattern marine"
 
 /obj/item/clothing/suit/storage/marine/MP
 	name = "\improper M2 pattern MP armor"
@@ -307,7 +313,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		/obj/item/explosive/grenade,
 		/obj/item/device/binoculars,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/device/hailer,
 		/obj/item/storage/belt/gun,
 		/obj/item/weapon/melee/claymore/mercsword/ceremonial,
@@ -316,6 +322,19 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	uniform_restricted = list(/obj/item/clothing/under/marine/mp)
 	specialty = "M2 pattern MP"
 	item_state_slots = list(WEAR_JACKET = "mp")
+
+/obj/item/clothing/suit/storage/marine/MP/padless
+	name = "\improper M2 pattern padless MP armor"
+	icon_state = "mp_2"
+	specialty = "M2 pattern padless MP"
+	item_state_slots = list(WEAR_JACKET = "mp_2")
+
+/obj/item/clothing/suit/storage/marine/MP/jacket
+	name = "\improper MP service jacket over M2 pattern MP armor"
+	desc = "A standard Colonial Marines M2 Pattern Chestplate with an MP service jacket worn on top. Protects the chest from ballistic rounds, bladed objects and accidents. It has a small leather pouch strapped to it for limited storage. Arresting Marines for breaking windows has never felt so stylish."
+	icon_state = "mp_jacket"
+	specialty = "service jacket over M2 pattern MP"
+	item_state_slots = list(WEAR_JACKET = "mp_jacket")
 
 /obj/item/clothing/suit/storage/marine/MP/warden
 	icon_state = "warden"
@@ -334,6 +353,19 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	specialty = "M3 pattern warden MP"
 	item_state_slots = list(WEAR_JACKET = "warden")
 
+/obj/item/clothing/suit/storage/marine/MP/warden/padless
+	name = "\improper M3 pattern padless warden MP armor"
+	icon_state = "warden_2"
+	specialty = "M3 pattern padless warden MP"
+	item_state_slots = list(WEAR_JACKET = "warden_2")
+
+/obj/item/clothing/suit/storage/marine/MP/warden/jacket
+	name = "\improper warden service jacket over M3 pattern warden MP armor"
+	desc = "A well-crafted suit of M3 Pattern Armor typically distributed to Wardens, with a Warden service jacket worn on top. Look your best while you're escorting prisoners to their execution."
+	icon_state = "warden_jacket"
+	specialty = "warden service jacket over M3 pattern warden MP"
+	item_state_slots = list(WEAR_JACKET = "warden_jacket")
+
 /obj/item/clothing/suit/storage/marine/MP/WO
 	icon_state = "warrant_officer"
 	name = "\improper M3 pattern chief MP armor"
@@ -350,6 +382,19 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	uniform_restricted = list(/obj/item/clothing/under/marine/officer/warrant)
 	specialty = "M3 pattern chief MP"
 	item_state_slots = list(WEAR_JACKET = "warrant_officer")
+
+/obj/item/clothing/suit/storage/marine/MP/WO/padless
+	name = "\improper M3 pattern padless chief MP armor"
+	icon_state = "warrant_officer_2"
+	specialty = "M3 pattern padless chief MP"
+	item_state_slots = list(WEAR_JACKET = "warrant_officer_2")
+
+/obj/item/clothing/suit/storage/marine/MP/WO/jacket
+	name = "\improper CMP service jacket over M3 pattern chief MP armor"
+	desc = "A well-crafted suit of M3 Pattern Armor typically distributed to Chief MPs, with a CMP service jacket on top. Resonates with the strength of a thousand arguments with and arrests of superior officers."
+	icon_state = "warrant_officer_jacket"
+	specialty = "CMP service jacket over M3 pattern chief MP"
+	item_state_slots = list(WEAR_JACKET = "warrant_officer_jacket")
 
 /obj/item/clothing/suit/storage/marine/MP/admiral
 	icon_state = "admiral"
@@ -374,7 +419,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	name = "\improper M3 pattern officer armor"
 	desc = "A well-crafted suit of M3 Pattern Armor typically found in the hands of higher-ranking officers. Useful for letting your men know who is in charge when taking to the field."
 	flags_atom = null
-	uniform_restricted = list(/obj/item/clothing/under/marine/officer, /obj/item/clothing/under/rank/ro_suit)
+	uniform_restricted = list(/obj/item/clothing/under/marine/officer, /obj/item/clothing/under/rank/ro_suit, /obj/item/clothing/under/rank/chief_medical_officer)
 	specialty = "M2 pattern officer"
 	storage_slots = 3
 	item_state_slots = list(WEAR_JACKET = "officer")
@@ -382,12 +427,13 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 //Making a new object because we might want to edit armor values and such.
 //Or give it its own sprite. It's more for the future.
 /obj/item/clothing/suit/storage/marine/MP/CO
+	name = "\improper M3 pattern captain armor"
+	desc = "A robust, well-polished suit of armor for the Commanding Officer. Custom-made to fit its owner with special straps to operate a smartgun. Show those Marines who's really in charge."
 	icon_state = "co_officer"
 	item_state = "co_officer"
-	name = "\improper M3 pattern captain armor"
-	desc = "A robust, well-polished suit of armor for the Commanding Officer. Custom-made to fit its owner. Show those Marines who's really in charge."
 	uniform_restricted = list(/obj/item/clothing/under/marine/officer, /obj/item/clothing/under/rank/ro_suit)
 	flags_atom = NO_SNOW_TYPE
+	flags_inventory = SMARTGUN_HARNESS
 	armor_bullet = CLOTHING_ARMOR_HIGH
 	storage_slots = 3
 	specialty = "M3 pattern captain"
@@ -407,13 +453,14 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUM
 	storage_slots = 2
 	slowdown = SLOWDOWN_ARMOR_LIGHT
+	flags_inventory = SMARTGUN_HARNESS
 	allowed = list(/obj/item/tank/emergency_oxygen,
 					/obj/item/device/flashlight,
 					/obj/item/ammo_magazine,
 					/obj/item/explosive/mine,
 					/obj/item/attachable/bayonet,
 					/obj/item/weapon/gun/smartgun,
-					/obj/item/storage/sparepouch,
+					/obj/item/storage/backpack/general_belt,
 					/obj/item/device/motiondetector,
 					/obj/item/device/walkman)
 
@@ -427,7 +474,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 
 
 /obj/item/clothing/suit/storage/marine/leader
-	name = "\improper B12 pattern leader marine armor"
+	name = "\improper B12 pattern marine armor"
 	desc = "A lightweight suit of carbon fiber body armor built for quick movement. Designed in a lovely forest green. Use it to toggle the built-in flashlight."
 	icon_state = "7"
 	armor_melee = CLOTHING_ARMOR_MEDIUMHIGH
@@ -437,7 +484,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	armor_bio = CLOTHING_ARMOR_MEDIUMHIGH
 	armor_rad = CLOTHING_ARMOR_MEDIUMLOW
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUMHIGH
-	specialty = "B12 pattern leader marine"
+	specialty = "B12 pattern marine"
 
 /obj/item/clothing/suit/storage/marine/tanker
 	name = "\improper M3 pattern tanker armor"
@@ -489,14 +536,20 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	siemens_coefficient = 0.7
 	uniform_restricted = null
 
+/obj/item/clothing/suit/storage/marine/light/vest/dcc
+	name = "\improper M3-VL pattern flak vest"
+	desc = "A combination of the standard non-combat M3-VL ballistics vest and M70 flak jacket, this piece of armor has been distributed to dropship crew to keep them safe from threats external and internal..."
+	icon_state = "VL_FLAK"
+	storage_slots = 2
+
 /obj/item/clothing/suit/storage/marine/light/synvest
 	name = "\improper M3A1 Synthetic Utility Vest"
-	desc = "This variant of the M3-VL pattern ballistics vest has its protective plates stripped out, making it the absolute lightest IMP-compatible apparel available. Meant to be used by synthetic units, to provide an IMP-compatible utility compliant with standard synthetic unit programming."
-	icon_state = "VL_syn"
-	storage_slots = 1
+	desc = "This variant of the ubiquitous M3 pattern ballistics vest has been extensively modified, providing no protection in exchange for maximum mobility and storage space. Synthetic programming compliant."
+	icon_state = "VL_syn_camo"
+	storage_slots = 3
 	time_to_unequip = 0.5 SECONDS
 	time_to_equip = 1 SECONDS
-	flags_atom = NO_SNOW_TYPE|NO_NAME_OVERRIDE
+	flags_atom = NO_NAME_OVERRIDE
 	flags_marine_armor = ARMOR_LAMP_OVERLAY|SYNTH_ALLOWED //No squad colors + can be worn by synths.
 	armor_melee = CLOTHING_ARMOR_NONE
 	armor_bullet = CLOTHING_ARMOR_NONE
@@ -507,6 +560,10 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	armor_rad = CLOTHING_ARMOR_NONE
 	armor_internaldamage = CLOTHING_ARMOR_NONE
 	uniform_restricted = null
+
+/obj/item/clothing/suit/storage/marine/light/synvest/vanilla
+	icon_state = "VL_syn"
+	flags_atom = NO_SNOW_TYPE
 
 /obj/item/clothing/suit/storage/marine/heavy
 	name = "\improper M3-H pattern heavy armor"
@@ -520,7 +577,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	armor_bullet = CLOTHING_ARMOR_HIGH
 	armor_laser = CLOTHING_ARMOR_MEDIUMLOW
 	armor_bomb = CLOTHING_ARMOR_MEDIUMHIGH
-	armor_bio = CLOTHING_ARMOR_MEDIUMLOW
+	armor_bio = CLOTHING_ARMOR_HIGH
 	armor_rad = CLOTHING_ARMOR_MEDIUMHIGH
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUMHIGH
 	storage_slots = 2
@@ -812,7 +869,6 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	var/camouflage_break = 5 SECONDS
 	var/camouflage_enter_delay = 4 SECONDS
 	var/aiming_time = 1.25 SECONDS
-	var/datum/event_handler/ghillie_movement/ghillie_movement
 
 	var/aimed_shot_cooldown
 	var/aimed_shot_cooldown_delay = 2.5 SECONDS
@@ -850,7 +906,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		deactivate_camouflage(H)
 		return
 
-	H.visible_message(SPAN_DANGER("[H] goes prone, and begins adjusting his ghillie suit!"), SPAN_NOTICE("You go prone, and begins adjusting your ghillie suit."), max_distance = 4)
+	H.visible_message(SPAN_DANGER("[H] goes prone, and begins adjusting \his ghillie suit!"), SPAN_NOTICE("You go prone, and begins adjusting your ghillie suit."), max_distance = 4)
 	hide_in_progress = TRUE
 	H.unset_interaction() // If we're sticking to a machine gun or what not.
 	if(!do_after(H, camouflage_enter_delay, INTERRUPT_NO_NEEDHAND|BEHAVIOR_IMMOBILE, BUSY_ICON_BUILD))
@@ -866,14 +922,12 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		COMSIG_HUMAN_EXTINGUISH
 	), .proc/deactivate_camouflage)
 	RegisterSignal(H, COMSIG_MOB_POST_UPDATE_CANMOVE, .proc/fix_density)
-	ghillie_movement = new /datum/event_handler/ghillie_movement()
-	ghillie_movement.gs = src
 	camo_active = TRUE
 	H.alpha = full_camo_alpha
 	H.FF_hit_evade = 1000
 	H.density = FALSE
 
-	H.add_movement_handler(ghillie_movement)
+	RegisterSignal(H, COMSIG_MOB_MOVE_OR_LOOK, .proc/handle_mob_move_or_look)
 
 	var/datum/mob_hud/security/advanced/SA = huds[MOB_HUD_SECURITY_ADVANCED]
 	SA.remove_from_hud(H)
@@ -897,13 +951,13 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		COMSIG_MOB_FIRED_GUN_ATTACHMENT,
 		COMSIG_MOB_DEATH,
 		COMSIG_MOB_POST_UPDATE_CANMOVE,
-		COMSIG_HUMAN_EXTINGUISH
+		COMSIG_HUMAN_EXTINGUISH,
+		COMSIG_MOB_MOVE_OR_LOOK
 	))
 
 	camo_active = FALSE
 	animate(H, alpha = initial(H.alpha), flags = ANIMATION_END_NOW)
 	H.FF_hit_evade = initial(H.FF_hit_evade)
-	H.remove_movement_handler(ghillie_movement)
 	if(!H.lying)
 		H.density = TRUE
 	H.update_canmove()
@@ -937,13 +991,11 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		animate(H, alpha = full_camo_alpha)
 		current_camo = full_camo_alpha
 
+/obj/item/clothing/suit/storage/marine/ghillie/proc/handle_mob_move_or_look(mob/living/mover, var/actually_moving, var/direction, var/specific_direction)
+	SIGNAL_HANDLER
 
-/datum/event_handler/ghillie_movement
-	var/obj/item/clothing/suit/storage/marine/ghillie/gs
-	handle(mob/living/sender, datum/event_args/mob_movement/ev_args)
-		if(gs.camo_active && ev_args.moving)
-			gs.deactivate_camouflage(sender)
-			ev_args.continue_movement = TRUE
+	if(camo_active && actually_moving)
+		deactivate_camouflage(mover)
 
 /datum/action/item_action/specialist/prepare_position
 	ability_primacy = SPEC_PRIMARY_ACTION_1
@@ -1042,7 +1094,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	if(!check_can_use(M, TRUE))
 		return
 
-	var/obj/item/weapon/gun/rifle/sniper/G = istype(H.l_hand, /obj/item/weapon/gun/rifle/sniper/M42A) ? H.l_hand : H.r_hand
+	var/obj/item/weapon/gun/rifle/sniper/G = istype(H.l_hand, /obj/item/weapon/gun/rifle/sniper) ? H.l_hand : H.r_hand
 	var/obj/item/projectile/P = G.in_chamber
 	P.homing_target = M
 	P.projectile_override_flags |= AMMO_HOMING
@@ -1067,7 +1119,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		to_chat(H, SPAN_WARNING("How do you expect to do this without your Sniper Rifle?"))
 		return FALSE
 
-	if(!istype(H.l_hand, /obj/item/weapon/gun/rifle/sniper/M42A) && !istype(H.r_hand, /obj/item/weapon/gun/rifle/sniper/M42A))
+	if(!istype(H.l_hand, /obj/item/weapon/gun/rifle/sniper) && !istype(H.r_hand, /obj/item/weapon/gun/rifle/sniper))
 		to_chat(H, SPAN_WARNING("Your weapon isn't accurate enough for this. Use the M42A Sniper Rifle!"))
 		return FALSE
 
@@ -1075,7 +1127,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		to_chat(H, SPAN_WARNING("Your aim is not stable enough with one hand. Use both hands!"))
 		return FALSE
 
-	var/obj/item/weapon/gun/rifle/sniper/G = istype(H.l_hand, /obj/item/weapon/gun/rifle/sniper/M42A) ? H.l_hand : H.r_hand
+	var/obj/item/weapon/gun/rifle/sniper/G = istype(H.l_hand, /obj/item/weapon/gun/rifle/sniper) ? H.l_hand : H.r_hand
 	if(!G.in_chamber)
 		to_chat(H, SPAN_WARNING("[G] is unloaded!"))
 		return FALSE
@@ -1085,6 +1137,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		return FALSE
 
 	var/obj/item/projectile/P = G.in_chamber
+	// TODO: Make the below logic only occur in certain circumstances. Check goggles, maybe? -Kaga
 	if(check_shot_is_blocked(H, M, P))
 		to_chat(H, SPAN_WARNING("Something is in the way, or you're out of range!"))
 		if(cover_lose_focus)
@@ -1173,6 +1226,22 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	uniform_restricted = list(/obj/item/clothing/under/marine/veteran/PMC)
 	item_state_slots = list(WEAR_JACKET = "pmc_armor")
 
+/obj/item/clothing/suit/storage/marine/veteran/PMC/light
+	name = "\improper M4 pattern light PMC armor"
+	desc = "A modification of the standard Armat Systems M3 armor. Designed for high-profile security operators and corporate mercenaries in mind. Has some armour plating removed for extra mobility."
+	icon_state = "pmc_sniper"
+	armor_melee = CLOTHING_ARMOR_MEDIUMLOW
+	armor_bullet = CLOTHING_ARMOR_MEDIUM
+	armor_laser = CLOTHING_ARMOR_MEDIUMLOW
+	armor_energy = CLOTHING_ARMOR_MEDIUMLOW
+	armor_bomb = CLOTHING_ARMOR_MEDIUMLOW
+	armor_bio = CLOTHING_ARMOR_MEDIUMLOW
+	armor_rad = CLOTHING_ARMOR_MEDIUM
+	armor_internaldamage = CLOTHING_ARMOR_MEDIUMLOW
+	storage_slots = 2
+	slowdown = SLOWDOWN_ARMOR_VERY_LIGHT
+	item_state_slots = list(WEAR_JACKET = "pmc_sniper")
+
 /obj/item/clothing/suit/storage/marine/veteran/PMC/leader
 	name = "\improper M4 pattern PMC leader armor"
 	desc = "A modification of the standard Armat Systems M3 armor. Designed for high-profile security operators and corporate mercenaries in mind. This particular suit looks like it belongs to a high-ranking officer."
@@ -1200,7 +1269,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	name = "\improper PMC gunner armor"
 	desc = "A modification of the standard Armat Systems M3 armor. Hooked up with harnesses and straps allowing the user to carry an M56 Smartgun."
 	icon_state = "heavy_armor"
-	flags_inventory = BLOCK_KNOCKDOWN
+	flags_inventory = BLOCK_KNOCKDOWN|SMARTGUN_HARNESS
 	flags_atom = NO_SNOW_TYPE|NO_NAME_OVERRIDE
 	armor_melee = CLOTHING_ARMOR_MEDIUM
 	armor_bullet = CLOTHING_ARMOR_MEDIUMHIGH
@@ -1227,7 +1296,6 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	armor_bio = CLOTHING_ARMOR_MEDIUMLOW
 	armor_rad = CLOTHING_ARMOR_MEDIUMHIGH
 	armor_internaldamage = CLOTHING_ARMOR_MEDIUMHIGH
-	flags_inventory = BLOCK_KNOCKDOWN
 	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_ARMS|BODY_FLAG_LEGS|BODY_FLAG_FEET
 	storage_slots = 2
 	unacidable = TRUE
@@ -1279,9 +1347,10 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	name = "\improper D2 armored vest"
 	desc = "A protective vest worn by some seriously experienced mercs."
 	icon_state = "dutch_armor"
+	brightness_on = 9
 	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN
-	armor_melee = CLOTHING_ARMOR_MEDIUM
-	armor_bullet = CLOTHING_ARMOR_MEDIUM
+	armor_melee = CLOTHING_ARMOR_HIGH
+	armor_bullet = CLOTHING_ARMOR_HIGHPLUS
 	armor_laser = CLOTHING_ARMOR_MEDIUMLOW
 	armor_energy = CLOTHING_ARMOR_MEDIUMLOW
 	armor_bomb = CLOTHING_ARMOR_MEDIUM
@@ -1311,7 +1380,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		/obj/item/tool/lighter,
 		/obj/item/storage/bible,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/storage/large_holster/machete,
 		/obj/item/storage/belt/gun/m4a3,
 		/obj/item/storage/belt/gun/m44,
@@ -1425,7 +1494,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 
 /obj/item/clothing/suit/storage/marine/faction/UPP/kapitan
 	name = "\improper UL6 Kapitan's jacket"
-	desc = "A lightweight jacket, issued to the Kapitans of the UPP's military. Made of high quality materials, even going as far as having the ranks and insignia of the Kapitan and his Company emblazoned on the shoulders and front of the jacket."
+	desc = "A lightweight jacket, issued to the Kapitans of the UPP's military. Made of high quality materials, even going as far as having the ranks and insignia of the Kapitan and their Company emblazoned on the shoulders and front of the jacket."
 	icon_state = "upp_coat_kapitan"
 	slowdown = SLOWDOWN_ARMOR_VERY_LIGHT
 	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_ARMS
@@ -1525,7 +1594,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		/obj/item/explosive/grenade,
 		/obj/item/device/binoculars,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/storage/large_holster/machete,
 		/obj/item/weapon/melee/baseballbat,
 		/obj/item/weapon/melee/baseballbat/metal,
@@ -1571,12 +1640,17 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	flags_cold_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_ARMS|BODY_FLAG_LEGS
 	slowdown = 0.2
 
+/obj/item/clothing/suit/storage/militia/smartgun
+	name = "colonial militia harness"
+	desc = "The hauberk of a colonist militia member, created from boiled leather and some modern armored plates. While not the most powerful form of armor, and primitive compared to most modern suits of armor, it gives the wearer almost perfect mobility, which suits the needs of the local colonists. It is also quick to don, easy to hide, and cheap to produce in large workshops. This one has straps interweaved with the plates, that allow the user to fire a captured smartgun, if a bit uncomfortably."
+	flags_inventory = SMARTGUN_HARNESS
+
 /obj/item/clothing/suit/storage/CMB
 	name = "\improper CMB jacket"
 	desc = "A green jacket worn by crew on the Colonial Marshals."
 	icon_state = "CMB_jacket"
 	blood_overlay_type = "coat"
-	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_ARMS
+	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_ARMS
 	allowed = list(/obj/item/weapon/gun,
 		/obj/item/tank/emergency_oxygen,
 		/obj/item/device/flashlight,
@@ -1584,7 +1658,7 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 		/obj/item/explosive/grenade,
 		/obj/item/device/binoculars,
 		/obj/item/attachable/bayonet,
-		/obj/item/storage/sparepouch,
+		/obj/item/storage/backpack/general_belt,
 		/obj/item/storage/large_holster/machete,
 		/obj/item/weapon/melee/baseballbat,
 		/obj/item/weapon/melee/baseballbat/metal,
@@ -1620,14 +1694,14 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	desc = "A set of grey, heavy ceramic armor with dark blue highlights. It is the standard uniform of a unknown mercenary group working in the sector"
 	icon_state = "mercenary_heavy_armor"
 	flags_inventory = BLOCK_KNOCKDOWN
-	armor_melee = CLOTHING_ARMOR_MEDIUMHIGH
-	armor_bullet = CLOTHING_ARMOR_MEDIUMHIGH
+	armor_melee = CLOTHING_ARMOR_VERYHIGH
+	armor_bullet = CLOTHING_ARMOR_VERYHIGH
 	armor_laser = CLOTHING_ARMOR_MEDIUMLOW
 	armor_energy = CLOTHING_ARMOR_MEDIUMLOW
 	armor_bomb = CLOTHING_ARMOR_MEDIUM
-	armor_bio = CLOTHING_ARMOR_MEDIUM
+	armor_bio = CLOTHING_ARMOR_HIGHPLUS
 	armor_rad = CLOTHING_ARMOR_MEDIUM
-	armor_internaldamage = CLOTHING_ARMOR_MEDIUMHIGH
+	armor_internaldamage = CLOTHING_ARMOR_HIGHPLUS
 	storage_slots = 2
 	slowdown = SLOWDOWN_ARMOR_LIGHT
 	allowed = list(/obj/item/weapon/gun,
@@ -1647,19 +1721,32 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	uniform_restricted = list(/obj/item/clothing/under/marine/veteran/mercenary)
 	item_state_slots = list(WEAR_JACKET = "mercenary_heavy_armor")
 
+/obj/item/clothing/suit/storage/marine/veteran/mercenary/heavy
+	name = "\improper Modified K12 ceramic plated armor"
+	desc = "A set of grey, heavy ceramic armor with dark blue highlights. It has been modified with extra ceramic plates placed in its storage pouch, and seems intended to support an extremely heavy weapon."
+	armor_melee = CLOTHING_ARMOR_ULTRAHIGH
+	armor_bullet = CLOTHING_ARMOR_ULTRAHIGHPLUS
+	armor_laser = CLOTHING_ARMOR_MEDIUMLOW
+	armor_energy = CLOTHING_ARMOR_MEDIUMLOW
+	armor_bomb = CLOTHING_ARMOR_HIGHPLUS
+	armor_bio = CLOTHING_ARMOR_HIGHPLUS
+	armor_rad = CLOTHING_ARMOR_MEDIUM
+	armor_internaldamage = CLOTHING_ARMOR_VERYHIGHPLUS
+	storage_slots = 1
+
 /obj/item/clothing/suit/storage/marine/veteran/mercenary/miner
 	name = "\improper Y8 armored miner vest"
 	desc = "A set of beige, light armor built for protection while mining. It is a specialized uniform of a unknown mercenary group working in the sector"
 	icon_state = "mercenary_miner_armor"
-	armor_melee = CLOTHING_ARMOR_MEDIUMHIGH
-	armor_bullet = CLOTHING_ARMOR_MEDIUMHIGH
+	armor_melee = CLOTHING_ARMOR_VERYHIGH
+	armor_bullet = CLOTHING_ARMOR_VERYHIGH
 	armor_laser = CLOTHING_ARMOR_MEDIUMLOW
 	armor_energy = CLOTHING_ARMOR_MEDIUMLOW
 	armor_bomb = CLOTHING_ARMOR_MEDIUM
-	armor_bio = CLOTHING_ARMOR_MEDIUM
+	armor_bio = CLOTHING_ARMOR_HIGHPLUS
 	armor_rad = CLOTHING_ARMOR_MEDIUM
-	armor_internaldamage = CLOTHING_ARMOR_MEDIUMHIGH
-	storage_slots = 2
+	armor_internaldamage = CLOTHING_ARMOR_HIGHPLUS
+	storage_slots = 3
 	slowdown = SLOWDOWN_ARMOR_LIGHT
 	allowed = list(/obj/item/weapon/gun,
 		/obj/item/tank/emergency_oxygen,
@@ -1678,18 +1765,18 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	uniform_restricted = list(/obj/item/clothing/under/marine/veteran/mercenary)
 	item_state_slots = list(WEAR_JACKET = "mercenary_miner_armor")
 
-/obj/item/clothing/suit/storage/marine/veteran/mercenary/engineer
-	name = "\improper Z7 armored engineer vest"
-	desc = "A set of blue armor with yellow highlights built for protection while building in highly dangerous environments. It is a specialized uniform of a unknown mercenary group working in the sector"
+/obj/item/clothing/suit/storage/marine/veteran/mercenary/support
+	name = "\improper Z7 armored vest"
+	desc = "A set of blue armor with yellow highlights built for protection while building or carrying out medical treatment in highly dangerous environments. It is a specialized uniform of a unknown mercenary group working in the sector"
 	icon_state = "mercenary_engineer_armor"
-	armor_melee = CLOTHING_ARMOR_MEDIUMHIGH
-	armor_bullet = CLOTHING_ARMOR_MEDIUMHIGH
+	armor_melee = CLOTHING_ARMOR_VERYHIGH
+	armor_bullet = CLOTHING_ARMOR_VERYHIGH
 	armor_laser = CLOTHING_ARMOR_MEDIUMLOW
 	armor_energy = CLOTHING_ARMOR_MEDIUMLOW
 	armor_bomb = CLOTHING_ARMOR_MEDIUM
-	armor_bio = CLOTHING_ARMOR_MEDIUM
+	armor_bio = CLOTHING_ARMOR_HIGHPLUS
 	armor_rad = CLOTHING_ARMOR_MEDIUM
-	armor_internaldamage = CLOTHING_ARMOR_MEDIUMHIGH
+	armor_internaldamage = CLOTHING_ARMOR_HIGHPLUS
 	storage_slots = 2
 	slowdown = SLOWDOWN_ARMOR_LIGHT
 	allowed = list(/obj/item/weapon/gun,
@@ -1716,6 +1803,9 @@ var/list/squad_colors_chat = list(rgb(230,125,125), rgb(255,230,80), rgb(255,150
 	icon_state = "hefadier"
 	flags_atom = NO_NAME_OVERRIDE|NO_SNOW_TYPE
 	flags_marine_armor = ARMOR_LAMP_OVERLAY
+	armor_bullet = CLOTHING_ARMOR_VERYHIGH
+	armor_melee = CLOTHING_ARMOR_VERYHIGH
+	armor_bomb = CLOTHING_ARMOR_GIGAHIGH
 
 
 

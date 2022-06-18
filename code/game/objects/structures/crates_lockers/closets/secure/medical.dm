@@ -101,13 +101,14 @@
 	new /obj/item/clothing/mask/surgical(src)
 	new /obj/item/clothing/mask/breath(src)
 	new /obj/item/clothing/head/cmo(src)
-	new /obj/item/device/radio/headset/almayer/cmo(src)
 	new /obj/item/reagent_container/hypospray/tricordrazine(src)
 	new /obj/item/device/flash(src)
 	new /obj/item/storage/pouch/medical(src)
 	new /obj/item/storage/pouch/syringe(src)
 	new /obj/item/storage/pouch/medkit(src)
-
+	if(is_mainship_level(z))
+		new /obj/item/device/radio/headset/almayer/cmo(src)
+	return
 /obj/structure/closet/secure_closet/chemical
 	name = "chemical closet"
 	desc = "Store dangerous chemicals in here."
@@ -150,3 +151,22 @@
 				icon_state = icon_closed
 		else
 			icon_state = icon_opened
+
+/obj/structure/closet/secure_closet/surgical
+	name = "surgical equipment cabinet"
+	desc = "A self-sterilizing, wall-mounted cabinet containing all the surgical tools you need."
+	req_access = list(ACCESS_MARINE_MEDBAY)
+	icon_state = "surgical_wall_locked"
+	icon_closed = "surgical_wall_unlocked"
+	icon_locked = "surgical_wall_locked"
+	icon_opened = "surgical_wall_open"
+	icon_broken = "surgical_wall_spark"
+	density = 0
+	store_mobs = FALSE
+	wall_mounted = TRUE
+
+
+/obj/structure/closet/secure_closet/surgical/Initialize()
+	. = ..()
+	new /obj/item/storage/surgical_tray(src)
+	new /obj/item/roller/surgical(src)

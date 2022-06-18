@@ -72,10 +72,19 @@
 	if(!display_colour) // if invalid R_COLOR choice
 		display_colour = CONFIG_GET(string/ooc_color_default)
 
+	msg = process_chat_markup(msg, list("*"))
+
 	for(var/client/C in GLOB.clients)
 		if(C.prefs.toggles_chat & CHAT_OOC)
 			var/display_name = src.key
-			to_chat(C, "<font color='[display_colour]'><span class='ooc'>[src.donator ? "\[D\] " : ""]<span class='prefix'>OOC: [display_name]</span>: <span class='message'>[greentext ? "<font color='#789922'>[msg]</font>" : "[msg]"]</span></span></font>")
+			if(prefs.unlock_content)
+				if(prefs.toggle_prefs & TOGGLE_MEMBER_PUBLIC)
+					var/byond = icon('icons/effects/effects.dmi', "byondlogo")
+					display_name = "[icon2html(byond, GLOB.clients)][display_name]"
+			if(CONFIG_GET(flag/ooc_country_flags))
+				if(prefs.toggle_prefs & TOGGLE_OOC_FLAG)
+					display_name = "[country2chaticon(src.country, GLOB.clients)][display_name]"
+			to_chat(C, "<font color='[display_colour]'><span class='ooc linkify'>[src.donator ? "\[D\] " : ""]<span class='prefix'>OOC: [display_name]</span>: <span class='message'>[greentext ? "<font color='#789922'>[msg]</font>" : "[msg]"]</span></span></font>")
 
 	usr.talked = 1
 	addtimer(CALLBACK(usr, .proc/clear_chat_spam_mute, usr.talked), CHAT_OOC_DELAY, TIMER_UNIQUE)
@@ -93,7 +102,7 @@
 	set category = "OOC.OOC"
 
 	if(usr.talked == 2)
-		to_chat(usr, SPAN_DANGER("Your spam has been consumed for it's nutritional value."))
+		to_chat(usr, SPAN_DANGER("Your spam has been consumed for its nutritional value."))
 		return
 	if((usr.talked == 1) && (usr.chatWarn >= 5))
 		usr.talked = 2
@@ -147,6 +156,8 @@
 	if(S.stat != DEAD && !isobserver(S))
 		display_name = S.name
 
+	msg = process_chat_markup(msg, list("*"))
+
 	// Handle non-admins
 	for(var/mob/M in heard)
 		if(!M.client)
@@ -156,7 +167,11 @@
 			continue //they are handled after that
 
 		if(C.prefs.toggles_chat & CHAT_LOOC)
-			to_chat(C, "<font color='#6699CC'><span class='ooc'><span class='prefix'>LOOC:</span> <EM>[display_name]:</EM> <span class='message'>[msg]</span></span></font>")
+			to_chat(C, "<font color='#f557b8'><span class='ooc linkify'><span class='prefix'>LOOC:</span> <EM>[display_name]:</EM> <span class='message'>[msg]</span></span></font>")
+
+	if(mob.looc_overhead)
+		var/transmit_language = isXeno(mob) ? LANGUAGE_XENOMORPH : LANGUAGE_ENGLISH
+		mob.langchat_speech(msg, heard, GLOB.all_languages[transmit_language], "#ff47d7")
 
 	// Now handle admins
 	display_name = S.key
@@ -171,7 +186,7 @@
 			var/prefix = "(R)LOOC"
 			if (C.mob in heard)
 				prefix = "LOOC"
-			to_chat(C, "<font color='#6699CC'><span class='ooc'><span class='prefix'>[prefix]:</span> <EM>[display_name]:</EM> <span class='message'>[msg]</span></span></font>")
+			to_chat(C, "<font color='#f557b8'><span class='ooc linkify'><span class='prefix'>[prefix]:</span> <EM>[display_name]:</EM> <span class='message'>[msg]</span></span></font>")
 	usr.talked = 1
 	addtimer(CALLBACK(usr, .proc/clear_chat_spam_mute, usr.talked), CHAT_OOC_DELAY, TIMER_UNIQUE)
 

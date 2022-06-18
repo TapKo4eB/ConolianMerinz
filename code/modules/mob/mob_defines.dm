@@ -18,6 +18,9 @@
 	var/adminhelp_marked = 0 // Prevents marking an Adminhelp more than once. Making this a client define will cause runtimes and break some Adminhelps
 	var/adminhelp_marked_admin = "" // Ckey of last marking admin
 
+	/// a ckey that persists client logout / ghosting, replaced when a client inhabits the mob
+	var/persistent_ckey
+
 	/*A bunch of this stuff really needs to go under their own defines instead of being globally attached to mob.
 	A variable should only be globally attached to turfs/obj/whatever, when it is in fact needed as such.
 	The current method unnecessarily clusters up the variable list, especially for humans (although rearranging won't really clean it up a lot but the difference will be noticable for other mobs).
@@ -29,9 +32,7 @@
 	var/use_me = 1 //Allows all mobs to use the me verb by default, will have to manually specify they cannot
 	var/damageoverlaytemp = 0
 	var/computer_id = null //to track the players
-	var/lastattacker = null
-	var/lastattacked = null
-	var/attack_log = list( )
+	var/list/attack_log = list( )
 	var/atom/movable/interactee //the thing that the mob is currently interacting with (e.g. a computer, another mob (stripping a mob), manning a hmg)
 	var/sdisabilities = 0	//Carbon
 	var/disabilities = 0	//Carbon
@@ -67,11 +68,14 @@
 	unacidable = FALSE
 	var/mob_size = MOB_SIZE_HUMAN
 	var/list/embedded = list()          // Embedded items, since simple mobs don't have organs.
-	var/list/languages = list()         // For speaking/listening.
+	var/list/datum/language/languages = list()         // For speaking/listening.
 	var/list/speak_emote = list("says") // Verbs used when speaking. Defaults to 'say' if speak_emote is null.
 	var/emote_type = 1		// Define emote default type, 1 for seen emotes, 2 for heard emotes
 
 	var/name_archive //For admin things like possession
+
+	// Determines what the alpha of the lighting is to this mob.
+	var/lighting_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
 
 	/// List of active luminosity sources for handling of light stacking
 	var/list/atom/luminosity_sources
@@ -83,6 +87,7 @@
 	var/timeofdeath = 0.0//Living
 	var/life_steps_total = 0
 	var/life_kills_total = 0
+	var/life_damage_taken_total = 0
 
 	var/bodytemperature = 310.055	//98.7 F
 	var/old_x = 0
@@ -139,6 +144,8 @@
 	var/faction = FACTION_NEUTRAL
 	var/faction_group
 
+	var/looc_overhead = FALSE
+
 	var/datum/skills/skills = null //the knowledge you have about certain abilities and actions (e.g. do you how to do surgery?)
 									//see skills.dm in #define folder and code/datums/skills.dm for more info
 	var/obj/item/legcuffs/legcuffed = null  //Same as handcuffs but for legs. Bear traps use this.
@@ -153,11 +160,6 @@
 	var/status_flags = CANKNOCKDOWN|CANPUSH|STATUS_FLAGS_DEBILITATE	//bitflags defining which status effects can be inflicted (replaces canweaken, canstun, etc)
 
 	var/area/lastarea = null
-
-	var/list/radar_blips = list() // list of screen objects, radar blips
-	var/radar_open = 0 	// nonzero is radar is open
-
-
 	var/obj/control_object //Used by admins to possess objects. All mobs should have this var
 
 	//Whether or not mobs can understand other mobtypes. These stay in /mob so that ghosts can hear everything.
@@ -165,15 +167,19 @@
 	var/universal_understand = 0 // Set to 1 to enable the mob to understand everyone, not necessarily speak
 
 	var/immune_to_ssd = 0
+	var/aghosted = FALSE //If the mob owner is currently aghosted.
 
 	var/list/tile_contents = list()  //the contents of the turf being examined in the stat panel
 	var/tile_contents_change = 0
 
 	var/STUI_log = 1
 
-	var/away_timer = 0 //How long the player has been disconnected
+	var/away_timer = 0 //How long the player has not done an action.
 
 	var/recently_pointed_to = 0 //used as cooldown for the pointing verb.
+
+	///Colour matrices to be applied to the client window. Assoc. list.
+	var/list/client_color_matrices
 
 	var/list/image/hud_list //This mob's HUD (med/sec, etc) images. Associative list.
 
@@ -185,8 +191,6 @@
 							// only left click, shift click, right click, and middle click
 
 	var/datum/cause_data/last_damage_data // for tracking whatever damaged us last
-
-	var/ambience_playing = FALSE
 
 	var/noclip = FALSE
 

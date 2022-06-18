@@ -47,6 +47,9 @@
 	max_water = 500
 	power = PYRO_EXTINGUISHER_PWR
 
+/obj/item/tool/extinguisher/pyro/atmos_tank
+	max_water = 500000 //so it never runs out, theoretically
+
 /obj/item/tool/extinguisher/Initialize()
 	. = ..()
 	create_reagents(max_water)
@@ -96,7 +99,8 @@
 			return
 		var/mob/living/M = user
 		M.ExtinguishMob()
-		new /obj/effect/particle_effect/water(get_turf(user))
+		var/obj/effect/particle_effect/water/water_effect = new /obj/effect/particle_effect/water(get_turf(user))
+		QDEL_IN(water_effect, 1 SECONDS)
 		reagents.total_volume -= EXTINGUISHER_WATER_USE_AMT
 		return
 

@@ -148,17 +148,21 @@ There are several things that need to be remembered:
 		//Underwear
 		remove_overlay(UNDERSHIRT_LAYER)
 		remove_overlay(UNDERWEAR_LAYER)
-		if(underwear >0 && underwear < 3)
-			var/image/underwear_icon = new /image('icons/mob/humans/human.dmi', "cryo[underwear]_[g]_s")
-			underwear_icon.layer = -UNDERWEAR_LAYER
-			overlays_standing[UNDERWEAR_LAYER] = underwear_icon
-			apply_overlay(UNDERWEAR_LAYER)
+
+		var/image/underwear_icon = new /image('icons/mob/humans/human.dmi', "cryo[underwear]_[g]_s")
+		underwear_icon.layer = -UNDERWEAR_LAYER
+		overlays_standing[UNDERWEAR_LAYER] = underwear_icon
+		apply_overlay(UNDERWEAR_LAYER)
 
 		if(undershirt>0 && undershirt < 5)
 			var/image/undershirt_icon = new /image('icons/mob/humans/human.dmi', "cryoshirt[undershirt]_s")
 			undershirt_icon.layer = -UNDERSHIRT_LAYER
 			overlays_standing[UNDERSHIRT_LAYER] = undershirt_icon
 			apply_overlay(UNDERSHIRT_LAYER)
+
+/mob/living/carbon/human/proc/remove_underwear() // :flushed: - geeves
+	remove_overlay(UNDERSHIRT_LAYER)
+	remove_overlay(UNDERWEAR_LAYER)
 
 //HAIR OVERLAY
 /mob/living/carbon/human/proc/update_hair()
@@ -183,7 +187,7 @@ There are several things that need to be remembered:
 			apply_overlay(FACIAL_LAYER)
 
 	if(h_style && !(head && head.flags_inv_hide & HIDETOPHAIR))
-		var/datum/sprite_accessory/hair_style = GLOB.hair_styles_list[h_style]
+		var/datum/sprite_accessory/hair_style = species.get_hairstyle(h_style)
 		if(hair_style && (species.name in hair_style.species_allowed))
 			var/image/hair_s = new/image("icon" = hair_style.icon, "icon_state" = "[hair_style.icon_state]_s")
 			hair_s.layer = -HAIR_LAYER
@@ -225,14 +229,13 @@ There are several things that need to be remembered:
 	// blend the individual damage states with our icons
 	for(var/obj/limb/L in limbs)
 		for(var/datum/wound/W in L.wounds)
-			if(!W.bandaged)
-				continue
-			if(!W.bandaged_icon)
-				var/bandaged_icon_name = "gauze_[L.icon_name]"
-				if(L.bandage_icon_amount > 1)
-					bandaged_icon_name += "_[rand(1, L.bandage_icon_amount)]"
-				W.bandaged_icon = new /icon('icons/mob/humans/onmob/med_human.dmi', "[bandaged_icon_name]")
-			standing_image.overlays += W.bandaged_icon
+			if(W.bandaged & WOUND_BANDAGED)
+				if(!W.bandaged_icon)
+					var/bandaged_icon_name = "gauze_[L.icon_name]"
+					if(L.bandage_icon_amount > 1)
+						bandaged_icon_name += "_[rand(1, L.bandage_icon_amount)]"
+					W.bandaged_icon = new /icon('icons/mob/humans/onmob/med_human.dmi', "[bandaged_icon_name]")
+				standing_image.overlays += W.bandaged_icon
 		if(L.status & LIMB_SPLINTED)
 			if(!L.splinted_icon)
 				var/splinted_icon_name = "splint_[L.icon_name]"
@@ -262,7 +265,11 @@ Applied by gun suicide and high impact bullet executions, removed by rejuvenate,
 	if(!head_organ || (head_organ.status & LIMB_DESTROYED))
 		return
 
-	var/image/headshot = new('icons/mob/humans/dam_human.dmi', headshot_state)
+	var/image/headshot = new('icons/mob/humans/dam_human.dmi', headshot_state + "_bone")
+	var/image/headshot_blood = new('icons/mob/humans/dam_human.dmi', headshot_state + "_blood")
+	headshot_blood.color = species.blood_color
+	headshot.overlays += headshot_blood
+
 	headshot.appearance_flags = RESET_COLOR
 	headshot.blend_mode = BLEND_INSET_OVERLAY
 	headshot.layer = -HEADSHOT_LAYER

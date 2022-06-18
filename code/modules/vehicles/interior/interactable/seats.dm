@@ -42,7 +42,7 @@
 		vehicle.set_seated_mob(seat, null)
 		M.unset_interaction()
 		if(M.client)
-			M.client.change_view(7)
+			M.client.change_view(world_view_size, src)
 			M.client.pixel_x = 0
 			M.client.pixel_y = 0
 	else
@@ -51,7 +51,15 @@
 			return
 		vehicle.set_seated_mob(seat, M)
 		if(M && M.client)
-			M.client.change_view(8)
+			M.client.change_view(8, src)
+
+/obj/structure/bed/chair/comfy/vehicle/clicked(mob/user, list/mods) // If you're buckled, you can shift-click on the seat in order to return to camera-view
+	if(user == buckled_mob && mods["shift"] && !user.is_mob_incapacitated())
+		user.client.change_view(8, src)
+		vehicle.set_seated_mob(seat, user)
+		return TRUE
+	else
+		. = ..()
 
 // Pass movement relays to the vehicle
 /obj/structure/bed/chair/comfy/vehicle/relaymove(mob/user, direction)
@@ -69,6 +77,9 @@
 		if(target == user)
 			to_chat(user, SPAN_WARNING("You have no idea how to drive this thing!"))
 		return FALSE
+
+	if(vehicle)
+		vehicle.vehicle_faction = target.faction
 
 	return ..()
 
@@ -98,6 +109,9 @@
 	for(var/obj/item/I in user.contents)		//prevents shooting while zoomed in, but zoom can still be activated and used without shooting
 		if(I.zoom)
 			I.zoom(user)
+
+	if(vehicle)
+		vehicle.vehicle_faction = target.faction
 
 	return ..()
 
@@ -212,7 +226,7 @@
 		vehicle.set_seated_mob(seat, null)
 		M.unset_interaction()
 		if(M.client)
-			M.client.change_view(7)
+			M.client.change_view(world_view_size, src)
 			M.client.pixel_x = 0
 			M.client.pixel_y = 0
 	else
@@ -220,9 +234,8 @@
 			unbuckle()
 			return
 		vehicle.set_seated_mob(seat, M)
-		//port view ain't that good
 		if(M && M.client)
-			M.client.change_view(6)
+			M.client.change_view(8, src)
 
 		if(vehicle.health < initial(vehicle.health) / 2)
 			to_chat(M, SPAN_WARNING("\The [vehicle] is too damaged to operate the Firing Port Weapon!"))
@@ -259,6 +272,7 @@
 	var/image/chairbar = null
 	var/broken = FALSE
 	buildstacktype = 0
+	picked_up_item = null
 
 	unslashable = FALSE
 	unacidable = TRUE

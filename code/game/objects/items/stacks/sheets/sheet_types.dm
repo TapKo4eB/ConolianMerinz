@@ -11,8 +11,9 @@
  * Metal
  */
 var/global/list/datum/stack_recipe/metal_recipes = list ( \
-	new/datum/stack_recipe("barbed wire", /obj/item/stack/barbed_wire, 2, 1, 20, time = 1 SECONDS, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_TRAINED), \
-	new/datum/stack_recipe("metal barricade", /obj/structure/barricade/metal, 5, time = 2 SECONDS, one_per_turf = ONE_TYPE_PER_BORDER, on_floor = 1, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_TRAINED, min_time = 1 SECONDS), \
+	new/datum/stack_recipe("barbed wire", /obj/item/stack/barbed_wire, 1, 1, 20, time = 1 SECONDS, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_TRAINED), \
+	new/datum/stack_recipe("metal barricade", /obj/structure/barricade/metal, 4, time = 2 SECONDS, one_per_turf = ONE_TYPE_PER_BORDER, on_floor = 1, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_TRAINED, min_time = 1 SECONDS), \
+	new/datum/stack_recipe("folding metal barricade", /obj/structure/barricade/plasteel/metal, 6, time = 3 SECONDS, one_per_turf = ONE_TYPE_PER_BORDER, on_floor = 1, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_ENGI, min_time = 1.5 SECONDS), \
 	new/datum/stack_recipe("handrail", /obj/structure/barricade/handrail, 2, time = 2 SECONDS, one_per_turf = ONE_TYPE_PER_BORDER, on_floor = 1, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_TRAINED, min_time = 1 SECONDS), \
 	null, \
 	new/datum/stack_recipe("apc frame", /obj/item/frame/apc, 2), \
@@ -35,6 +36,12 @@ var/global/list/datum/stack_recipe/metal_recipes = list ( \
 		new/datum/stack_recipe("brown comfy chair", /obj/structure/bed/chair/comfy/orange, 2, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
 		new/datum/stack_recipe("lime comfy chair", /obj/structure/bed/chair/comfy/lime, 2, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
 		new/datum/stack_recipe("teal comfy chair", /obj/structure/bed/chair/comfy/teal, 2, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
+		), 2), \
+	new/datum/stack_recipe_list("squad chairs", list( \
+		new/datum/stack_recipe("alpha squad chair", /obj/structure/bed/chair/comfy/alpha, 2, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
+		new/datum/stack_recipe("bravo squad chair", /obj/structure/bed/chair/comfy/bravo, 2, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
+		new/datum/stack_recipe("charlie squad chair", /obj/structure/bed/chair/comfy/charlie, 2, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
+		new/datum/stack_recipe("delta squad chair", /obj/structure/bed/chair/comfy/delta, 2, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
 		), 2), \
 	new/datum/stack_recipe_list("office chairs",list( \
 		new/datum/stack_recipe("dark office chair", /obj/structure/bed/chair/office/dark, 5, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
@@ -65,8 +72,14 @@ var/global/list/datum/stack_recipe/metal_recipes = list ( \
 /obj/item/stack/sheet/metal/small_stack
 	amount = STACK_10
 
+/obj/item/stack/sheet/metal/med_small_stack
+	amount = STACK_20
+
 /obj/item/stack/sheet/metal/medium_stack
-	amount = STACK_25
+	amount = STACK_30
+
+/obj/item/stack/sheet/metal/med_large_stack
+	amount = STACK_40
 
 /obj/item/stack/sheet/metal/large_stack
 	amount = STACK_50
@@ -81,7 +94,7 @@ var/global/list/datum/stack_recipe/metal_recipes = list ( \
  * Plasteel
  */
 var/global/list/datum/stack_recipe/plasteel_recipes = list ( \
-	new/datum/stack_recipe("plasteel barricade", /obj/structure/barricade/plasteel, 10, time = 4 SECONDS, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_ENGI, min_time = 2 SECONDS),
+	new/datum/stack_recipe("plasteel barricade", /obj/structure/barricade/plasteel, 8, time = 4 SECONDS, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_ENGI, min_time = 2 SECONDS),
 	null, \
 	new/datum/stack_recipe("reinforced window frame", /obj/structure/window_frame/colony/reinforced, 5, time = 40, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1, skill_req = SKILL_CONSTRUCTION, skill_lvl = SKILL_CONSTRUCTION_ENGI),
 	null, \
@@ -110,8 +123,14 @@ var/global/list/datum/stack_recipe/plasteel_recipes = list ( \
 /obj/item/stack/sheet/plasteel/small_stack
 	amount = STACK_10
 
+/obj/item/stack/sheet/plasteel/med_small_stack
+	amount = STACK_20
+
 /obj/item/stack/sheet/plasteel/medium_stack
 	amount = STACK_30
+
+/obj/item/stack/sheet/plasteel/med_large_stack
+	amount = STACK_40
 
 /obj/item/stack/sheet/plasteel/large_stack
 	amount = STACK_50
@@ -126,11 +145,12 @@ var/global/list/datum/stack_recipe/wood_recipes = list ( \
 	new/datum/stack_recipe("table parts", /obj/item/frame/table/wood, 2), \
 	 */
 	new/datum/stack_recipe("wooden chair", /obj/structure/bed/chair/wood/normal, 1, time = 10, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
-	new/datum/stack_recipe("wooden barricade", /obj/structure/barricade/wooden, 5, time = 50, one_per_turf = ONE_TYPE_PER_BORDER, on_floor = 1), \
-
+	new/datum/stack_recipe("wooden barricade", /obj/structure/barricade/wooden, 5, time = 20, one_per_turf = ONE_TYPE_PER_BORDER, on_floor = 1), \
+	new/datum/stack_recipe("wooden crate", /obj/structure/closet/coffin/woodencrate, 5, time = 15, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
 	new/datum/stack_recipe("wooden door", /obj/structure/mineral_door/wood, 10, time = 20, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
 	new/datum/stack_recipe("coffin", /obj/structure/closet/coffin, 5, time = 15, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1), \
-	new/datum/stack_recipe("baseball bat", /obj/item/weapon/melee/baseballbat, 10, time = 20, on_floor = 1) \
+	new/datum/stack_recipe("baseball bat", /obj/item/weapon/melee/baseballbat, 10, time = 20, on_floor = 1), \
+	new/datum/stack_recipe("wooden cross", /obj/structure/prop/wooden_cross, 2, time = 10, one_per_turf = ONE_TYPE_PER_TURF, on_floor = 1) \
 	)
 
 /obj/item/stack/sheet/wood
@@ -231,6 +251,11 @@ var/global/list/datum/stack_recipe/cardboard_recipes = list ( \
 		new/datum/stack_recipe("empty shotgun shell box (Flechette)", /obj/item/ammo_box/magazine/shotgun/flechette/empty), \
 		new/datum/stack_recipe("empty shotgun shell box (Incendiary)", /obj/item/ammo_box/magazine/shotgun/incendiary/empty), \
 		new/datum/stack_recipe("empty shotgun shell box (Slugs)", /obj/item/ammo_box/magazine/shotgun/empty), \
+		null, \
+		new/datum/stack_recipe("empty 45-70 bullets box", /obj/item/ammo_box/magazine/lever_action/empty), \
+		new/datum/stack_recipe("empty 45-70 bullets box (Blanks)", /obj/item/ammo_box/magazine/lever_action/training/empty), \
+		new/datum/stack_recipe("empty 45-70 bullets box (Trackers)", /obj/item/ammo_box/magazine/lever_action/tracker/empty), \
+		new/datum/stack_recipe("empty 45-70 bullets box (Marksman)", /obj/item/ammo_box/magazine/lever_action/marksman/empty), \
 		null, \
 		new/datum/stack_recipe("empty smg ammo box (10x20mm)", /obj/item/ammo_box/rounds/smg/empty), \
 		new/datum/stack_recipe("empty smg ammo box (10x20mm AP)", /obj/item/ammo_box/rounds/smg/ap/empty), \

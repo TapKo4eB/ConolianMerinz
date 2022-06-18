@@ -1,24 +1,24 @@
-/obj/item/clothing/suit/storage/jacket/marine
-	name = "marine service jacket"
-	desc = "A service jacket typically worn by officers of the USCM. It has shards of light Kevlar to help protect against stabbing weapons, bullets, and shrapnel from explosions, a small EMF distributor to help null energy-based weapons, and a hazmat chemical filter weave to ward off biological and radiation hazards."
+/obj/item/clothing/suit/storage/jacket/marine //BASE ITEM
+	name = "marine jacket"
+	//This really should not be spawned
+	desc = "What the hell is this doing here?"
 	icon = 'icons/obj/items/clothing/cm_suits.dmi'
 	item_icons = list(
 		WEAR_JACKET = 'icons/mob/humans/onmob/suit_1.dmi'
 	)
 	sprite_sheets = list(SPECIES_MONKEY = 'icons/mob/humans/species/monkeys/onmob/suit_monkey_1.dmi')
-	icon_state = "coat_officer"
 	blood_overlay_type = "coat"
 	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_ARMS
 	flags_cold_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_ARMS|BODY_FLAG_LEGS
 	min_cold_protection_temperature = ICE_PLANET_min_cold_protection_temperature
-	armor_melee = CLOTHING_ARMOR_MEDIUMLOW
-	armor_bullet = CLOTHING_ARMOR_MEDIUM
-	armor_laser = CLOTHING_ARMOR_LOW
+	armor_melee = CLOTHING_ARMOR_LOW
+	armor_bullet = CLOTHING_ARMOR_LOW
+	armor_laser = CLOTHING_ARMOR_NONE
 	armor_energy = CLOTHING_ARMOR_NONE
 	armor_bomb = CLOTHING_ARMOR_NONE
 	armor_bio = CLOTHING_ARMOR_NONE
 	armor_rad = CLOTHING_ARMOR_NONE
-	armor_internaldamage = CLOTHING_ARMOR_LOW
+	armor_internaldamage = CLOTHING_ARMOR_NONE
 	allowed = list(
 		/obj/item/weapon/gun/,
 		/obj/item/storage/fancy/cigarettes,
@@ -38,17 +38,69 @@
 		/obj/item/tank/emergency_oxygen,
 		/obj/item/tool/crowbar,
 		/obj/item/tool/pen,
+		/obj/item/storage/large_holster/machete,
 	)
 	valid_accessory_slots = list(ACCESSORY_SLOT_ARMBAND, ACCESSORY_SLOT_RANK, ACCESSORY_SLOT_DECOR, ACCESSORY_SLOT_MEDAL)
 	restricted_accessory_slots = list(ACCESSORY_SLOT_ARMBAND, ACCESSORY_SLOT_RANK)
+
+	//Buttons
+	var/has_buttons = FALSE
+	var/buttoned = TRUE
+	var/initial_icon_state
+
+/obj/item/clothing/suit/storage/jacket/marine/proc/toggle()
+	set name = "Toggle Buttons"
+	set category = "Object"
+	set src in usr
+
+	if(!usr.canmove || usr.stat || usr.is_mob_restrained())
+		return 0
+
+	if(src.buttoned == TRUE)
+		src.icon_state = "[initial_icon_state]_o"
+		src.buttoned = FALSE
+		to_chat(usr, SPAN_INFO("You unbutton \the [src]."))
+	else
+		src.icon_state = "[initial_icon_state]"
+		src.buttoned = TRUE
+		to_chat(usr, SPAN_INFO("You button \the [src]."))
+	update_clothing_icon()
 
 /obj/item/clothing/suit/storage/jacket/marine/Initialize()
 	. = ..()
 	if(!(flags_atom & NO_SNOW_TYPE))
 		select_gamemode_skin(type)
+		initial_icon_state = icon_state
+	if(has_buttons)
+		verbs += /obj/item/clothing/suit/storage/jacket/marine/proc/toggle
+
+//Marine service jacket and MP themed variants
+/obj/item/clothing/suit/storage/jacket/marine/service
+	name = "marine service jacket"
+	desc = "A service jacket typically worn by officers of the USCM. It has shards of light Kevlar to help protect against stabbing weapons and bullets."
+	has_buttons = TRUE
+	icon_state = "coat_officer"
+
+/obj/item/clothing/suit/storage/jacket/marine/service/mp
+	name = "military police service jacket"
+	desc = "A marine service jacket adopted for use by Military Police personnel on board USCM ships. Ironically most ships require their MP departments to use full armor, making these barely used by on duty MPs. This variant is also available to regular Marines, if they are willing to bear the shame."
+	has_buttons = TRUE
+	icon_state = "coat_mp"
+
+/obj/item/clothing/suit/storage/jacket/marine/service/warden
+	name = "military warden service jacket"
+	desc = "A marine service jacket adopted for use by Military Wardens on board USCM ships. Ironically most ships require their MP departments to use full armor, making these barely used by on duty Wardens. The jacket of choice for looking all night at a set of monitors, while cigarette butts pile around you."
+	has_buttons = TRUE
+	icon_state = "coat_warden"
+
+/obj/item/clothing/suit/storage/jacket/marine/service/cmp
+	name = "chief military police service jacket"
+	desc = "A marine service jacket adopted for use by Military Police personnel on board USCM ships. Ironically most ships require their MP departments to use full armor, making these barely used by on duty MPs. Very popular among those who want to inexplicably smell like donuts."
+	has_buttons = TRUE
+	icon_state = "coat_cmp"
 
 /obj/item/clothing/suit/storage/jacket/marine/chef
-	name = "mess sergeant jacket"
+	name = "mess technician jacket"
 	desc = "Smells like vanilla. Signifies prestige and power, if a little flashy."
 	icon_state = "chef_jacket"
 	armor_melee = CLOTHING_ARMOR_LOW
@@ -83,9 +135,26 @@
 	restricted_accessory_slots = list(ACCESSORY_SLOT_ARMBAND)
 
 /obj/item/clothing/suit/storage/jacket/marine/dress/officer/bomber
-	name = "commanding officer bomber jacket"
+	name = "captain's bomber jacket"
 	desc = "A bomber jacket resembling those worn by airmen of old. A classic, stylish choice for those in the higher ranks."
+	has_buttons = TRUE
 	icon_state = "co_bomber"
+	initial_icon_state = "co_bomber"
+
+/obj/item/clothing/suit/storage/jacket/marine/dress/officer/white
+	name = "captain's white dress jacket"
+	desc = "A white dress tunic for hot-weather parades. Bright, unstained, and immaculate with gold accents."
+	icon_state = "co_formal_white"
+
+/obj/item/clothing/suit/storage/jacket/marine/dress/officer/black
+	name = "captain's gray dress jacket"
+	desc = "A gray dress tunic for those occasions that mandate darker, more subdued colors. Combines sleek and subdued with gold accents."
+	icon_state = "co_formal_black"
+
+/obj/item/clothing/suit/storage/jacket/marine/dress/officer/suit
+	name = "captain's dress blue coat"
+	desc = "A Navy regulation dress blues coat for high-ranking officers. For those who wish for style and authority."
+	icon_state = "co_suit"
 
 /obj/item/clothing/suit/storage/jacket/marine/dress/admiral
 	name = "admiral's jacket"
@@ -97,9 +166,9 @@
 	)
 	item_state = "admiral_jacket"
 	storage_slots = 4
-	armor_melee = CLOTHING_ARMOR_MEDIUM
-	armor_bullet = CLOTHING_ARMOR_MEDIUM
-	armor_bomb = CLOTHING_ARMOR_MEDIUM
+	armor_melee = CLOTHING_ARMOR_HIGHPLUS
+	armor_bullet = CLOTHING_ARMOR_HIGHPLUS
+	armor_bomb = CLOTHING_ARMOR_VERYHIGH
 	flags_armor_protection = BODY_FLAG_CHEST|BODY_FLAG_GROIN|BODY_FLAG_ARMS
 	w_class = SIZE_MEDIUM
 

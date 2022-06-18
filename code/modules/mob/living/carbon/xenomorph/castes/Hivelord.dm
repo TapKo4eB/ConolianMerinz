@@ -15,7 +15,7 @@
 
 	evolution_allowed = FALSE
 	caste_desc = "A builder of really big hives."
-	deevolves_to = XENO_CASTE_DRONE
+	deevolves_to = list(XENO_CASTE_DRONE)
 	can_hold_facehuggers = 1
 	can_hold_eggs = CAN_HOLD_TWO_HANDS
 	acid_level = 2
@@ -60,7 +60,7 @@
 		/datum/action/xeno_action/onclick/plant_weeds, //first macro
 		/datum/action/xeno_action/onclick/choose_resin, //second macro
 		/datum/action/xeno_action/activable/secrete_resin/hivelord, //third macro
-		/datum/action/xeno_action/onclick/toggle_speed //fourth macro
+		/datum/action/xeno_action/onclick/toggle_speed, //fourth macro
 		)
 	mutation_type = HIVELORD_NORMAL
 

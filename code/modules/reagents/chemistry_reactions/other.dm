@@ -147,23 +147,14 @@
 	id = "flash_powder"
 	result = null
 	required_reagents = list("aluminum" = 1, "potassium" = 1, "sulfur" = 1 )
-	result_amount = null
+	result_amount = 3
 
 	on_reaction(var/datum/reagents/holder, var/created_volume)
 		var/location = get_turf(holder.my_atom)
 		var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
 		s.set_up(2, 1, location)
 		s.start()
-		for(var/mob/living/carbon/M in viewers(world_view_size, location))
-			switch(get_dist(M, location))
-				if(0 to 3)
-					if(M.flash_eyes())
-						M.KnockDown(15)
-
-				if(4 to 5)
-					if(M.flash_eyes())
-						M.Stun(5)
-
+		new /obj/item/device/flashlight/flare/on/illumination/chemical(location, created_volume)
 
 /datum/chemical_reaction/chemfire
 	name = "Napalm"
@@ -253,6 +244,7 @@
 	required_reagents = list("potassium" = 1, "sugar" = 1, "phosphorus" = 1)
 	result_amount = 0.4
 	secondary = 1
+	mob_react = FALSE
 
 	on_reaction(var/datum/reagents/holder, var/created_volume)
 		var/location = get_turf(holder.my_atom)
@@ -371,9 +363,9 @@
 		holder.clear_reagents()
 
 
-/datum/chemical_reaction/metalfoam
+/datum/chemical_reaction/metal_foam
 	name = "Metal Foam"
-	id = "metalfoam"
+	id = "metal_foam"
 	result = null
 	required_reagents = list("aluminum" = 3, "foaming_agent" = 1, "pacid" = 1)
 	result_amount = 5
@@ -383,7 +375,7 @@
 		var/location = get_turf(holder.my_atom)
 
 		for(var/mob/M in viewers(5, location))
-			to_chat(M, SPAN_WARNING("The solution spews out a metalic foam!"))
+			to_chat(M, SPAN_WARNING("The solution spews out a metallic shiny foam!"))
 
 		var/datum/effect_system/foam_spread/s = new()
 		s.set_up(created_volume, location, holder, 1)
@@ -402,7 +394,7 @@
 		var/location = get_turf(holder.my_atom)
 
 		for(var/mob/M in viewers(5, location))
-			to_chat(M, SPAN_WARNING("The solution spews out a metalic foam!"))
+			to_chat(M, SPAN_WARNING("The solution spews out a metallic dull foam!"))
 
 		var/datum/effect_system/foam_spread/s = new()
 		s.set_up(created_volume, location, holder, 2)

@@ -36,6 +36,8 @@ var/obj/structure/anti_air_cannon/almayer_aa_cannon
 	dir = WEST
 	flags_atom = ON_BORDER|CONDUCT|FPRINT
 
+	req_one_access = list(ACCESS_MARINE_ENGINEERING, ACCESS_MARINE_BRIDGE)
+
 /obj/structure/machinery/computer/aa_console/initialize_pass_flags(var/datum/pass_flags_container/PF)
 	..()
 	if (PF)
@@ -55,7 +57,11 @@ var/obj/structure/anti_air_cannon/almayer_aa_cannon
 
 	if(!skillcheck(user, SKILL_ENGINEER, SKILL_ENGINEER_ENGI))
 		to_chat(user, SPAN_WARNING("You have no idea how to use that console."))
-		return 1
+		return TRUE
+
+	if(!allowed(user))
+		to_chat(user, SPAN_WARNING("You do not have access to this."))
+		return TRUE
 
 	user.set_interaction(src)
 
@@ -93,7 +99,10 @@ var/obj/structure/anti_air_cannon/almayer_aa_cannon
 
 	if(href_list["protect"] && !almayer_aa_cannon.is_disabled)
 		almayer_aa_cannon.protecting_section = href_list["protect"]
-		message_staff("[key_name(usr)] has set the AA to [almayer_aa_cannon.protecting_section].")
+		if(!(almayer_aa_cannon.protecting_section in almayer_ship_sections))
+			almayer_aa_cannon.protecting_section = ""
+			return
+		message_staff("[key_name(usr)] has set the AA to [html_encode(almayer_aa_cannon.protecting_section)].")
 		attack_hand(usr)
 	else if(href_list["close"])
 		close_browser(usr, "aa_console")

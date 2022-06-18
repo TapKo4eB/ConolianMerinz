@@ -99,7 +99,7 @@
     for(var/obj/item/O in contents)
         var/image/I = image(O.icon)
         I.appearance = O.appearance
-        I.appearance_flags = RESET_COLOR
+        I.appearance_flags |= RESET_COLOR
         I.overlays = O.overlays
         LAZYADD(overlays, I)
 
@@ -174,7 +174,9 @@
 	W.pixel_x = (CELLSIZE * (cell_x + 0.5)) - center["x"]
 	W.pixel_y = (CELLSIZE * (cell_y + 0.5)) - center["y"]
 	W.pixel_z = 0
-	attach_item(W)
+
+	if(!(W.flags_item & NOTABLEMERGE))
+		attach_item(W)
 
 /obj/structure/surface/MouseDrop(atom/over)
 	. = ..()

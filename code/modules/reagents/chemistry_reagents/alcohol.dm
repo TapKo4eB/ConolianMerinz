@@ -644,7 +644,7 @@
 /datum/reagent/ethanol/grog
 	name = "Grog"
 	id = "grog"
-	description = "Watered down rum, NanoTrasen approves!"
+	description = "Watered down rum, Weyland-Yutani approves!"
 	reagent_state = LIQUID
 	color = "#664300" // rgb: 102, 67, 0
 	boozepwr = 0.5
@@ -681,7 +681,7 @@
 /datum/reagent/ethanol/amasec
 	name = "Amasec"
 	id = "amasec"
-	description = "Official drink of the NanoTrasen Gun-Club!"
+	description = "Official drink of the Weyland-Yutani Gun-Club!"
 	reagent_state = LIQUID
 	color = "#664300" // rgb: 102, 67, 0
 	boozepwr = 2
@@ -707,6 +707,13 @@
 	description = "Tastes like terrorism!"
 	color = "#2E6671" // rgb: 46, 102, 113
 	boozepwr = 5
+
+/datum/reagent/ethanol/spikedeggnog
+	name = "Spiked Eggnog"
+	id = "spikedeggnog"
+	description = "A rich and sweet alcoholic beverage traditionally consumed around Christmastime."
+	color = "#DFD7AF" // rgb: 223, 215, 175
+	boozepwr = 1
 
 /datum/reagent/ethanol/erikasurprise
 	name = "Erika Surprise"

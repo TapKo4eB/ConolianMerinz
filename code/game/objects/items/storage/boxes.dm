@@ -145,11 +145,25 @@
 	new /obj/item/explosive/grenade/flashbang(src)
 	new /obj/item/explosive/grenade/flashbang(src)
 	new /obj/item/explosive/grenade/flashbang(src)
+	if(SSticker.mode && MODE_HAS_FLAG(MODE_FACTION_CLASH))
+		handle_delete_clash_contents()
+	else if(SSticker.current_state < GAME_STATE_PLAYING)
+		RegisterSignal(SSdcs, COMSIG_GLOB_MODE_PRESETUP, .proc/handle_delete_clash_contents)
+
+/obj/item/storage/box/flashbangs/proc/handle_delete_clash_contents()
+	if(MODE_HAS_FLAG(MODE_FACTION_CLASH))
+		var/grenade_count = 0
+		var/grenades_desired = 4
+		for(var/grenade in contents)
+			if(grenade_count > grenades_desired)
+				qdel(grenade)
+			grenade_count++
+	UnregisterSignal(SSdcs, COMSIG_GLOB_MODE_PRESETUP)
 
 /obj/item/storage/box/emps
 	name = "box of emp grenades"
 	desc = "A box with 5 emp grenades."
-	icon_state = "flashbang"
+	icon_state = "emp"
 
 /obj/item/storage/box/emps/fill_preset_inventory()
 	new /obj/item/explosive/grenade/empgrenade(src)
@@ -377,6 +391,7 @@
 /obj/item/storage/box/pillbottles
 	name = "box of pill bottles"
 	desc = "It has pictures of pill bottles on its front."
+	icon_state = "pillbox"
 
 /obj/item/storage/box/pillbottles/fill_preset_inventory()
 	new /obj/item/storage/pill_bottle( src )
@@ -416,7 +431,6 @@
 /obj/item/storage/box/matches/attackby(obj/item/tool/match/W as obj, mob/user as mob)
 	if(istype(W) && !W.heat_source && !W.burnt)
 		W.light_match()
-
 
 /obj/item/storage/box/quickclot
 	name = "box of quickclot injectors"
@@ -551,15 +565,12 @@
 	storage_slots = 25
 	max_storage_space = 50
 	can_hold = list(/obj/item/explosive/grenade/HE)
-	var/nade_box_icon
+	var/base_icon
 	var/grenade_type = /obj/item/explosive/grenade/HE
+	has_gamemode_skin = TRUE
 
-/obj/item/storage/box/nade_box/Initialize()
-	. = ..()
-
-	select_gamemode_skin(/obj/item/storage/box/nade_box)
-	nade_box_icon = initial(icon_state)
-	update_icon()
+/obj/item/storage/box/nade_box/post_skin_selection()
+	base_icon = icon_state
 
 /obj/item/storage/box/nade_box/fill_preset_inventory()
 	for(var/i = 1 to storage_slots)
@@ -567,10 +578,10 @@
 
 /obj/item/storage/box/nade_box/update_icon()
 	if(!contents.len)
-		icon_state = "[nade_box_icon]_e"
+		icon_state = "[base_icon]_e"
 		qdel(src) //No reason to keep it - nobody will reuse it...
 	else
-		icon_state = nade_box_icon
+		icon_state = base_icon
 
 
 /obj/item/storage/box/nade_box/frag
@@ -582,6 +593,18 @@
 	max_storage_space = 50
 	can_hold = list(/obj/item/explosive/grenade/HE/frag)
 	grenade_type = /obj/item/explosive/grenade/HE/frag
+	has_gamemode_skin = FALSE
+
+/obj/item/storage/box/nade_box/phophorus
+	name = "\improper M40 HPDP grenade box"
+	desc = "A secure box holding 25 M40 HPDP white phosphorus grenade. High explosive, don't store near the flamer fuel."
+	icon_state = "phos_nade_placeholder"
+	w_class = SIZE_LARGE
+	storage_slots = 25
+	max_storage_space = 50
+	can_hold = list(/obj/item/explosive/grenade/phosphorus)
+	grenade_type = /obj/item/explosive/grenade/phosphorus
+	has_gamemode_skin = FALSE
 
 /obj/item/storage/box/nade_box/airburst
 	name = "\improper M74 AGM-F grenade box"
@@ -592,6 +615,7 @@
 	max_storage_space = 50
 	can_hold = list(/obj/item/explosive/grenade/HE/airburst)
 	grenade_type = /obj/item/explosive/grenade/HE/airburst
+	has_gamemode_skin = FALSE
 
 /obj/item/storage/box/nade_box/training
 	name = "\improper M07 training grenade box"
@@ -599,7 +623,7 @@
 	icon_state = "train_nade_placeholder"
 	grenade_type = /obj/item/explosive/grenade/HE/training
 	can_hold = list(/obj/item/explosive/grenade/HE/training)
-
+	has_gamemode_skin = FALSE
 
 /obj/item/storage/box/nade_box/tear_gas
 	name = "\improper M66 tear gas grenade box"
@@ -607,6 +631,25 @@
 	icon_state = "teargas_nade_placeholder"
 	can_hold = list(/obj/item/explosive/grenade/custom/teargas)
 	grenade_type = /obj/item/explosive/grenade/custom/teargas
+	has_gamemode_skin = FALSE
+
+/obj/item/storage/box/nade_box/tear_gas/fill_preset_inventory()
+	..()
+	if(SSticker.mode && MODE_HAS_FLAG(MODE_FACTION_CLASH))
+		handle_delete_clash_contents()
+	else if(SSticker.current_state < GAME_STATE_PLAYING)
+		RegisterSignal(SSdcs, COMSIG_GLOB_MODE_PRESETUP, .proc/handle_delete_clash_contents)
+
+/obj/item/storage/box/nade_box/tear_gas/proc/handle_delete_clash_contents()
+	if(MODE_HAS_FLAG(MODE_FACTION_CLASH))
+		var/grenade_count = 0
+		var/grenades_desired = 6
+		for(var/grenade in contents)
+			if(grenade_count > grenades_desired)
+				qdel(grenade)
+			grenade_count++
+	UnregisterSignal(SSdcs, COMSIG_GLOB_MODE_PRESETUP)
+
 
 //ITEMS-----------------------------------//
 /obj/item/storage/box/lightstick
@@ -637,16 +680,13 @@
 	new /obj/item/lightstick/red(src)
 	new /obj/item/lightstick/red(src)
 
-
-
-
 /obj/item/storage/box/MRE
 	name = "\improper USCM MRE"
-	desc = "Meal Ready-to-Eat, property of the US Colonial Marines. Meant to be consumed in the field, and has an expiration that is at least two decades past your combat life expectancy."
+	desc = "A Meal, Ready-to-Eat. A single-meal combat ration designed to provide a soldier with enough nutrients for a day's of strenuous work. Its expiration date is at least 20 years ahead of your combat life expectancy."
 	icon_state = "mealpack"
 	w_class = SIZE_SMALL
 	can_hold = list()
-	storage_slots = 5
+	storage_slots = 7
 	max_w_class = 0
 	use_sound = "rip"
 	var/isopened = 0
@@ -662,12 +702,33 @@
 	name = "[initial(name)] ([main])"
 	//1 in 3 chance of getting a fortune cookie
 	var/cookie = rand(1,3)
+	var/matches_type = rand(1, 5)
+	if(cookie == 1)
+		storage_slots = 8
 	new /obj/item/reagent_container/food/snacks/packaged_meal(src, main)
 	new /obj/item/reagent_container/food/snacks/packaged_meal(src, second)
 	new /obj/item/reagent_container/food/snacks/packaged_meal(src, side)
 	new /obj/item/reagent_container/food/snacks/packaged_meal(src, desert)
+	new /obj/item/reagent_container/food/drinks/cans/waterbottle(src)
 	if(cookie == 1)
 		new /obj/item/reagent_container/food/snacks/fortunecookie/prefilled(src)
+	new /obj/item/storage/fancy/cigarettes/lucky_strikes_4(src)
+	switch(matches_type)
+		if(1)
+			new /obj/item/storage/fancy/cigar/matchbook(src)
+		if(2)
+			new /obj/item/storage/fancy/cigar/matchbook/koorlander(src)
+		if(3)
+			new /obj/item/storage/fancy/cigar/matchbook/exec_select(src)
+		if(4)
+			new /obj/item/storage/fancy/cigar/matchbook/wy_gold(src)
+		if(5)
+			new /obj/item/storage/fancy/cigar/matchbook/brown(src)
+
+/obj/item/storage/box/MRE/Initialize()
+	. = ..()
+	isopened = 0
+	icon_state = "mealpack"
 
 /obj/item/storage/box/MRE/update_icon()
 	if(!contents.len)

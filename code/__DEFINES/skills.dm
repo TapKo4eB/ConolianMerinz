@@ -17,6 +17,8 @@
 #define SKILL_POWERLOADER "powerloader"
 #define SKILL_VEHICLE "vehicles"
 #define SKILL_JTAC "jtac"
+#define SKILL_EXECUTION "execution"
+#define SKILL_DOMESTIC "domestics"
 
 /*
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -104,6 +106,14 @@
 #define SKILL_CQC_MAX 5
 
 
+//execution skill
+//roles with the execution skill can perform battlefield executions (i.e. mateba and deagle)
+//should be restricted to CO/admiral/W-Y execs maybe
+
+#define SKILL_EXECUTION_DEFAULT 0
+#define SKILL_EXECUTION_TRAINED 1
+#define SKILL_EXECUTION_MAX 1
+
 //powerloader skill
 //hidden
 //proficiency with powerloader, changes powerloader speed.
@@ -115,11 +125,10 @@
 
 //leadership skill
 #define SKILL_LEAD_NOVICE 0 //Anyone but the above. Using SL items is possible but painfully slow
-#define SKILL_LEAD_BEGINNER 1 //All non-Standard Marines
-#define SKILL_LEAD_TRAINED 2 //SL
-#define SKILL_LEAD_EXPERT 3 //SOs
-#define SKILL_LEAD_MASTER 4 //XO, CO
-#define SKILL_LEAD_MAX 4
+#define SKILL_LEAD_TRAINED 1 //SL
+#define SKILL_LEAD_EXPERT 2 //SOs
+#define SKILL_LEAD_MASTER 3 //XO, CO
+#define SKILL_LEAD_MAX 3
 
 
 //JTAC skill
@@ -141,18 +150,25 @@
 
 //pilot skill, hidden
 #define SKILL_PILOT_DEFAULT 0
-#define SKILL_PILOT_TRAINED 1 //Pilot
-#define SKILL_PILOT_MAX 1
+#define SKILL_PILOT_TRAINED 1 // DCC, Synth
+#define SKILL_PILOT_EXPERT 2 // Pilot
+#define SKILL_PILOT_MAX 2
 
 
-//endurance skill
+//endurance skill - Leaving surv for ease of change
 #define SKILL_ENDURANCE_NONE 0
 #define SKILL_ENDURANCE_WEAK 1
 #define SKILL_ENDURANCE_TRAINED 2
 #define SKILL_ENDURANCE_MASTER 3
 #define SKILL_ENDURANCE_EXPERT 4
-#define SKILL_ENDURANCE_SURVIVOR 5
+#define SKILL_ENDURANCE_SURVIVOR 2
 #define SKILL_ENDURANCE_MAX 5
+
+//domestic skill, how well you work cleaning equipment and cooking stuff
+#define SKILL_DOMESTIC_NONE 0
+#define SKILL_DOMESTIC_TRAINED 1
+#define SKILL_DOMESTIC_MASTER 2
+#define SKILL_DOMESTIC_MAX 2
 
 //multitile vehicle skills
 //Can't drive

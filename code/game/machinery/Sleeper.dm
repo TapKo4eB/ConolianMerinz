@@ -3,7 +3,7 @@
 /////////////////////////////////////////
 
 /obj/structure/machinery/sleep_console
-	name = "Sleeper Console"
+	name = "sleeper console"
 	icon = 'icons/obj/structures/machinery/cryogenics.dmi'
 	icon_state = "sleeperconsole"
 	var/obj/structure/machinery/sleeper/connected = null
@@ -15,6 +15,7 @@
 /obj/structure/machinery/sleep_console/Initialize()
 	. = ..()
 	connect_sleeper()
+	flags_atom |= USES_HEARING
 
 /obj/structure/machinery/sleep_console/proc/connect_sleeper()
 	if(connected)
@@ -170,7 +171,7 @@
 /////////////////////////////////////////
 
 /obj/structure/machinery/sleeper
-	name = "Sleeper"
+	name = "sleeper"
 	desc = "A fancy bed with built-in injectors, a dialysis machine, and a limited health scanner."
 	icon = 'icons/obj/structures/machinery/cryogenics.dmi'
 	icon_state = "sleeper_0"
@@ -235,11 +236,12 @@
 
 /obj/structure/machinery/sleeper/attackby(var/obj/item/W, var/mob/living/user)
 	if(istype(W, /obj/item/grab))
-		if(isXeno(user)) return
 		var/obj/item/grab/G = W
-		if(!ismob(G.grabbed_thing))
+		if(isXeno(G.grabbed_thing))
+			to_chat(user, SPAN_WARNING("An unsupported lifeform was detected, aborting!"))
 			return
-
+		if(!ismob(G.grabbed_thing) || (isXeno(user)))
+			return
 		if(occupant)
 			to_chat(user, SPAN_NOTICE("The sleeper is already occupied!"))
 			return
@@ -250,7 +252,8 @@
 			if(occupant)
 				to_chat(user, SPAN_NOTICE("The sleeper is already occupied!"))
 				return
-			if(!G || !G.grabbed_thing) return
+			if(!G || !G.grabbed_thing)
+				return
 			var/mob/M = G.grabbed_thing
 			go_in_sleeper(M)
 			add_fingerprint(user)
@@ -313,6 +316,15 @@
 	STOP_PROCESSING(SSobj, connected)
 	update_use_power(1)
 	update_icon()
+
+//clickdrag code - "resist to get out" code is in living_verbs.dm
+/obj/structure/machinery/sleeper/MouseDrop_T(mob/target, mob/user)
+	. = ..()
+	var/mob/living/H = user
+	if(!istype(H) || target != user) //cant make others get in. grab-click for this
+		return
+
+	move_inside(target)
 
 #ifdef OBJECTS_PROXY_SPEECH
 // Transfers speech to occupant

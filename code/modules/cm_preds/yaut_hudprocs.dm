@@ -1,6 +1,6 @@
 /mob/living/carbon/human/proc/mark_panel()
 	set name = "Mark Panel"
-	set category = "Yautja"
+	set category = "Yautja.Marks"
 	set desc = "Allows you to mark your prey."
 
 	if(is_mob_incapacitated())
@@ -65,7 +65,7 @@
 // Mark for Hunt verbs
 // Add prey for hunt
 /mob/living/carbon/human/proc/mark_for_hunt()
-	set category = "Yautja"
+	set category = "Yautja.Marks"
 	set name = "Mark for Hunt"
 	set desc = "Mark a target for the hunt."
 
@@ -79,13 +79,13 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	// List all possible preys
 	// We only target living humans and xenos
 	var/list/target_list = list()
-	for(var/mob/living/prey in view(7, src))
+	for(var/mob/living/prey in view(7, usr.client))
 		if((isHumanStrict(prey) || isXeno(prey)) && prey.stat != DEAD)
 			target_list += prey
 
@@ -111,7 +111,7 @@
 
 // Removing prey from hunt (i.e. it died, it bugged, it left the game, etc.)
 /mob/living/carbon/human/proc/remove_from_hunt()
-	set category = "Yautja"
+	set category = "Yautja.Marks"
 	set name = "Remove from Hunt"
 	set desc = "Unmark your hunt target."
 
@@ -124,8 +124,9 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
+
 	if (alert(usr, "Are you sure you want to abandon this prey?", "Remove from Hunt:", "Yes", "No") != "Yes")
 		return
 	var/mob/living/carbon/prey = hunter_data.prey
@@ -139,17 +140,16 @@
 
 
 /mob/living/carbon/human/proc/mark_honored()
-
 	if(is_mob_incapacitated())
 		to_chat(src, SPAN_DANGER("You're not able to do that right now."))
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if((isHumanStrict(target) || isXeno(target)) && target.stat != DEAD)
 			target_list += target
 
@@ -171,23 +171,22 @@
 	T.hunter_data.honored_set = src
 	hunter_data.honored_targets += T
 	T.hunter_data.honored = TRUE
-	T.hunter_data.honored_reason = "[reason]' by '[src]"
+	T.hunter_data.honored_reason = "[reason]' by '[src.real_name]"
 	T.hud_set_hunter()
 
 
 
 /mob/living/carbon/human/proc/unmark_honored()
-
 	if(is_mob_incapacitated())
 		to_chat(src, SPAN_DANGER("You're not able to do that right now."))
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if((isHumanStrict(target) || isXeno(target)) && target.stat != DEAD)
 			if(target.hunter_data.honored)
 				target_list += target
@@ -220,11 +219,11 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if((isHumanStrict(target) || isXeno(target)) && target.stat != DEAD)
 			target_list += target
 
@@ -249,7 +248,7 @@
 	T.hunter_data.dishonored_set = src
 	hunter_data.dishonored_targets += T
 	T.hunter_data.dishonored = TRUE
-	T.hunter_data.dishonored_reason = "[reason]' by '[src]"
+	T.hunter_data.dishonored_reason = "[reason]' by '[src.real_name]"
 	T.hud_set_hunter()
 
 
@@ -260,11 +259,11 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if((isHumanStrict(target) || isXeno(target)) && target.stat != DEAD)
 			if(target.job != "Predalien" && target.job != "Predalien Larva")
 				if(target.hunter_data.dishonored)
@@ -301,11 +300,11 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if((isHumanStrict(target) && target.stat != DEAD))
 			target_list += target
 
@@ -332,11 +331,11 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if((isHumanStrict(target) && target.stat != DEAD))
 			if(target.hunter_data.gear)
 				target_list += target
@@ -367,17 +366,17 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	if(hunter_data.thrall)
-		to_chat(src, "You already have a thrall!")
+		to_chat(src, SPAN_WARNING("You already have a thrall."))
 		return
 
 	// List all possible targets
 	// We only target living humans
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if(isHumanStrict(target) && target.stat != DEAD)
 			target_list += target
 
@@ -410,13 +409,13 @@
 		return
 
 	if(!isYautja(src))
-		to_chat(src, "How did you get this verb?")
+		to_chat(src, SPAN_WARNING("How did you get this verb?"))
 		return
 
 	// List all possible targets
 	// We only target living humans
 	var/list/target_list = list()
-	for(var/mob/living/carbon/target in view(7, src))
+	for(var/mob/living/carbon/target in view(7, usr.client))
 		if(isHumanStrict(target) && target.stat != DEAD)
 			if(target.hunter_data.thralled)
 				target_list += target

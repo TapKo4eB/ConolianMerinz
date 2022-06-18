@@ -4,15 +4,17 @@
 	required_players = 1 //Need at least one player, but really we need 2.
 	xeno_required_num = 1 //Need at least one xeno.
 	monkey_amount = 5
+	corpses_to_spawn = 25
 	flags_round_type = MODE_INFESTATION|MODE_FOG_ACTIVATED|MODE_NEW_SPAWN
 	var/round_status_flags
-
-	var/passive_increase_interval = 20 MINUTES
-	var/next_passive_increase = 0
 
 	var/research_allocation_interval = 10 MINUTES
 	var/next_research_allocation = 0
 	var/research_allocation_amount = 5
+
+	var/budget_increase_delay = 30 MINUTES
+	var/next_budget_increase = 30 MINUTES
+	var/budget_points_to_give = 85
 
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -120,10 +122,10 @@
 
 	return ..()
 
-#define MONKEYS_TO_MARINES_RATIO 1/20
+#define MONKEYS_TO_TOTAL_RATIO 1/32
 
 /datum/game_mode/colonialmarines/proc/spawn_smallhosts()
-	if(!marines_assigned)
+	if(!players_preassigned)
 		return
 
 	monkey_types = SSmapping.configs[GROUND_MAP].monkey_types
@@ -131,7 +133,7 @@
 	if(!length(monkey_types))
 		return
 
-	var/amount_to_spawn = round(marines_assigned * MONKEYS_TO_MARINES_RATIO)
+	var/amount_to_spawn = round(players_preassigned * MONKEYS_TO_TOTAL_RATIO)
 
 	for(var/i in 0 to min(amount_to_spawn, length(GLOB.monkey_spawns)))
 		var/turf/T = get_turf(pick_n_take(GLOB.monkey_spawns))
@@ -159,14 +161,6 @@
 	. = ..()
 	if(--round_started > 0)
 		return FALSE //Initial countdown, just to be safe, so that everyone has a chance to spawn before we check anything.
-
-	if((flags_round_type & MODE_BASIC_RT) && next_passive_increase < world.time)
-		for(var/T in SStechtree.trees)
-			var/datum/techtree/tree = SStechtree.trees[T]
-
-			tree.passive_node.resources_per_second += PASSIVE_INCREASE_AMOUNT
-
-		next_passive_increase = world.time + passive_increase_interval
 
 	if(next_research_allocation < world.time)
 		chemical_data.update_credits(research_allocation_amount)
@@ -222,13 +216,13 @@
 			evolution_ovipositor_threshold = TRUE
 			msg_admin_niche("Xenomorphs now require the queen's ovipositor for evolution progress.")
 
-		if(!(resin_allow_finished) && world.time >= SSticker.round_start_time + round_time_resin)
-			for(var/area/A in all_areas)
-				if(!(A.is_resin_allowed))
-					A.is_resin_allowed = TRUE
-			resin_allow_finished = TRUE
-			msg_admin_niche("Areas close to landing zones are now weedable.")
+		if(!GLOB.resin_lz_allowed && world.time >= SSticker.round_start_time + round_time_resin)
+			set_lz_resin_allowed(TRUE)
 
+		if(world.time >= next_budget_increase)
+			shipwide_ai_announcement("Additional Supply Budget has been authorised for this operation.")
+			supply_controller.points += budget_points_to_give * get_scaling_value()
+			next_budget_increase += budget_increase_delay
 
 #undef FOG_DELAY_INTERVAL
 #undef PODLOCKS_OPEN_WAIT
@@ -236,8 +230,7 @@
 // Resource Towers
 
 /datum/game_mode/colonialmarines/ds_first_drop(var/datum/shuttle/ferry/marine/m_shuttle)
-	SStechtree.activate_passive_nodes()
-	addtimer(CALLBACK(SStechtree, /datum/controller/subsystem/techtree/proc/activate_all_nodes), 20 SECONDS)
+	addtimer(CALLBACK(GLOBAL_PROC, /proc/show_blurb_uscm), DROPSHIP_DROP_MSG_DELAY)
 
 ///////////////////////////
 //Checks to see who won///

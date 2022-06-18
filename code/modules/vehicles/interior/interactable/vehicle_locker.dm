@@ -15,7 +15,7 @@
 	unslashable = TRUE
 	indestructible = TRUE
 
-	var/list/role_restriction = list(JOB_CREWMAN, JOB_UPP_CREWMAN)
+	var/list/role_restriction = list(JOB_CREWMAN, JOB_WO_CREWMAN, JOB_UPP_CREWMAN, JOB_PMC_CREWMAN)
 
 	var/obj/item/storage/internal/container
 
@@ -28,7 +28,7 @@
 	container.max_storage_space = 40
 	container.use_sound = null
 	container.bypass_w_limit = list(/obj/item/weapon/gun,
-									/obj/item/storage/sparepouch,
+									/obj/item/storage/backpack/general_belt,
 									/obj/item/storage/large_holster/machete,
 									/obj/item/storage/belt,
 									/obj/item/storage/pouch,
@@ -36,6 +36,7 @@
 									/obj/item/ammo_magazine/hardpoint,
 									/obj/item/tool/weldpack
 									)
+	flags_atom |= USES_HEARING
 
 /obj/structure/vehicle_locker/verb/empty_storage()
 	set name = "Empty"
@@ -185,6 +186,7 @@
 	new /obj/item/tool/surgery/bonegel(container)
 	new /obj/item/tool/surgery/bonesetter(container)
 	new /obj/item/tool/surgery/FixOVein(container)
+	new /obj/item/tool/surgery/surgical_line(container)
 	new /obj/item/stack/nanopaste(container)
 
 /obj/structure/vehicle_locker/med/examine(mob/user)

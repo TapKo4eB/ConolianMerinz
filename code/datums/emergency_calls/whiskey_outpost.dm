@@ -10,11 +10,11 @@
 	max_heavies = 4
 	max_medics = 2
 
-/datum/emergency_call/wo/create_member(datum/mind/M)
+/datum/emergency_call/wo/create_member(datum/mind/M, var/turf/override_spawn_loc)
 	set waitfor = 0
 	if(SSmapping.configs[GROUND_MAP].map_name == MAP_WHISKEY_OUTPOST)
 		name_of_spawn = /obj/effect/landmark/ert_spawns/distress_wo
-	var/turf/spawn_loc = get_spawn_point()
+	var/turf/spawn_loc = override_spawn_loc ? override_spawn_loc : get_spawn_point()
 
 	if(!istype(spawn_loc)) return //Didn't find a useable spawn point.
 
@@ -24,25 +24,25 @@
 	sleep(5)
 	if(!leader)
 		leader = mob
-		arm_equipment(mob, "Dust Raider Squad Leader", TRUE, TRUE)
+		arm_equipment(mob, /datum/equipment_preset/dust_raider/leader, TRUE, TRUE)
 		to_chat(mob, "<font size='3'>\red You are a Squad leader in the USCM, your squad is here to assist in the defence of the [SSmapping.configs[GROUND_MAP].map_name]. </B>")
 	else if (heavies < max_heavies)
 		heavies++
 		if(prob(40))
-			arm_equipment(mob, "Dust Raider Smartgunner", TRUE, TRUE)
+			arm_equipment(mob, /datum/equipment_preset/dust_raider/smartgunner, TRUE, TRUE)
 			to_chat(mob, "<font size='3'>\red You are a smartgunner in the USCM, your squad is here to assist in the defence of the [SSmapping.configs[GROUND_MAP].map_name]. Listen to [leader.name] they are your (acting) squad leader. </B>")
 		else if(prob(20))
-			arm_equipment(mob, "Dust Raider Specialist", TRUE, TRUE)
+			arm_equipment(mob, /datum/equipment_preset/dust_raider/specialist, TRUE, TRUE)
 			to_chat(mob, "<font size='3'>\red You are a specialist in the USCM, your squad is here to assist in the defence of the [SSmapping.configs[GROUND_MAP].map_name]. Listen to [leader.name] they are your (acting) squad leader. </B>")
 		else
-			arm_equipment(mob, "Dust Raider Engineer", TRUE, TRUE)
+			arm_equipment(mob, /datum/equipment_preset/dust_raider/engineer, TRUE, TRUE)
 			to_chat(mob, "<font size='3'>\red You are an engineer in the USCM, your squad is here to assist in the defence of the [SSmapping.configs[GROUND_MAP].map_name]. Listen to [leader.name] they are your (acting) squad leader. </B>")
 	else if (medics < max_medics)
 		medics++
-		arm_equipment(mob, "Dust Raider Medic", TRUE, TRUE)
-		to_chat(mob, "<font size='3'>\red You are a medic in the USCM, your squad is here to assist in the defence of the [SSmapping.configs[GROUND_MAP].map_name]. Listen to [leader.name] they are your (acting) squad leader. </B>")
+		arm_equipment(mob, /datum/equipment_preset/dust_raider/medic, TRUE, TRUE)
+		to_chat(mob, "<font size='3'>\red You are a hospital corpsman in the USCM, your squad is here to assist in the defence of the [SSmapping.configs[GROUND_MAP].map_name]. Listen to [leader.name] they are your (acting) squad leader. </B>")
 	else
-		arm_equipment(mob,"Dust Raider Private", TRUE, TRUE)
+		arm_equipment(mob, /datum/equipment_preset/dust_raider/private, TRUE, TRUE)
 		to_chat(mob, "<font size='3'>\red You are a private in the USCM, your squad is here to assist in the defence of [SSmapping.configs[GROUND_MAP].map_name]. Listen to [leader.name] they are your (acting) squad leader. </B>")
 
 	sleep(10)

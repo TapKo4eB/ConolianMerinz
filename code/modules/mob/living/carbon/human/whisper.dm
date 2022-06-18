@@ -94,6 +94,7 @@
 	//now mobs
 	var/speech_bubble_test = say_test(message)
 	var/image/speech_bubble = image('icons/mob/hud/talk.dmi',src,"h[speech_bubble_test]")
+	speech_bubble.appearance_flags = NO_CLIENT_COLOR|KEEP_APART|RESET_COLOR
 
 	var/not_dead_speaker = (stat != DEAD)
 	for(var/mob/M in listening)
@@ -111,7 +112,7 @@
 	spawn(30)
 		if(client) client.images -= speech_bubble
 		if(not_dead_speaker)
-			log_say("[name] \[Whisper\]: [message] (CKEY: [key]) (JOB: [job])")
+			log_say("[name != "Unknown" ? name : "([real_name])"] \[Whisper\]: [message] (CKEY: [key]) (JOB: [job])")
 			for(var/mob/M in listening)
 				if(M.client) M.client.images -= speech_bubble
 			for(var/mob/M in eavesdropping)

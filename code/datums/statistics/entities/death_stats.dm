@@ -16,6 +16,7 @@
 	var/total_kills = 0
 	var/time_of_death
 	var/total_time_alive
+	var/total_damage_taken
 
 	var/total_brute = 0
 	var/total_burn = 0
@@ -47,6 +48,7 @@
         "total_kills" = DB_FIELDTYPE_INT,
         "time_of_death" = DB_FIELDTYPE_BIGINT,
         "total_time_alive" = DB_FIELDTYPE_BIGINT,
+        "total_damage_taken" = DB_FIELDTYPE_INT,
 
         "total_brute" = DB_FIELDTYPE_INT,
         "total_burn" = DB_FIELDTYPE_INT,
@@ -58,7 +60,7 @@
         "z" = DB_FIELDTYPE_INT
     )
 
-/mob/proc/track_mob_death(var/datum/cause_data/cause_data)
+/mob/proc/track_mob_death(var/datum/cause_data/cause_data, var/turf/death_loc)
 	if(!mind || statistic_exempt)
 		return
 
@@ -73,7 +75,7 @@
 	new_death.mob_name = real_name
 	new_death.faction_name = faction
 
-	var/area/A = get_area(src)
+	var/area/A = get_area(death_loc)
 	new_death.area_name = A.name
 
 	new_death.cause_name = cause_data.cause_name
@@ -98,25 +100,16 @@
 
 	new_death.time_of_death = world.time
 
-	new_death.x = src.x
-	new_death.y = src.y
-	new_death.z = src.z
+	new_death.x = death_loc.x
+	new_death.y = death_loc.y
+	new_death.z = death_loc.z
 
 	new_death.total_steps = life_steps_total
 	new_death.total_kills = life_kills_total
 	new_death.total_time_alive = life_time_total
+	new_death.total_damage_taken = life_damage_taken_total
 
-	var/observer_message = "<b>[real_name]</b> has died"
-	if(cause_data && cause_data.cause_name)
-		observer_message += " to <b>[cause_data.cause_name]</b>"
-	if(A.name)
-		observer_message += " at \the <b>[A.name]</b>"
-
-	msg_admin_attack(observer_message, src.loc.x, src.loc.y, src.loc.z)
-
-	to_chat(src, SPAN_DEADSAY(observer_message))
-	for(var/mob/dead/observer/g in GLOB.observer_list)
-		to_chat(g, SPAN_DEADSAY(observer_message + " (<a href='?src=\ref[g];jumptocoord=1;X=[src.loc.x];Y=[src.loc.y];Z=[src.loc.z]'>JMP</a>)"))
+	handle_observer_message(cause_data, cause_mob, death_loc, A)
 
 	if(round_statistics)
 		round_statistics.track_death(new_death)
@@ -140,3 +133,24 @@
 	var/datum/entity/player_stats/xeno/xeno_stats = mind.setup_xeno_stats()
 	if(xeno_stats && xeno_stats.death_list)
 		xeno_stats.death_list.Insert(1, .)
+
+/mob/proc/handle_observer_message(var/datum/cause_data/cause_data, var/mob/cause_mob, var/turf/death_loc, var/area/death_area)
+	var/observer_message = "<b>[real_name]</b> has died"
+	if(cause_data && cause_data.cause_name)
+		observer_message += " to <b>[cause_data.cause_name]</b>"
+	if(death_area.name)
+		observer_message += " at \the <b>[death_area.name]</b>"
+	if(cause_data && cause_mob)
+		observer_message += " from <b>[cause_mob]</b>"
+
+	msg_admin_attack(observer_message, death_loc.x, death_loc.y, death_loc.z)
+
+	if(src)
+		to_chat(src, SPAN_DEADSAY(observer_message))
+	for(var/mob/dead/observer/g in GLOB.observer_list)
+		to_chat(g, SPAN_DEADSAY(observer_message + " (<a href='?src=\ref[g];jumptocoord=1;X=[death_loc.x];Y=[death_loc.y];Z=[death_loc.z]'>JMP</a>)"))
+
+/mob/living/carbon/Xenomorph/handle_observer_message(var/datum/cause_data/cause_data, var/mob/cause_mob, var/turf/death_loc, var/area/death_area)
+	if(hardcore)
+		return
+	return ..()

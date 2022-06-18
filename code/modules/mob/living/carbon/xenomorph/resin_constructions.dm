@@ -1,3 +1,5 @@
+GLOBAL_VAR_INIT(resin_lz_allowed, FALSE)
+
 /datum/resin_construction
 	var/name
 	var/desc
@@ -10,7 +12,10 @@
 
 	var/range_between_constructions
 	var/build_path
+	var/build_path_thick
 	var/max_per_xeno = RESIN_CONSTRUCTION_NO_MAX
+
+	var/thick_hiveweed = FALSE // if this is set, the thick variants will only work on hiveweeds
 
 /datum/resin_construction/proc/can_build_here(var/turf/T, var/mob/living/carbon/Xenomorph/X)
 	var/mob/living/carbon/Xenomorph/blocker = locate() in T
@@ -59,25 +64,37 @@
 /datum/resin_construction/proc/build(var/turf/T, var/hivenumber, var/builder)
 	return
 
+/datum/resin_construction/proc/check_thick_build(var/turf/build_turf, var/hivenumber, var/mob/living/carbon/Xenomorph/builder)
+	var/can_build_thick = TRUE
+	if(thick_hiveweed)
+		var/obj/effect/alien/weeds/weeds = locate() in build_turf
+		if(!weeds || weeds.hivenumber != hivenumber || weeds.weed_strength < WEED_LEVEL_HIVE)
+			can_build_thick = FALSE
+
+	if(build_path_thick && (can_build_thick || (SEND_SIGNAL(builder, COMSIG_XENO_THICK_RESIN_BYPASS) & COMPONENT_THICK_BYPASS)))
+		return TRUE
+	return FALSE
 
 // Subtype encompassing all resin constructions that are of type /obj
-/datum/resin_construction/resin_obj/build(var/turf/T, var/hivenumber, var/builder)
-	if (pass_hivenumber)
-		return new build_path(T, hivenumber, builder)
-	return new build_path(T)
-
+/datum/resin_construction/resin_obj/build(var/turf/build_turf, var/hivenumber, var/mob/living/carbon/Xenomorph/builder)
+	var/path = check_thick_build(build_turf, hivenumber, builder) ? build_path_thick : build_path
+	if(pass_hivenumber)
+		return new path(build_turf, hivenumber, builder)
+	return new path(build_turf)
 
 // Subtype encompassing all resin constructions that are of type /turf
-/datum/resin_construction/resin_turf/build(var/turf/T, var/hivenumber, var/builder)
-	T.PlaceOnTop(build_path)
+/datum/resin_construction/resin_turf/build(var/turf/build_turf, var/hivenumber, var/mob/living/carbon/Xenomorph/builder)
+	var/path = check_thick_build(build_turf, hivenumber, builder) ? build_path_thick : build_path
 
-	var/turf/closed/wall/resin/W = T
-	if (istype(W) && pass_hivenumber)
-		W.hivenumber = hivenumber
-		W.set_resin_builder(builder)
-		set_hive_data(W, hivenumber)
+	build_turf.PlaceOnTop(path)
 
-	return T
+	var/turf/closed/wall/resin/resin_wall = build_turf
+	if (istype(resin_wall) && pass_hivenumber)
+		resin_wall.hivenumber = hivenumber
+		resin_wall.set_resin_builder(builder)
+		set_hive_data(resin_wall, hivenumber)
+
+	return build_turf
 
 
 // Resin Walls
@@ -97,6 +114,18 @@
 
 	build_path = /turf/closed/wall/resin/thick
 
+
+/datum/resin_construction/resin_turf/wall/queen
+	name = "Queen Resin Wall"
+	desc = "A resin wall, able to block passage. Constructed type depends on weeds."
+	construction_name = "queen resin wall"
+
+	cost = XENO_RESIN_WALL_QUEEN_COST
+
+	build_path = /turf/closed/wall/resin
+	build_path_thick = /turf/closed/wall/resin/thick
+	thick_hiveweed = TRUE
+
 /datum/resin_construction/resin_turf/wall/reflective
 	name = "Reflective Resin Wall"
 	desc = "A reflective resin wall, able to reflect any and all projectiles back to the shooter."
@@ -114,6 +143,16 @@
 	cost = XENO_RESIN_MEMBRANE_COST
 
 	build_path = /turf/closed/wall/resin/membrane
+
+/datum/resin_construction/resin_turf/membrane/queen
+	name = "Queen Resin Membrane"
+	desc = "Resin membrane that can be seen through. Constructed type depends on weeds."
+	construction_name = "queen resin membrane"
+	cost = XENO_RESIN_MEMBRANE_QUEEN_COST
+
+	build_path = /turf/closed/wall/resin/membrane
+	build_path_thick = /turf/closed/wall/resin/membrane/thick
+	thick_hiveweed = TRUE
 
 /datum/resin_construction/resin_turf/membrane/thick
 	name = "Thick Resin Membrane"
@@ -154,6 +193,16 @@
 
 	return TRUE
 
+/datum/resin_construction/resin_obj/door/queen
+	name = "Queen Resin Door"
+	desc = "A resin door that only sisters may pass. Constructed type depends on weeds."
+	construction_name = "queen resin door"
+	cost = XENO_RESIN_DOOR_QUEEN_COST
+
+	build_path = /obj/structure/mineral_door/resin
+	build_path_thick = /obj/structure/mineral_door/resin/thick
+	thick_hiveweed = TRUE
+
 /datum/resin_construction/resin_obj/door/thick
 	name = "Thick Resin Door"
 	desc = "A thick resin door, which is more durable, that only sisters may pass."
@@ -190,6 +239,7 @@
 	desc = "Resin that slows down any tallhosts when they walk over it."
 	construction_name = "sticky resin"
 	cost = XENO_RESIN_STICKY_COST
+	build_time = 1 SECONDS
 
 	build_path = /obj/effect/alien/resin/sticky
 
@@ -200,6 +250,7 @@
 	desc = "Resin that speeds up other sisters when they walk over it."
 	construction_name = "fast resin"
 	cost = XENO_RESIN_FAST_COST
+	build_time = 1 SECONDS
 
 	build_path = /obj/effect/alien/resin/sticky/fast
 

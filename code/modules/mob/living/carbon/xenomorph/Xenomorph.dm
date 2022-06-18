@@ -41,9 +41,9 @@
 	universal_speak = 0
 	mob_size = MOB_SIZE_XENO
 	hand = 1 //Make right hand active by default. 0 is left hand, mob defines it as null normally
-	see_in_dark = 8
+	see_in_dark = 12
 	recovery_constant = 1.5
-	see_invisible = SEE_INVISIBLE_MINIMUM
+	see_invisible = SEE_INVISIBLE_LIVING
 	hud_possible = list(HEALTH_HUD_XENO, PLASMA_HUD, PHEROMONE_HUD, QUEEN_OVERWATCH_HUD, ARMOR_HUD_XENO, XENO_STATUS_HUD, XENO_BANISHED_HUD, XENO_HOSTILE_ACID, XENO_HOSTILE_SLOW, XENO_HOSTILE_TAG, XENO_HOSTILE_FREEZE, HUNTER_HUD)
 	unacidable = TRUE
 	rebounds = TRUE
@@ -54,6 +54,8 @@
 	var/obj/item/clothing/head/head = null
 	var/obj/item/r_store = null
 	var/obj/item/l_store = null
+
+	var/obj/item/iff_tag/iff_tag = null
 
 	//////////////////////////////////////////////////////////////////
 	//
@@ -132,7 +134,7 @@
 
 	var/pslash_delay = 0
 
-	var/hardcore = 0 //Set to 1 in New() when Whiskey Outpost is active. Prevents healing and queen evolution
+	var/hardcore = 0 //Set to 1 in New() when Whiskey Outpost is active. Prevents healing and queen evolution, deactivates dchat death messages
 
 	//Naming variables
 	var/caste_type = "Drone"
@@ -151,6 +153,9 @@
 	/// xenomorph type is given upon spawn
 	var/base_actions
 
+	// Mark tracking --
+	var/obj/effect/alien/resin/marker/tracked_marker = null //this is the resin mark that is currently being tracked by the xeno
+
 	//////////////////////////////////////////////////////////////////
 	//
 	//		Modifiers
@@ -168,6 +173,7 @@
 	var/explosivearmor_modifier = 0
 	var/plasmapool_modifier = 1
 	var/plasmagain_modifier = 0
+	var/tackle_chance_modifier = 0
 	var/regeneration_multiplier = 1
 	var/speed_modifier = 0
 	var/phero_modifier = 0
@@ -176,6 +182,8 @@
 	var/evasion_modifier = 0
 	var/attack_speed_modifier = 0
 	var/armor_integrity_modifier = 0
+
+	var/list/modifier_sources
 
 	//////////////////////////////////////////////////////////////////
 	//
@@ -208,10 +216,12 @@
 	var/tileoffset = 0 // Zooming-out related vars
 	var/viewsize = 0
 	var/banished = FALSE // Banished xenos can be attacked by all other xenos
+	var/lock_evolve = FALSE //Prevents evolve/devolve (used when banished)
 	var/list/tackle_counter
 	var/evolving = FALSE // Whether the xeno is in the process of evolving
 	/// The damage dealt by a xeno whenever they take damage near someone
-	var/acid_blood_damage = 12
+	var/acid_blood_damage = 25
+	var/nocrit = FALSE
 
 
 	//////////////////////////////////////////////////////////////////
@@ -237,17 +247,18 @@
 	// Related to zooming out (primarily queen and boiler)
 	var/devour_timer = 0 // The world.time at which we will regurgitate our currently-vored victim
 	var/extra_build_dist = 0 // For drones/hivelords. Extends the maximum build range they have
+	var/can_stack_builds = FALSE
 	var/list/resin_build_order
 	var/selected_resin // Which resin structure to build when we secrete resin, defaults to null.
 	var/selected_construction = XENO_STRUCTURE_CORE //which special structure to build when we place constructions
+	var/selected_mark // If leader what mark you will place when you make one
 	var/datum/ammo/xeno/ammo = null //The ammo datum for our spit projectiles. We're born with this, it changes sometimes.
-	var/obj/structure/tunnel/start_dig = null
 	var/tunnel_delay = 0
 	var/steelcrest = FALSE
-	var/list/available_placeable = list() // List of placeable the xenomorph has access to.
-	var/list/current_placeable = list() // If we have current_placeable that are limited, e.g. fruits
+	var/list/available_fruits = list() // List of placeable the xenomorph has access to.
+	var/list/current_fruits = list() // If we have current_fruits that are limited, e.g. fruits
 	var/max_placeable = 0 // Limit to that amount
-	var/selected_placeable_index = 1 //In the available build list, what is the index of what we're building next
+	var/obj/effect/alien/resin/fruit/selected_fruit = null // the typepath of the placeable we wanna put down
 	var/list/built_structures = list()
 
 	var/icon_xeno
@@ -294,10 +305,16 @@
 	if(oldXeno)
 		hivenumber = oldXeno.hivenumber
 		nicknumber = oldXeno.nicknumber
+		life_kills_total = oldXeno.life_kills_total
+		life_damage_taken_total = oldXeno.life_damage_taken_total
+		if(oldXeno.iff_tag)
+			iff_tag = oldXeno.iff_tag
+			iff_tag.forceMove(src)
+			oldXeno.iff_tag = null
 	else if (h_number)
 		hivenumber = h_number
 
-	set_languages(list("Xenomorph", "Hivemind"))
+	set_languages(list(LANGUAGE_XENOMORPH, LANGUAGE_HIVEMIND))
 	if(oldXeno)
 		for(var/datum/language/L in oldXeno.languages)
 			add_language(L.name)//Make sure to keep languages (mostly for event Queens that know English)
@@ -359,8 +376,12 @@
 	recalculate_actions()
 
 	sight |= SEE_MOBS
-	see_invisible = SEE_INVISIBLE_MINIMUM
-	see_in_dark = 8
+	see_invisible = SEE_INVISIBLE_LIVING
+	see_in_dark = 12
+	if(client)
+		set_lighting_alpha_from_prefs(client)
+	else
+		lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
 
 	if(caste && caste.spit_types && caste.spit_types.len)
 		ammo = GLOB.ammo_list[caste.spit_types[1]]
@@ -487,6 +508,9 @@
 	if(!in_hive)
 		in_hive = GLOB.hive_datum[hivenumber]
 
+	//Im putting this in here, because this proc gets called when a player inhabits a SSD xeno and it needs to go somewhere (sorry)
+	hud_set_marks()
+
 	//Larvas have their own, very weird naming conventions, let's not kick a beehive, not yet
 	if(isXenoLarva(src))
 		return
@@ -513,6 +537,41 @@
 	// Since we updated our name we should update the info in the UI
 	in_hive.hive_ui.update_xeno_info()
 
+/mob/living/carbon/Xenomorph/proc/set_lighting_alpha_from_prefs(var/client/xeno_client)
+	var/vision_level = xeno_client?.prefs?.xeno_vision_level_pref
+	switch(vision_level)
+		if(XENO_VISION_LEVEL_NO_NVG)
+			lighting_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
+		if(XENO_VISION_LEVEL_MID_NVG)
+			lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
+		if(XENO_VISION_LEVEL_FULL_NVG)
+			lighting_alpha = LIGHTING_PLANE_ALPHA_INVISIBLE
+	update_sight()
+	if(hud_used)
+		var/obj/screen/xenonightvision/screenobj = (locate() in hud_used.infodisplay)
+		screenobj.update_icon(src)
+
+/mob/living/carbon/Xenomorph/proc/set_lighting_alpha(var/level)
+	switch(level)
+		if(XENO_VISION_LEVEL_NO_NVG)
+			lighting_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
+		if(XENO_VISION_LEVEL_MID_NVG)
+			lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
+		if(XENO_VISION_LEVEL_FULL_NVG)
+			lighting_alpha = LIGHTING_PLANE_ALPHA_INVISIBLE
+	update_sight()
+	var/obj/screen/xenonightvision/screenobj = (locate() in hud_used.infodisplay)
+	screenobj.update_icon(src)
+
+/mob/living/carbon/Xenomorph/proc/get_vision_level()
+	switch(lighting_alpha)
+		if(LIGHTING_PLANE_ALPHA_INVISIBLE)
+			return XENO_VISION_LEVEL_FULL_NVG
+		if(LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE)
+			return XENO_VISION_LEVEL_MID_NVG
+		if(LIGHTING_PLANE_ALPHA_VISIBLE)
+			return XENO_VISION_LEVEL_NO_NVG
+
 /mob/living/carbon/Xenomorph/examine(mob/user)
 	..()
 	if(HAS_TRAIT(src, TRAIT_SIMPLE_DESC))
@@ -521,6 +580,12 @@
 
 	if(isXeno(user) && caste && caste.caste_desc)
 		to_chat(user, caste.caste_desc)
+
+	if(l_hand)
+		to_chat(user, "It's holding[l_hand.get_examine_line()] in its left hand.")
+
+	if(r_hand)
+		to_chat(user, "It's holding[r_hand.get_examine_line()] in its right hand.")
 
 	if(stat == DEAD)
 		to_chat(user, "It is DEAD. Kicked the bucket. Off to that great hive in the sky.")
@@ -547,20 +612,19 @@
 		if(mutation_type != "Normal")
 			to_chat(user, "It has specialized into a [mutation_type].")
 
+	if(iff_tag)
+		to_chat(user, SPAN_NOTICE("It has an IFF tag sticking out of its carapace."))
+
 	return
 
 /mob/living/carbon/Xenomorph/Destroy()
-	if(mind)
-		mind.name = name //Grabs the name when the xeno is getting deleted, to reference through hive status later.
-	if(is_zoomed)
-		zoom_out()
-
 	GLOB.living_xeno_list -= src
 	GLOB.xeno_mob_list -= src
 
+	if(mind)
+		mind.name = name //Grabs the name when the xeno is getting deleted, to reference through hive status later.
 	if(IS_XENO_LEADER(src)) //Strip them from the Xeno leader list, if they are indexed in here
-		hive.remove_hive_leader(src)
-
+		hive.remove_hive_leader(src, light_mode = TRUE)
 	SStracking.stop_tracking("hive_[hivenumber]", src)
 
 	// Only handle free slots if the xeno is not in tdome
@@ -573,24 +637,14 @@
 			LAZYSET(hive.free_slots, selected_caste, new_val)
 
 	hive.remove_xeno(src)
-
 	remove_from_all_mob_huds()
-
-	for(var/datum/action/xeno_action/XA in actions)
-		qdel(XA)
-		XA = null
-
-	reagents = null
 
 	observed_xeno = null
 	wear_suit = null
 	head = null
 	r_store = null
 	l_store = null
-
-	start_dig = null
 	ammo = null
-
 	selected_ability = null
 	queued_action = null
 
@@ -606,7 +660,16 @@
 	vis_contents -= wound_icon_carrier
 	QDEL_NULL(wound_icon_carrier)
 
+	QDEL_NULL(iff_tag)
+
+	if(hardcore)
+		attack_log?.Cut() // Completely clear out attack_log to limit mem usage if we fail to delete
+
 	. = ..()
+
+	// Everything below fits the "we have to clear by principle it but i dont wanna break stuff" bill
+	mutators = null
+
 
 
 /mob/living/carbon/Xenomorph/slip(slip_source_name, stun_level, weaken_level, run_only, override_noslip, slide_steps)
@@ -662,6 +725,8 @@
 	med_hud_set_armor()
 	hud_set_plasma()
 	hud_set_pheromone()
+	hud_set_marks()
+
 
 	//and display them
 	add_to_all_mob_huds()
@@ -669,18 +734,10 @@
 	MH.add_hud_to(src)
 
 
-/mob/living/carbon/Xenomorph/point_to_atom(atom/A, turf/T)
-	//xeno leader get a bit arrow and less cooldown
+/mob/living/carbon/Xenomorph/check_improved_pointing()
+	//xeno leaders get a big arrow and less cooldown
 	if(hive_pos != NORMAL_XENO)
-		recently_pointed_to = world.time + 10
-		new /obj/effect/overlay/temp/point/big(T, src)
-	else
-		recently_pointed_to = world.time + 50
-		new /obj/effect/overlay/temp/point(T, src)
-	visible_message("<b>[src]</b> points to [A]")
-	return 1
-
-
+		return TRUE
 
 ///get_eye_protection()
 ///Returns a number between -1 to 2
@@ -691,9 +748,6 @@
 	return pull_multiplier
 
 /mob/living/carbon/Xenomorph/proc/set_faction(var/new_faction = FACTION_XENOMORPH)
-	if(round_statistics && !statistic_exempt)
-		round_statistics.track_new_participant(faction, -1)
-		round_statistics.track_new_participant(new_faction, 1)
 	faction = new_faction
 
 //Call this function to set the hive and do other cleanup
@@ -717,6 +771,10 @@
 		generate_name()
 	if(istype(src, /mob/living/carbon/Xenomorph/Queen))
 		update_living_queens()
+
+	lock_evolve = FALSE
+	banished = FALSE
+	hud_update_banished()
 
 	recalculate_everything()
 
@@ -751,12 +809,12 @@
 /mob/living/carbon/Xenomorph/proc/recalculate_tackle()
 	tackle_min = caste.tackle_min
 	tackle_max = caste.tackle_max
-	tackle_chance = caste.tackle_chance
+	tackle_chance = caste.tackle_chance + tackle_chance_modifier
 	tacklestrength_min = caste.tacklestrength_min + mutators.tackle_strength_bonus + hive.mutators.tackle_strength_bonus
 	tacklestrength_max = caste.tacklestrength_max + mutators.tackle_strength_bonus + hive.mutators.tackle_strength_bonus
 
 /mob/living/carbon/Xenomorph/proc/recalculate_health()
-	var/new_max_health = health_modifier + caste.max_health
+	var/new_max_health = nocrit ? health_modifier + maxHealth : health_modifier + caste.max_health
 	if (new_max_health == maxHealth)
 		return
 	var/currentHealthRatio = 1
@@ -914,6 +972,8 @@
 	. = ..()
 	if (. & IGNITE_IGNITED)
 		RegisterSignal(src, COMSIG_XENO_PRE_HEAL, .proc/cancel_heal)
+		if(!caste || !(caste.fire_immunity & FIRE_IMMUNITY_NO_DAMAGE) || fire_reagent.fire_penetrating)
+			INVOKE_ASYNC(src, /mob.proc/emote, "roar")
 
 /mob/living/carbon/Xenomorph/ExtinguishMob()
 	. = ..()
@@ -923,3 +983,21 @@
 /mob/living/carbon/Xenomorph/proc/cancel_heal()
 	SIGNAL_HANDLER
 	return COMPONENT_CANCEL_XENO_HEAL
+
+/mob/living/carbon/Xenomorph/proc/set_resin_build_order(var/list/build_order)
+	resin_build_order = build_order
+	if(length(resin_build_order))
+		selected_resin = resin_build_order[1]
+
+/mob/living/carbon/Xenomorph/ghostize(can_reenter_corpse = TRUE)
+	. = ..()
+	if(. && !can_reenter_corpse && stat != DEAD && !QDELETED(src) && !is_admin_level(z))
+		handle_ghost_message()
+
+/mob/living/carbon/Xenomorph/proc/handle_ghost_message()
+	announce_dchat("[src] ([mutation_type] [caste_type])</b> has ghosted and their body is up for grabs!", src)
+
+/mob/living/carbon/Xenomorph/Larva/handle_ghost_message()
+	if(locate(/obj/effect/alien/resin/special/pool) in range(2, get_turf(src)))
+		return
+	return ..()

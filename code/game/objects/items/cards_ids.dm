@@ -65,6 +65,7 @@
 	var/list/faction_group
 
 	var/registered_name = "Unknown" // The name registered_name on the card
+	var/registered_ref = null
 	var/registered_gid = 0
 	flags_equip_slot = SLOT_ID
 
@@ -92,6 +93,19 @@
 	..()
 	user.visible_message("[user] shows you: [icon2html(src, viewers(user))] [name]: assignment: [assignment]")
 	src.add_fingerprint(user)
+
+/obj/item/card/id/proc/set_user_data(var/mob/living/carbon/human/H)
+	if(!istype(H))
+		return
+
+	registered_name = H.real_name
+	registered_ref = WEAKREF(H)
+	registered_gid = H.gid
+	blood_type = H.blood_type
+
+/obj/item/card/id/proc/set_assignment(var/new_assignment)
+	assignment = new_assignment
+	name = "[registered_name]'s ID Card ([assignment])"
 
 /obj/item/card/id/GetAccess()
 	return access
@@ -201,6 +215,15 @@
 	icon_state = "admiral"
 	registered_name = "The USCM"
 	assignment = "Admiral"
+	New()
+		access = get_all_centcom_access()
+
+/obj/item/card/id/provost
+	name = "provost holo-badge"
+	desc = "Issued to members of the Provost Office."
+	icon_state = "provost"
+	registered_name = "Provost Office"
+	assignment = "Provost"
 	New()
 		access = get_all_centcom_access()
 

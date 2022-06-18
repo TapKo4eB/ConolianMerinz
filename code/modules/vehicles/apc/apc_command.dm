@@ -1,7 +1,7 @@
 
 /obj/vehicle/multitile/apc/command
-	name = "\improper M577-CMD Armored Personnel Carrier"
-	desc = "A modification of the M577 Armored Personnel Carrier designed to act as a field commander vehicle. An armored transport with four big wheels. Has inbuilt techpod vendor at the back of it, sensor tower and a field command station installed inside. Entrances on the sides."
+	name = "M577-CMD Armored Personnel Carrier"
+	desc = "A modification of the M577 Armored Personnel Carrier designed to act as a field commander vehicle. An armored transport with four big wheels. Has inbuilt sensor tower and a field command station installed inside. Entrances on the sides."
 
 	icon_state = "apc_base_com"
 
@@ -40,7 +40,7 @@
 /obj/vehicle/multitile/apc/command/load_role_reserved_slots()
 	var/datum/role_reserved_slots/RRS = new
 	RRS.category_name = "Crewmen"
-	RRS.roles = list(JOB_CREWMAN, JOB_UPP_CREWMAN)
+	RRS.roles = list(JOB_CREWMAN, JOB_WO_CREWMAN, JOB_UPP_CREWMAN, JOB_PMC_CREWMAN)
 	RRS.total = 2
 	role_reserved_slots += RRS
 
@@ -108,6 +108,8 @@
 		if(camera_int)
 			camera_int.c_tag = camera.c_tag + " interior"
 
+//With techwebs disabled, disabling these until later.
+/*
 /obj/vehicle/multitile/apc/command/attack_hand(var/mob/user)
 	. = ..()
 
@@ -166,7 +168,7 @@
 			return TRUE
 
 	return FALSE
-
+*/
 /*
 ** PRESETS
 */

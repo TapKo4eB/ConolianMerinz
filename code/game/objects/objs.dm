@@ -56,6 +56,40 @@
 	else
 		. = "[icon2html(src)] \a [src]"
 
+/obj/item/proc/get_examine_location(var/mob/living/carbon/human/wearer, var/slot, var/t_He = "They", var/t_his = "their", var/t_him = "them", var/t_has = "have", var/t_is = "are")
+	switch(slot)
+		if(WEAR_HEAD)
+			return "on [t_his] head"
+		if(WEAR_L_EAR)
+			return "on [t_his] left ear"
+		if(WEAR_R_EAR)
+			return "on [t_his] right ear"
+		if(WEAR_EYES)
+			return "covering [t_his] eyes"
+		if(WEAR_FACE)
+			return "on [t_his] face"
+		if(WEAR_BODY)
+			return "wearing [get_examine_line()]"
+		if(WEAR_JACKET)
+			return "wearing [get_examine_line()]"
+		if(WEAR_WAIST)
+			return "about [t_his] waist"
+		if(WEAR_ID)
+			return "wearing [get_examine_line()]"
+		if(WEAR_BACK)
+			return "on [t_his] back"
+		if(WEAR_J_STORE)
+			return "[wearer.wear_suit ? "on [t_his] [wearer.wear_suit.name]" : "around [t_his] back"]"
+		if(WEAR_HANDS)
+			return "on [t_his] hands"
+		if(WEAR_L_HAND)
+			return "in [t_his] left hand"
+		if(WEAR_R_HAND)
+			return "in [t_his] right hand"
+		if(WEAR_FEET)
+			return "on [t_his] feet"
+	return "...somewhere?"
+
 /obj/proc/updateUsrDialog()
 	if(in_use)
 		var/is_in_use = 0
@@ -114,7 +148,7 @@
 	return
 
 
-/obj/proc/hear_talk(mob/M, text)
+/obj/proc/hear_talk(mob/living/M as mob, msg, var/verb="says", var/datum/language/speaking, var/italics = 0)
 	return
 
 /obj/attack_hand(mob/user)
@@ -193,7 +227,10 @@
 		density = 1
 	else
 		if(M.loc != src.loc)
-			return
+			step_towards(M, src) //buckle if you're right next to it
+			if(M.loc != src.loc)
+				return
+			. = buckle_mob(M)
 	if (M.mob_size <= MOB_SIZE_XENO && M.stat == DEAD && istype(src, /obj/structure/bed/roller))
 		do_buckle(M, user)
 		return
@@ -257,7 +294,7 @@
 
 	// Even if the movement is entirely managed by the object, notify the buckled mob that it's moving for its handler.
 	//It won't be called otherwise because it's a function of client_move or pulled mob, neither of which accounts for this.
-	buckled_mob.on_movement()
+	SEND_SIGNAL(buckled_mob, COMSIG_MOB_MOVE_OR_LOOK, TRUE, direct, direct)
 	return TRUE
 
 /obj/BlockedPassDirs(atom/movable/mover, target_dir)
@@ -295,7 +332,7 @@
 	else if(use_spritesheet(bodytype, slot, mob_state))
 		spritesheet = TRUE
 		mob_icon = sprite_sheets[bodytype]
-	else if(item_icons && item_icons[slot])
+	else if(LAZYISIN(item_icons, slot))
 		mob_icon = item_icons[slot]
 	else
 		mob_icon = default_onmob_icons[slot]
@@ -305,13 +342,13 @@
 	return overlay_image(mob_icon, mob_state, color, RESET_COLOR)
 
 /obj/item/proc/use_spritesheet(var/bodytype, var/slot, var/icon_state)
-	if(!sprite_sheets || !sprite_sheets[bodytype])
-		return 0
+	if(!LAZYISIN(sprite_sheets, bodytype))
+		return FALSE
 	if(slot == WEAR_R_HAND || slot == WEAR_L_HAND)
-		return 0
+		return FALSE
 
 	if(icon_state in icon_states(sprite_sheets[bodytype]))
-		return 1
+		return TRUE
 
 	return (slot != WEAR_JACKET && slot != WEAR_HEAD)
 
@@ -328,3 +365,6 @@
 		return
 
 	O.name += " ([label])"
+
+/obj/proc/extinguish()
+	return

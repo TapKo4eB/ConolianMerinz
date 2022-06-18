@@ -1,15 +1,17 @@
-#define SURVIVOR_TO_MARINES_SPAWN_RATIO 1/10
+#define SURVIVOR_TO_TOTAL_SPAWN_RATIO 1/11
 
 /datum/job/civilian/survivor
 	title = JOB_SURVIVOR
 	selection_class = "job_special"
-	flags_startup_parameters = ROLE_ADD_TO_DEFAULT|ROLE_ADD_TO_MODE|ROLE_CUSTOM_SPAWN
+	// For the roundstart precount, then gets further limited by set_spawn_positions.
+	total_positions = 8
+	flags_startup_parameters = ROLE_ADD_TO_DEFAULT|ROLE_CUSTOM_SPAWN
 	late_joinable = FALSE
 	var/intro_text
 	var/story_text
 
 /datum/job/civilian/survivor/set_spawn_positions(var/count)
-	spawn_positions = Clamp((round(count * SURVIVOR_TO_MARINES_SPAWN_RATIO)), 2, 8)
+	spawn_positions = Clamp((round(count * SURVIVOR_TO_TOTAL_SPAWN_RATIO)), 2, 8)
 	total_positions = spawn_positions
 
 /datum/job/civilian/survivor/equip_job(mob/living/M)
@@ -100,7 +102,7 @@
 /datum/job/civilian/survivor/synth
 	title = JOB_SYNTH_SURVIVOR
 	selection_class = "job_synth"
-	flags_startup_parameters = ROLE_ADD_TO_DEFAULT|ROLE_ADD_TO_MODE|ROLE_ADMIN_NOTIFY|ROLE_WHITELISTED|ROLE_CUSTOM_SPAWN
+	flags_startup_parameters = ROLE_ADD_TO_DEFAULT|ROLE_ADMIN_NOTIFY|ROLE_WHITELISTED|ROLE_CUSTOM_SPAWN
 	flags_whitelist = WHITELIST_SYNTHETIC
 	total_positions = 1
 	spawn_positions = 1
@@ -110,11 +112,13 @@
 
 /datum/job/civilian/survivor/synth/survivor_old_equipment(var/mob/living/carbon/human/H)
 	var/list/survivor_types = list(
-			"Survivor - Synthetic",
-		)
+		/datum/equipment_preset/synth/survivor,
+	)
 
 	arm_equipment(H, pick(survivor_types), FALSE, TRUE)
 
 AddTimelock(/datum/job/civilian/survivor, list(
-	JOB_SQUAD_ROLES = 3 HOURS
+	JOB_SQUAD_ROLES = 5 HOURS,
+	JOB_ENGINEER_ROLES = 5 HOURS,
+	JOB_MEDIC_ROLES = 5 HOURS
 ))

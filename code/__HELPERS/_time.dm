@@ -11,8 +11,9 @@
 
 #define DECISECONDS_TO_HOURS /36000
 
-#define XENO_LEAVE_TIMER_LARVA 6 SECONDS
-#define XENO_LEAVE_TIMER 30 SECONDS
+#define XENO_LEAVE_TIMER_LARVA 80 //80 seconds
+#define XENO_LEAVE_TIMER 300 //300 seconds
+#define XENO_AVAILABLE_TIMER 60 //60 seconds, when to add a xeno to the avaliable list so ghosts can get ready
 
 var/midnight_rollovers = 0
 var/rollovercheck_last_timeofday = 0
@@ -28,9 +29,9 @@ var/rollovercheck_last_timeofday = 0
 	rollovercheck_last_timeofday = world.timeofday
 	return midnight_rollovers
 
-//Returns the world time in english
-/proc/worldtime2text(time = world.time)
-	return gameTimestamp("hh:mm", time + 12 HOURS)
+///Returns the world time in english. Do not use to get date information - starts at 0 + 12 hours.
+/proc/worldtime2text(format = "hh:mm", time = world.time)
+	return gameTimestamp(format, time + 12 HOURS)
 
 /proc/gameTimestamp(format = "hh:mm:ss", wtime=null)
 	if(!wtime)

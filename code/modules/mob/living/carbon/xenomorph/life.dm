@@ -27,10 +27,8 @@
 		update_icons()
 		handle_luminosity()
 
-		if (behavior_delegate)
-			var/datum/behavior_delegate/MD = behavior_delegate
-			MD.on_life()
-
+		if(behavior_delegate)
+			behavior_delegate.on_life()
 
 		if(loc)
 			handle_environment()
@@ -47,11 +45,11 @@
 	if(caste && caste.evolution_allowed && evolution_stored < evolution_threshold && ovipositor_check)
 		evolution_stored = min(evolution_stored + progress_amount, evolution_threshold)
 		if(evolution_stored >= evolution_threshold - 1)
-			to_chat(src, SPAN_XENODANGER("Your carapace crackles and your tendons strengthen. You are ready to evolve!")) //Makes this bold so the Xeno doesn't miss it
+			to_chat(src, SPAN_XENODANGER("Your carapace crackles and your tendons strengthen. You are ready to <a href='?src=\ref[src];evolve=1;'>evolve</a>!")) //Makes this bold so the Xeno doesn't miss it
 			src << sound('sound/effects/xeno_evolveready.ogg')
 
 // Always deal 80% of damage and deal the other 20% depending on how many fire stacks mob has
-#define PASSIVE_BURN_DAM_CALC(intensity, duration, fire_stacks) intensity*((duration-fire_stacks)/duration*0.2 + 0.8)
+#define PASSIVE_BURN_DAM_CALC(intensity, duration, fire_stacks) intensity*(fire_stacks/duration*0.2 + 0.8)
 
 /mob/living/carbon/Xenomorph/proc/handle_xeno_fire()
 	if(!on_fire)
@@ -68,6 +66,7 @@
 	if(!caste || !(caste.fire_immunity & FIRE_IMMUNITY_NO_DAMAGE) || fire_reagent.fire_penetrating)
 		var/dmg = armor_damage_reduction(GLOB.xeno_fire, PASSIVE_BURN_DAM_CALC(fire_reagent.intensityfire, fire_reagent.durationfire, fire_stacks))
 		apply_damage(dmg, BURN)
+		INVOKE_ASYNC(src, /mob.proc/emote, pick("roar", "needhelp"))
 
 #undef PASSIVE_BURN_DAM_CALC
 
@@ -77,58 +76,36 @@
 	//Basically, we use a special tally var so we don't reset the actual aura value before making sure they're not affected
 	//Now moved out of healthy only state, because crit xenos can def still be affected by pheros
 
-	if(aura_strength > 0) //Ignoring pheromone underflow
-		if(current_aura && !stat && plasma_stored > 5)
-			if(caste_type == XENO_CASTE_QUEEN && anchored) //stationary queen's pheromone apply around the observed xeno.
-				var/mob/living/carbon/Xenomorph/Queen/Q = src
-				var/atom/phero_center = Q
-				if(Q.observed_xeno)
-					phero_center = Q.observed_xeno
-				if(!phero_center || !phero_center.loc)
-					return
-				if(phero_center.loc.z == Q.loc.z)//Only same Z-level
-					var/pheromone_range = round(6 + aura_strength * 2)
-					for(var/mob/living/carbon/Xenomorph/Z in range(pheromone_range, phero_center)) //Goes from 8 for Queen to 16 for Ancient Queen
-						if(Z.ignores_pheromones)
-							continue
-						if((current_aura == "all" || current_aura == "frenzy") && aura_strength > Z.frenzy_new && hivenumber == Z.hivenumber)
-							Z.frenzy_new = aura_strength
-						if((current_aura == "all" || current_aura == "warding") && aura_strength > Z.warding_new && hivenumber == Z.hivenumber)
-							Z.warding_new = aura_strength
-						if((current_aura == "all" || current_aura == "recovery") && aura_strength > Z.recovery_new && hivenumber == Z.hivenumber)
-							Z.recovery_new = aura_strength
-			else
-				var/pheromone_range = round(6 + aura_strength * 2)
-				for(var/mob/living/carbon/Xenomorph/Z in range(pheromone_range, src)) //Goes from 7 for Young Drone to 16 for Ancient Queen
-					if(Z.ignores_pheromones)
-						continue
-					if((current_aura == "all" || current_aura == "frenzy") && aura_strength > Z.frenzy_new && hivenumber == Z.hivenumber)
-						Z.frenzy_new = aura_strength
-					if((current_aura == "all" || current_aura == "warding") && aura_strength > Z.warding_new && hivenumber == Z.hivenumber)
-						Z.warding_new = aura_strength
-					if((current_aura == "all" || current_aura == "recovery") && aura_strength > Z.recovery_new && hivenumber == Z.hivenumber)
-						Z.recovery_new = aura_strength
+	if(!stat)
+		var/use_current_aura = FALSE
+		var/use_leader_aura = FALSE
+		var/aura_center = src
+		if(aura_strength > 0) //Ignoring pheromone underflow
+			if(current_aura && plasma_stored > 5)
+				if(caste_type == XENO_CASTE_QUEEN && anchored) //stationary queen's pheromone apply around the observed xeno.
+					var/mob/living/carbon/Xenomorph/Queen/Q = src
+					var/atom/phero_center = Q
+					if(Q.observed_xeno)
+						phero_center = Q.observed_xeno
+					if(!phero_center || !phero_center.loc)
+						return
+					if(phero_center.loc.z == Q.loc.z)//Only same Z-level
+						use_current_aura = TRUE
+						aura_center = phero_center
+				else
+					use_current_aura = TRUE
 
+		if(leader_current_aura && hive && hive.living_xeno_queen && hive.living_xeno_queen.loc.z == loc.z) //Same Z-level as the Queen!
+			use_leader_aura = TRUE
 
-	if(hive && hive.living_xeno_queen && hive.living_xeno_queen.loc.z == loc.z) //Same Z-level as the Queen!
-		if(leader_current_aura && !stat)
-			var/pheromone_range = round(6 + leader_aura_strength * 2)
-			for(var/mob/living/carbon/Xenomorph/Z in range(pheromone_range, src)) //Goes from 7 for Young Drone to 16 for Ancient Queen
-				if(Z.ignores_pheromones)
+		if(use_current_aura || use_leader_aura)
+			for(var/mob/living/carbon/Xenomorph/Z as anything in GLOB.living_xeno_list)
+				if(Z.ignores_pheromones || Z.z != z || get_dist(aura_center, Z) > round(6 + aura_strength * 2) || !HIVE_ALLIED_TO_HIVE(Z.hivenumber, hivenumber))
 					continue
-				if((leader_current_aura == "all" || leader_current_aura == "frenzy") && leader_aura_strength > Z.frenzy_new && hivenumber == Z.hivenumber)
-					Z.frenzy_new = leader_aura_strength
-				if((leader_current_aura == "all" || leader_current_aura == "warding") && leader_aura_strength > Z.warding_new && hivenumber == Z.hivenumber)
-					Z.warding_new = leader_aura_strength
-				if((leader_current_aura == "all" || leader_current_aura == "recovery") && leader_aura_strength > Z.recovery_new && hivenumber == Z.hivenumber)
-					Z.recovery_new = leader_aura_strength
-
-	if(ignores_pheromones)
-		frenzy_aura = 0
-		warding_aura = 0
-		recovery_aura = 0
-		hud_set_pheromone()
-		return
+				if(use_leader_aura)
+					Z.affected_by_pheromones(leader_current_aura, leader_aura_strength)
+				if(use_current_aura)
+					Z.affected_by_pheromones(current_aura, aura_strength)
 
 	if(frenzy_aura != frenzy_new || warding_aura != warding_new || recovery_aura != recovery_new)
 		frenzy_aura = frenzy_new
@@ -140,6 +117,25 @@
 	frenzy_new = 0
 	warding_new = 0
 	recovery_new = 0
+
+/mob/living/carbon/Xenomorph/proc/affected_by_pheromones(var/aura, var/strength)
+	switch(aura)
+		if("all")
+			if(strength > frenzy_new)
+				frenzy_new = strength
+			if(strength > warding_new)
+				warding_new = strength
+			if(strength > recovery_new)
+				recovery_new = strength
+		if("frenzy")
+			if(strength > frenzy_new)
+				frenzy_new = strength
+		if("warding")
+			if(strength > warding_new)
+				warding_new = strength
+		if("recovery")
+			if(strength > recovery_new)
+				recovery_new = strength
 
 /mob/living/carbon/Xenomorph/handle_regular_status_updates(regular_update = TRUE)
 	if(regular_update && health <= 0 && (!caste || (caste.fire_immunity & FIRE_IMMUNITY_NO_IGNITE) || !on_fire)) //Sleeping Xenos are also unconscious, but all crit Xenos are under 0 HP. Go figure
@@ -170,10 +166,7 @@
 				layer = MOB_LAYER
 
 	else						//alive and not in crit! Turn on their vision.
-		if(isXenoBoiler(src))
-			see_in_dark = 20
-		else
-			see_in_dark = 8
+		see_in_dark = 50
 
 		SetEarDeafness(0) //All this stuff is prob unnecessary
 		ear_damage = 0
@@ -395,20 +388,77 @@ updatehealth()
 	if(!hud_used || !hud_used.locate_leader)
 		return
 
-	if(hive && !hive.living_xeno_queen || (caste && caste.is_intelligent) || !loc)
-		hud_used.locate_leader.icon_state = "trackoff"
+	var/obj/screen/queen_locator/QL = hud_used.locate_leader
+	if(!loc)
+		QL.icon_state = "trackoff"
 		return
 
-	if(hive && hive.living_xeno_queen.loc.z != loc.z || get_dist(src,hive.living_xeno_queen) < 1 || src == hive.living_xeno_queen)
-		hud_used.locate_leader.icon_state = "trackondirect"
+	var/atom/tracking_atom
+	switch(QL.track_state)
+		if(TRACKER_QUEEN)
+			if(!hive || !hive.living_xeno_queen)
+				QL.icon_state = "trackoff"
+				return
+			tracking_atom = hive.living_xeno_queen
+		if(TRACKER_HIVE)
+			if(!hive || !hive.hive_location)
+				QL.icon_state = "trackoff"
+				return
+			tracking_atom = hive.hive_location
+		else
+			var/leader_tracker = text2num(QL.track_state)
+			if(!hive || !hive.xeno_leader_list[leader_tracker])
+				QL.icon_state = "trackoff"
+				return
+			tracking_atom = hive.xeno_leader_list[leader_tracker]
+
+	if(!tracking_atom)
+		QL.icon_state = "trackoff"
+		return
+
+	if(tracking_atom.loc.z != loc.z || get_dist(src, tracking_atom) < 1 || src == tracking_atom)
+		QL.icon_state = "trackondirect"
 	else
 		var/area/A = get_area(loc)
-		var/area/QA = get_area(hive.living_xeno_queen.loc)
+		var/area/QA = get_area(tracking_atom.loc)
 		if(A.fake_zlevel == QA.fake_zlevel)
-			hud_used.locate_leader.setDir(get_dir(src,hive.living_xeno_queen))
-			hud_used.locate_leader.icon_state = "trackon"
+			QL.setDir(get_dir(src, tracking_atom))
+			QL.icon_state = "trackon"
 		else
-			hud_used.locate_leader.icon_state = "trackondirect"
+			QL.icon_state = "trackondirect"
+
+/mob/living/carbon/Xenomorph/proc/mark_locator()
+	if(!hud_used || !hud_used.locate_marker || !tracked_marker.loc || !loc)
+		return
+
+	var/tracked_marker_z_level = tracked_marker.loc.z 		 //I was getting errors if the mark was deleted while this was operating,
+	var/tracked_marker_turf = get_turf(tracked_marker)	 //so I made local variables to circumvent this
+	var/area/A = get_area(loc)
+	var/area/MA = get_area(tracked_marker_turf)
+	var/obj/screen/mark_locator/ML = hud_used.locate_marker
+	ML.desc = client
+
+	ML.overlays.Cut()
+
+	if(tracked_marker_z_level != loc.z) //different z levels
+		ML.overlays |= image(tracked_marker.seenMeaning, "pixel_y" = 0)
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "center_glow")
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "z_direction")
+		return
+	else if(tracked_marker_turf == get_turf(src)) //right on top of the marker
+		ML.overlays |= image(tracked_marker.seenMeaning, "pixel_y" = 0)
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "center_glow")
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "all_direction")
+		return
+	else if(A.fake_zlevel == MA.fake_zlevel) //normal tracking
+		ML.setDir(get_dir(src, tracked_marker_turf))
+		ML.overlays |= image(tracked_marker.seenMeaning, "pixel_y" = 0)
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "center_glow")
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "direction")
+	else //same z level, different fake z levels (decks of almayer)
+		ML.overlays |= image(tracked_marker.seenMeaning, "pixel_y" = 0)
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "center_glow")
+		ML.overlays |= image('icons/mob/hud/xeno_markers.dmi', "no_direction")
 
 /mob/living/carbon/Xenomorph/updatehealth()
 	if(status_flags & GODMODE)

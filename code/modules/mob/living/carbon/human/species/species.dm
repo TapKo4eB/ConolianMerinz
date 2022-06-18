@@ -61,6 +61,7 @@
 	var/reagent_tag                 //Used for metabolizing reagents.
 
 	var/darksight = 2
+	var/default_lighting_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
 
 	var/brute_mod = null    // Physical damage reduction/malus.
 	var/burn_mod = null     // Burn damage reduction/malus.
@@ -93,17 +94,19 @@
 	var/stun_reduction = 1 //how much the stunned effect is reduced per Life call.
 	var/knock_out_reduction = 1 //same thing
 
+	var/acid_blood_dodge_chance = 0
+
 	var/list/slot_equipment_priority = DEFAULT_SLOT_PRIORITY
 	var/list/equip_adjust = list()
 	var/list/equip_overlays = list()
 
 	var/blood_mask = 'icons/effects/blood.dmi'
 
-	var/melee_allowed = TRUE
-
 	var/mob_flags = NO_FLAGS // The mob flags to give their mob
 	 /// Status traits to give to the mob.
 	var/list/mob_inherent_traits
+
+	var/ignores_stripdrag_flag = FALSE
 
 /datum/species/New()
 	if(unarmed_type)
@@ -128,7 +131,6 @@
 	H.limbs += C
 	var/obj/limb/groin/G = new(H, C, H)
 	H.limbs += G
-	H.limbs += new /obj/limb/head(H, C, H)
 	var/obj/limb/arm/l_arm/LA = new(H, C, H)
 	H.limbs += LA
 	H.limbs += new /obj/limb/hand/l_hand(H, LA, H)
@@ -141,13 +143,14 @@
 	var/obj/limb/leg/r_leg/RL = new(H, G, H)
 	H.limbs += RL
 	H.limbs += new /obj/limb/foot/r_foot(H, RL, H)
+	H.limbs += new /obj/limb/head(H, C, H)
 
 	for(var/organ in has_organ)
 		var/organ_type = has_organ[organ]
 		H.internal_organs_by_name[organ] = new organ_type(H)
 
 	if(flags & IS_SYNTHETIC)
-		C.robotize() //Also gets all other limbs, as those are attached.
+		C.robotize(synth_skin = TRUE) //Also gets all other limbs, as those are attached.
 		for(var/datum/internal_organ/I in H.internal_organs)
 			I.mechanize()
 
@@ -309,6 +312,10 @@
 	return
 */
 
+/datum/species/proc/handle_dead_death(var/mob/living/carbon/human/H, var/gibbed)
+
+/datum/species/proc/handle_cryo(var/mob/living/carbon/human/H)
+
 /datum/species/proc/get_offset_overlay_image(var/spritesheet, var/mob_icon, var/mob_state, var/color, var/slot)
 	// If we don't actually need to offset this, don't bother with any of the generation/caching.
 	if(!spritesheet && equip_adjust.len && equip_adjust[slot] && LAZYLEN(equip_adjust[slot]))
@@ -376,3 +383,6 @@
 			return 1
 
 	return 0
+
+/datum/species/proc/get_hairstyle(var/style)
+	return GLOB.hair_styles_list[style]

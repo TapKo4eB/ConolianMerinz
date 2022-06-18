@@ -5,7 +5,7 @@
 	..()
 	ui_datum = hud_type
 	if(!istype(ui_datum))
-		ui_datum = custom_huds_list["midnight"]
+		ui_datum = GLOB.custom_huds_list[HUD_MIDNIGHT]
 
 	gear = list(
 		"i_clothing" =   list("loc" = ui_datum.ui_iclothing, "slot" = WEAR_BODY, 		"state" = "center", "toggle" = 1, "dir" = SOUTH),
@@ -260,6 +260,7 @@
 	using.icon_state = "act_equip"
 	using.screen_loc = ui_datum.ui_equip
 	using.layer = ABOVE_HUD_LAYER
+	using.plane = ABOVE_HUD_PLANE
 	if(ui_color)
 		using.color = ui_color
 	if(ui_alpha)
@@ -382,7 +383,7 @@
 
 /mob/living/carbon/human/create_hud()
 	if(client && client.prefs && !hud_used)
-		var/ui_datum = custom_huds_list[client.prefs.UI_style]
+		var/ui_datum = GLOB.custom_huds_list[client.prefs.UI_style]
 		var/ui_color = client.prefs.UI_style_color
 		var/ui_alpha = client.prefs.UI_style_alpha
 		hud_used = new /datum/hud/human(src, ui_datum, ui_color, ui_alpha)

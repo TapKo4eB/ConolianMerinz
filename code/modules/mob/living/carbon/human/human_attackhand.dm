@@ -1,4 +1,5 @@
 /mob/living/carbon/human/var/cpr_cooldown
+/mob/living/carbon/human/var/cpr_attempt_timer
 /mob/living/carbon/human/attack_hand(mob/living/carbon/human/M)
 	if(..())
 		return TRUE
@@ -26,10 +27,13 @@
 				return 1
 
 			if(M.head && (M.head.flags_inventory & COVERMOUTH) || M.wear_mask && (M.wear_mask.flags_inventory & COVERMOUTH) && !(M.wear_mask.flags_inventory & ALLOWCPR))
-				to_chat(M, SPAN_NOTICE(" <B>Remove your mask!</B>"))
+				to_chat(M, SPAN_NOTICE("<B>Remove your mask!</B>"))
 				return 0
 			if(head && (head.flags_inventory & COVERMOUTH) || wear_mask && (wear_mask.flags_inventory & COVERMOUTH) && !(wear_mask.flags_inventory & ALLOWCPR))
-				to_chat(M, SPAN_NOTICE(" <B>Remove his mask!</B>"))
+				to_chat(M, SPAN_NOTICE("<B>Remove [src.gender==MALE?"his":"her"] mask!</B>"))
+				return 0
+			if(cpr_attempt_timer >= world.time)
+				to_chat(M, SPAN_NOTICE("<B>CPR is already being performed on [src]!</B>"))
 				return 0
 
 			//CPR
@@ -39,6 +43,7 @@
 			M.visible_message(SPAN_NOTICE("<b>[M]</b> starts performing <b>CPR</b> on <b>[src]</b>."),
 				SPAN_HELPFUL("You start <b>performing CPR</b> on <b>[src]</b>."))
 
+			cpr_attempt_timer = world.time + HUMAN_STRIP_DELAY * M.get_skill_duration_multiplier(SKILL_MEDICAL)
 			if(do_after(M, HUMAN_STRIP_DELAY * M.get_skill_duration_multiplier(SKILL_MEDICAL), INTERRUPT_ALL, BUSY_ICON_GENERIC, src, INTERRUPT_MOVED, BUSY_ICON_MEDICAL))
 				if(stat != DEAD)
 					var/suff = min(getOxyLoss(), 10) //Pre-merge level, less healing, more prevention of dieing.
@@ -57,7 +62,7 @@
 						M.visible_message(SPAN_NOTICE("<b>[M]</b> fails to perform CPR on <b>[src]</b>."),
 							SPAN_HELPFUL("You <b>fail</b> to perform <b>CPR</b> on <b>[src]</b>. Incorrect rhythm. Do it <b>slower</b>."))
 					cpr_cooldown = world.time + 7 SECONDS
-
+			cpr_attempt_timer = 0
 			return 1
 
 		if(INTENT_GRAB)
@@ -81,7 +86,7 @@
 			if(!attack.is_usable(M)) attack = M.species.secondary_unarmed
 			if(!attack.is_usable(M)) return
 
-			M.last_damage_data = create_cause_data("fisticuffs", src)
+			last_damage_data = create_cause_data("fisticuffs", src)
 			M.attack_log += text("\[[time_stamp()]\] <font color='red'>[pick(attack.attack_verb)]ed [key_name(src)]</font>")
 			attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been [pick(attack.attack_verb)]ed by [key_name(M)]</font>")
 			msg_admin_attack("[key_name(M)] [pick(attack.attack_verb)]ed [key_name(src)] in [get_area(src)] ([src.loc.x],[src.loc.y],[src.loc.z]).", src.loc.x, src.loc.y, src.loc.z)
@@ -136,7 +141,7 @@
 						chance = !hand ? 40 : 20
 
 					if (prob(chance))
-						visible_message(SPAN_DANGER("[src]'s [W.name] goes off during the struggle!"), null, null, 5)
+						visible_message(SPAN_DANGER("[M] accidentally makes [src]'s [W.name] go off during the struggle!"), SPAN_DANGER("You accidentally make [src]'s [W.name] go off during the struggle!"), null, 5)
 						var/list/turfs = list()
 						for(var/turf/T in view())
 							turfs += T
@@ -144,8 +149,8 @@
 						count_niche_stat(STATISTICS_NICHE_DISCHARGE)
 
 						attack_log += "\[[time_stamp()]\] <b>[key_name(src)]</b> accidentally fired <b>[W.name]</b> in [get_area(src)] triggered by <b>[key_name(M)]</b>."
-						M:attack_log += "\[[time_stamp()]\] <b>[key_name(src)]</b> accidentally fired <b>[W.name]</b> in [get_area(src)] triggered by <b>[key_name(M)]</b>."
-						msg_admin_attack("[key_name(src)] accidentally fired <b>[W.name]</b> in [get_area(M)] ([M.loc.x],[M.loc.y],[M.loc.z]).", M.loc.x, M.loc.y, M.loc.z)
+						M.attack_log += "\[[time_stamp()]\] <b>[key_name(src)]</b> accidentally fired <b>[W.name]</b> in [get_area(src)] triggered by <b>[key_name(M)]</b>."
+						msg_admin_attack("[key_name(src)] accidentally fired <b>[W.name]</b> in [get_area(M)] ([M.loc.x],[M.loc.y],[M.loc.z]) triggered by <b>[key_name(M)]</b>.", M.loc.x, M.loc.y, M.loc.z)
 
 						return W.afterattack(target,src)
 
@@ -237,7 +242,7 @@
 		var/burndamage = org.burn_dam
 		if(org.status & LIMB_DESTROYED)
 			status += "MISSING!"
-		else if(org.status & LIMB_ROBOT)
+		else if(org.status & (LIMB_ROBOT|LIMB_SYNTHSKIN))
 			switch(brutedamage)
 				if(1 to 20)
 					status += "dented"

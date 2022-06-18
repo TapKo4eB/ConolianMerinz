@@ -1,12 +1,12 @@
 #define HUNTER_BEST_ITEM  pick(\
 								75; list(/obj/item/clothing/glasses/night, /obj/item/storage/backpack/holding, /obj/item/storage/belt/grenade/full, /obj/item/weapon/gun/flamer), \
-								100; list(/obj/item/weapon/melee/twohanded/yautja/glaive, /obj/item/clothing/mask/gas/yautja, /obj/item/clothing/suit/armor/yautja,/obj/item/clothing/shoes/yautja), \
-								50; list(/obj/item/weapon/melee/yautja/combistick, /obj/item/clothing/mask/gas/yautja, /obj/item/clothing/suit/armor/yautja/full,/obj/item/clothing/shoes/yautja), \
+								100; list(/obj/item/weapon/melee/twohanded/yautja/glaive, /obj/item/clothing/mask/gas/yautja/hunter, /obj/item/clothing/suit/armor/yautja/hunter,/obj/item/clothing/shoes/yautja/hunter), \
+								50; list(/obj/item/weapon/melee/yautja/combistick, /obj/item/clothing/mask/gas/yautja/hunter, /obj/item/clothing/suit/armor/yautja/hunter/full,/obj/item/clothing/shoes/yautja/hunter), \
 								150; list(/obj/item/stack/medical/advanced/ointment, /obj/item/stack/medical/advanced/bruise_pack, /obj/item/storage/belt/medical/lifesaver/full), \
 								50; list(/obj/item/clothing/under/marine/veteran/PMC/commando, /obj/item/clothing/suit/storage/marine/veteran/PMC/commando, /obj/item/clothing/gloves/marine/veteran/PMC/commando, /obj/item/clothing/shoes/veteran/PMC/commando, /obj/item/clothing/head/helmet/marine/veteran/PMC/commando), \
 								125; list(/obj/item/weapon/melee/yautja/chain, /obj/item/weapon/melee/yautja/knife, /obj/item/weapon/melee/yautja/scythe, /obj/item/hunting_trap, /obj/item/hunting_trap), \
 								75; list(/obj/item/weapon/gun/revolver/mateba/admiral, /obj/item/ammo_magazine/revolver/mateba, /obj/item/ammo_magazine/revolver/mateba, /obj/item/clothing/mask/balaclava/tactical), \
-								50; list(/obj/item/weapon/shield/energy, /obj/item/weapon/melee/energy/axe, /obj/item/clothing/under/gladiator, /obj/item/clothing/head/helmet/gladiator) \
+								50; list(/obj/item/weapon/shield/energy, /obj/item/weapon/melee/energy/axe, /obj/item/clothing/under/chainshirt/hunter, /obj/item/clothing/head/helmet/gladiator, /obj/item/clothing/suit/armor/gladiator) \
 								)
 
 #define HUNTER_GOOD_ITEM  pick(\
@@ -105,7 +105,8 @@ var/waiting_for_drop_votes = 0
 	var/ticks_passed = 0
 	var/drops_disabled = 0
 
-	votable = FALSE // borked
+	votable = FALSE // borkeds
+	taskbar_icon = 'icons/taskbar/gml_hgames.png'
 
 /obj/effect/step_trigger/hell_hound_blocker/Trigger(mob/living/carbon/hellhound/H)
 	if(istype(H)) H.gib() //No mercy.
@@ -278,9 +279,8 @@ var/waiting_for_drop_votes = 0
 		if(6)//BEARS!!
 			H.equip_to_slot_or_del(new /obj/item/clothing/under/marine/veteran/bear(H), WEAR_BODY)
 			H.equip_to_slot_or_del(new /obj/item/clothing/shoes/marine(H), WEAR_FEET)
-			H.remove_language("English")
-			H.remove_language("Sol Common")
-			H.add_language("Russian")
+			H.remove_language(LANGUAGE_ENGLISH)
+			H.add_language(LANGUAGE_RUSSIAN)
 		if(7) //Highlander!
 			H.equip_to_slot_or_del(new /obj/item/clothing/under/kilt(H), WEAR_BODY)
 			H.equip_to_slot_or_del(new /obj/item/clothing/shoes/sandal(H), WEAR_FEET)
@@ -411,9 +411,6 @@ var/waiting_for_drop_votes = 0
 		to_world(SPAN_DANGER("<FONT size = 4><B>NOBODY WON!?</B></FONT>"))
 		to_world("<FONT size = 3><B>'Somehow you stupid humans managed to even fuck up killing yourselves. Well done.'</B></FONT>")
 		world << 'sound/misc/sadtrombone.ogg'
-
-		if(round_stats) // Logging to data/logs/round_stats.log
-			round_stats << "Humans remaining: [count_humans()]\nRound time: [duration2text()][log_end]"
 	else
 		to_world(SPAN_DANGER("<FONT size = 4><B>NOBODY WON!</B></FONT>"))
 		to_world("<FONT size = 3><B>There was a winner, but they died before they could receive the prize!! Bummer.</B></FONT>")

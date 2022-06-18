@@ -1,38 +1,52 @@
-/mob/Destroy()//This makes sure that mobs with clients/keys are not just deleted from the game.
+/mob/Destroy()
 	GLOB.mob_list -= src
 	GLOB.dead_mob_list -= src
 	GLOB.alive_mob_list -= src
 	GLOB.player_list -= src
 
-	item_verbs = null
-	luminosity_sources = null
+	ghostize(FALSE)
 
-	if(mind)
+	item_verbs = null
+	control_object = null
+
+	if(mind) // Means ghostize failed for some reason
 		if(mind.current == src)
 			mind.current = null
 		if(mind.original == src)
 			mind.original = null
+		mind = null
 
-	QDEL_NULL(hud_used)
+	QDEL_NULL(skills)
+	QDEL_NULL_LIST(actions)
+	QDEL_NULL_LIST(viruses)
+	resistances?.Cut()
+	QDEL_LIST_ASSOC_VAL(implants)
 
-	if(open_uis)
-		for(var/datum/nanoui/ui in open_uis)
-			ui.close()
-			qdel(ui)
-		open_uis = null
+	. = ..()
 
-	interactee = null
-
-	last_damage_data = null
-
-	QDEL_NULL(mob_panel)
-
-	if(implants)
-		QDEL_NULL_LIST(implants)
-
-	ghostize()
 	clear_fullscreens()
-	return ..()
+	QDEL_NULL(mob_panel)
+	QDEL_NULL_LIST(open_uis)
+
+	tgui_open_uis = null
+	buckled = null
+	skincmds = null
+	item_verbs = null
+	interactee = null
+	faction_group = null
+	lastarea = null
+	langchat_listeners = null
+	langchat_image = null
+	languages = null
+	last_damage_data = null
+	listed_turf = null
+	tile_contents = null
+	hud_list = null
+	attack_log = null
+	item_verbs = null
+	luminosity_sources = null
+
+
 
 /mob/Initialize()
 	if(!faction_group)
@@ -75,7 +89,7 @@
 	hud_list = new
 	for(var/hud in hud_possible)
 		var/image/I = image('icons/mob/hud/hud.dmi', src, "")
-		I.appearance_flags |= RESET_COLOR
+		I.appearance_flags |= NO_CLIENT_COLOR|KEEP_APART|RESET_COLOR
 		hud_list[hud] = I
 
 
@@ -187,6 +201,8 @@
 	SHOULD_NOT_SLEEP(TRUE)
 	if(client == null)
 		away_timer++
+	if(client == null || (client.inactivity > 1 && world.time > 20 MINUTES)) //Do not start away_timer on connected clients until 20 minutes has passed.
+		away_timer++
 	else
 		away_timer = 0
 	return
@@ -204,7 +220,7 @@
 		return 1
 	return 0
 
-//This is a SAFE proc. Use this instead of equip_to_splot()!
+//This is a SAFE proc. Use this instead of equip_to_slot()!
 //set del_on_fail to have it delete W if it fails to equip
 //set disable_warning to disable the 'you are unable to equip that' warning.
 //unset redraw_mob to prevent the mob from being redrawn at the end.
@@ -225,7 +241,7 @@
 		INVOKE_ASYNC(src, .proc/equip_to_slot_timed, W, slot, redraw_mob, permanent, start_loc)
 		return TRUE
 
-	equip_to_slot(W, slot, redraw_mob) //This proc should not ever fail.
+	equip_to_slot(W, slot) //This proc should not ever fail.
 	if(permanent)
 		W.flags_inventory |= CANTSTRIP
 		W.flags_item |= NODROP
@@ -241,7 +257,7 @@
 /mob/proc/equip_to_slot_timed(obj/item/W, slot, redraw_mob = 1, permanent = 0, start_loc)
 	if(!do_after(src, W.time_to_equip, INTERRUPT_ALL, BUSY_ICON_GENERIC))
 		to_chat(src, "You stop putting on \the [W]")
-	equip_to_slot(W, slot, redraw_mob) //This proc should not ever fail.
+	equip_to_slot(W, slot) //This proc should not ever fail.
 	if(permanent)
 		W.flags_inventory |= CANTSTRIP
 		W.flags_item |= NODROP
@@ -261,6 +277,12 @@
 /mob/proc/equip_to_slot_or_del(obj/item/W, slot, permanent = 0)
 	return equip_to_slot_if_possible(W, slot, 1, 1, 1, 0, permanent)
 
+///Set the lighting plane hud alpha to the mobs lighting_alpha var
+/mob/proc/sync_lighting_plane_alpha()
+	if(hud_used)
+		var/obj/screen/plane_master/lighting/lighting = hud_used.plane_masters["[LIGHTING_PLANE]"]
+		if (lighting)
+			lighting.alpha = lighting_alpha
 
 
 //puts the item "W" into an appropriate slot in a human's inventory
@@ -316,16 +338,19 @@
 
 /mob/proc/point_to_atom(atom/A, turf/T)
 	//Squad Leaders and above have reduced cooldown and get a bigger arrow
-	if(!skillcheck(src, SKILL_LEADERSHIP, SKILL_LEAD_TRAINED))
-		recently_pointed_to = world.time + 50
-		new /obj/effect/overlay/temp/point(T, src)
-
-	else
+	if(check_improved_pointing())
 		recently_pointed_to = world.time + 10
 		new /obj/effect/overlay/temp/point/big(T, src)
+	else
+		recently_pointed_to = world.time + 50
+		new /obj/effect/overlay/temp/point(T, src)
 	visible_message("<b>[src]</b> points to [A]", null, null, 5)
-	return 1
+	return TRUE
 
+///Is this mob important enough to point with big arrows?
+/mob/proc/check_improved_pointing()
+	if(HAS_TRAIT(src, TRAIT_LEADERSHIP))
+		return TRUE
 
 /mob/proc/update_flavor_text()
 	set src in usr
@@ -352,22 +377,6 @@
 		else
 			return SPAN_NOTICE("[copytext(msg, 1, 37)]... <a href='byond://?src=\ref[src];flavor_more=1'>More...</a>")
 
-
-
-/client/verb/changes()
-	set name = "Changelog"
-	set category = "OOC"
-
-	var/datum/asset/simple/changelog = get_asset_datum(/datum/asset/simple/changelog)
-	changelog.send(src)
-
-	var/changelog_html = file2text('html/changelog.html')
-
-	show_browser(src, changelog_html, null, "changes", "size=675x650")
-	if(prefs.lastchangelog != changelog_hash)
-		prefs.lastchangelog = changelog_hash
-		prefs.save_preferences()
-		winset(src, "infowindow.changelog", "background-color=none;font-style=;")
 
 /mob/Topic(href, href_list)
 	. = ..()
@@ -437,6 +446,8 @@
 	var/mob/M
 	if(ismob(AM))
 		M = AM
+		if(!M.can_be_pulled_by(src))
+			return
 	else if(istype(AM, /obj))
 		AM.add_fingerprint(src)
 
@@ -460,6 +471,8 @@
 	var/mob/M
 	if(ismob(AM))
 		M = AM
+		if(!M.can_be_pulled_by(src))
+			return
 	else if(istype(AM, /obj))
 		AM.add_fingerprint(src)
 
@@ -673,31 +686,26 @@ note dizziness decrements automatically in the mob's Life() proc.
 
 	return canmove
 
-/mob/proc/facedir(var/ndir)
+/mob/proc/facedir(var/ndir, var/specific_dir)
 	if(!canface())	return 0
-	var/newdir = FALSE
 	if(dir != ndir)
 		flags_atom &= ~DIRLOCK
 		setDir(ndir)
-		newdir = TRUE
 	if(buckled && !buckled.anchored)
 		buckled.setDir(ndir)
 		buckled.handle_rotation()
-	var/mob/living/mliv = src
-	if(istype(mliv))
-		if(newdir)
-			mliv.on_movement(0)
 
 	if(back && (back.flags_item & ITEM_OVERRIDE_NORTHFACE))
 		update_inv_back()
 
-	return 1
+	SEND_SIGNAL(src, COMSIG_MOB_MOVE_OR_LOOK, FALSE, dir, specific_dir)
 
+	return TRUE
 
 /mob/proc/set_face_dir(var/newdir)
 	if(newdir == dir && flags_atom & DIRLOCK)
 		flags_atom &= ~DIRLOCK
-	else if ( facedir(newdir) )
+	else if(facedir(newdir))
 		flags_atom |= DIRLOCK
 
 
@@ -812,7 +820,7 @@ mob/proc/yank_out_object()
 		affected.take_damage((selection.w_class * 3), 0, 0, 1, "Embedded object extraction")
 		H.pain.apply_pain(selection.w_class * 3)
 
-		if(prob(selection.w_class * 5) && !(affected.status & LIMB_ROBOT))
+		if(prob(selection.w_class * 5) && !(affected.status & (LIMB_ROBOT|LIMB_SYNTHSKIN)))
 			var/datum/wound/internal_bleeding/I = new (0)
 			affected.add_bleeding(I, TRUE)
 			affected.wounds += I
@@ -996,3 +1004,39 @@ mob/proc/yank_out_object()
 
 /mob/proc/get_role_name()
 	return
+
+/mob/get_vv_options()
+	. = ..()
+	. += "<option value>-----MOB-----</option>"
+	. += "<option value='?_src_=vars;mob_player_panel=\ref[src]'>Show player panel</option>"
+	. += "<option value='?_src_=vars;give_disease=\ref[src]'>Give TG-style Disease</option>"
+	. += "<option value='?_src_=vars;godmode=\ref[src]'>Toggle Godmode</option>"
+	. += "<option value='?_src_=vars;build_mode=\ref[src]'>Toggle Build Mode</option>"
+
+	. += "<option value='?_src_=vars;direct_control=\ref[src]'>Assume Direct Control</option>"
+	. += "<option value='?_src_=vars;drop_everything=\ref[src]'>Drop Everything</option>"
+
+	. += "<option value='?_src_=vars;regenerateicons=\ref[src]'>Regenerate Icons</option>"
+	. += "<option value='?_src_=vars;addlanguage=\ref[src]'>Add Language</option>"
+	. += "<option value='?_src_=vars;remlanguage=\ref[src]'>Remove Language</option>"
+	. += "<option value='?_src_=vars;addorgan=\ref[src]'>Add Organ</option>"
+	. += "<option value='?_src_=vars;remorgan=\ref[src]'>Remove Organ</option>"
+	. += "<option value='?_src_=vars;addlimb=\ref[src]'>Add Limb</option>"
+	. += "<option value='?_src_=vars;amplimb=\ref[src]'>Amputate Limb</option>"
+	. += "<option value='?_src_=vars;remlimb=\ref[src]'>Remove Limb</option>"
+
+	. += "<option value='?_src_=vars;fix_nano=\ref[src]'>Fix NanoUI</option>"
+
+	. += "<option value='?_src_=vars;addverb=\ref[src]'>Add Verb</option>"
+	. += "<option value='?_src_=vars;remverb=\ref[src]'>Remove Verb</option>"
+
+	. += "<option value='?_src_=vars;gib=\ref[src]'>Gib</option>"
+
+/mob/Topic(href, href_list)
+	. = ..()
+	if(.)
+		return
+	if(href_list["preference"])
+		if(client)
+			client.prefs.process_link(src, href_list)
+		return TRUE

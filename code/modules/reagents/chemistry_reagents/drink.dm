@@ -179,6 +179,12 @@
 	description = "The fatty, still liquid part of milk. Why don't you mix this with sum scotch, eh?"
 	color = "#DFD7AF" // rgb: 223, 215, 175
 
+/datum/reagent/drink/milk/eggnog
+	name = "Eggnog"
+	id = "eggnog"
+	description = "A rich, sweet, non-alcoholic beverage traditionally consumed around Christmastime."
+	color = "#DFD7AF" // rgb: 223, 215, 175
+
 /datum/reagent/drink/cold/milkshake
 	name = "Milkshake"
 	description = "Glorious brainfreezing mixture."
@@ -198,8 +204,6 @@
 		holder.remove_reagent("capsaicin", 5)
 		holder.remove_reagent("hotsauce", 5)
 		holder.remove_reagent(src.id, FOOD_METABOLISM)
-
-
 
 //SOUTO//
 
@@ -284,6 +288,13 @@
 	color = "#100800" // rgb: 16, 8, 0
 	adj_drowsy 	= 	-3
 
+/datum/reagent/drink/cold/wy_cola
+	name = "Fruit Beer"
+	id = "fruit_beer"
+	description = "An insulting Mango flavored beverage. Tastes like rotten fruit."
+	color = "#100800" // rgb: 16, 8, 0
+	adj_drowsy = -3
+
 /datum/reagent/drink/cold/nuka_cola
 	name = "Nuka Cola"
 	id = "nuka_cola"
@@ -340,7 +351,7 @@
 	id = "coffee"
 	description = "Coffee is a brewed drink prepared from roasted seeds, commonly called coffee beans, of the coffee plant."
 	color = "#482000" // rgb: 72, 32, 0
-	overdose = REAGENTS_OVERDOSE*6
+	overdose = REAGENTS_OVERDOSE
 	overdose_critical = REAGENTS_OVERDOSE_CRITICAL*6
 	adj_dizzy = -5
 	adj_drowsy = -3
@@ -359,14 +370,13 @@
 		if(!ishuman(M))
 			return
 		var/mob/living/carbon/human/H = M
-		var/datum/internal_organ/heart/E = H.internal_organs_by_name["heart"]
-		if(prob(5) && E)
-			E.damage += 0.1
+		if(prob(5))
 			M.emote(pick("twitch", "blink_r", "shiver"))
 		if(volume > overdose_critical)
 			M.apply_damage(2, TOX) //Overdose starts getting bad
 			M.make_jittery(10)
 			M.KnockOut(20)
+			var/datum/internal_organ/heart/E = H.internal_organs_by_name["heart"]
 			if(prob(10) && E)
 				E.damage += 0.5
 				M.emote(pick("twitch", "blink_r", "shiver"))

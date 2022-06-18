@@ -8,7 +8,7 @@
 	active_power_usage = 10
 	layer = FLY_LAYER
 
-	var/list/network = list("military")
+	var/list/network = list(CAMERA_NET_MILITARY)
 	var/c_tag = null
 	var/c_tag_order = 999
 	var/status = 1.0
@@ -33,18 +33,20 @@
 	var/light_disabled = 0
 	var/alarm_on = 0
 
+	var/colony_camera_mapload = TRUE
+
 /obj/structure/machinery/camera/Initialize(mapload, ...)
 	. = ..()
 	WireColorToFlag = randomCameraWires()
 	assembly = new(src)
 	assembly.state = 4
 
-	if(mapload && is_ground_level(z))
-		network = list("colony")
+	if(colony_camera_mapload && mapload && is_ground_level(z))
+		network = list(CAMERA_NET_COLONY)
 
 	if(!src.network || src.network.len < 1)
 		if(loc)
-			error("[src.name] in [get_area(src)] (x:[src.x] y:[src.y] z:[src.z] has errored. [src.network?"Empty network list":"Null network list"]")
+			error("[src.name] in [get_area(src)] (x:[src.x] y:[src.y] z:[src.z]) has errored. [src.network?"Empty network list":"Null network list"]")
 		else
 			error("[src.name] in [get_area(src)]has errored. [src.network?"Empty network list":"Null network list"]")
 		ASSERT(src.network)
@@ -263,3 +265,55 @@
 		SPAN_NOTICE("You weld [src]."))
 		return 1
 	return 0
+
+/obj/structure/machinery/camera/mortar
+	alpha = 0
+	mouse_opacity = 0
+	density = FALSE
+	invuln = TRUE
+	network = list(CAMERA_NET_MORTAR)
+	colony_camera_mapload = FALSE
+
+/obj/structure/machinery/camera/mortar/Initialize()
+	c_tag = "Para-Cam ([obfuscate_x(x)]):([obfuscate_y(y)])"
+	. = ..()
+	QDEL_IN(src, 3 MINUTES)
+
+/obj/structure/machinery/camera/mortar/isXRay()
+	return TRUE
+
+/obj/structure/machinery/camera/cas
+	name = "cas camera"
+	invisibility = 101
+	invuln = TRUE
+	unslashable = TRUE
+	unacidable = TRUE
+
+	network = list(CAMERA_NET_LASER_TARGETS)
+	colony_camera_mapload = FALSE
+
+	// users looking directly at this, not via console
+	var/list/mob/viewing_users = list()
+
+/obj/structure/machinery/camera/cas/Initialize(mapload, var/c_tag_name)
+	c_tag = c_tag_name
+	return ..()
+
+/obj/structure/machinery/camera/cas/Destroy()
+	for(var/mob/M as anything in viewing_users)
+		M.reset_view()
+	return ..()
+
+/obj/structure/machinery/camera/cas/proc/view_directly(var/mob/living/carbon/human/user)
+	viewing_users += user
+	user.client?.eye = get_turf(src)
+	user.client?.perspective = EYE_PERSPECTIVE
+	give_action(user, /datum/action/human_action/cancel_view)
+	RegisterSignal(user, COMSIG_MOB_RESET_VIEW, .proc/remove_from_view)
+
+/obj/structure/machinery/camera/cas/proc/remove_from_view(var/mob/living/carbon/human/user)
+	viewing_users -= user
+	UnregisterSignal(user, COMSIG_MOB_RESET_VIEW)
+
+/obj/structure/machinery/camera/cas/isXRay()
+	return TRUE
