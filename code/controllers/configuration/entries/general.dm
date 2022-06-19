@@ -14,6 +14,7 @@ Basics, the most important.
 /datum/config_entry/string/resource_url
 
 /datum/config_entry/flag/hub	// if the game appears on the hub or not
+	config_entry_value = FALSE
 
 /datum/config_entry/string/wikiurl
 
