@@ -271,14 +271,14 @@ var/world_topic_spam_protect_time = world.timeofday
 	var/s = ""
 
 	if(CONFIG_GET(string/servername))
-		s += "<a href=\"[CONFIG_GET(string/forumurl)]\"><b>[CONFIG_GET(string/servername)]</b></a>"
+		s += "RU\] <a href=\"[CONFIG_GET(string/forumurl)]\"><b>[CONFIG_GET(string/servername)]</b></a>"
 
 	if(SSmapping?.configs)
 		var/datum/map_config/MG = SSmapping.configs[GROUND_MAP]
 		s += "<br>Карта: [MG?.map_name ? "<b>[MG.map_name]</b>" : ""]"
 	if(SSticker?.mode)
 		s += "<br>Режим: <b>[SSticker.mode.name]</b>"
-		s += "<br>Время раунда: <b>[duration2text()]</b>"
+		s += "<br>Время раунда: \[<b>[duration2text()]</b>"
 
 	world.status = s
 
