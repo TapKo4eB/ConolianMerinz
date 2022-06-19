@@ -22,11 +22,6 @@ var/list/reboot_sfx = file2list("config/reboot_sfx.txt")
 		enable_debugging()
 	internal_tick_usage = 0.2 * world.tick_lag
 
-	if(CONFIG_GET(flag/hub))
-		hub_password = "kMZy3U5jJHSiBQjr"
-	else
-		hub_password = "SORRYNOPASSWORD"
-
 	//logs
 	var/date_string = time2text(world.realtime, "YYYY/MM-Month/DD-Day")
 	var/year_string = time2text(world.realtime, "YYYY")
@@ -78,6 +73,12 @@ var/list/reboot_sfx = file2list("config/reboot_sfx.txt")
 	GLOB.timezoneOffset = text2num(time2text(0,"hh")) * 36000
 
 	Master.Initialize(10, FALSE, TRUE)
+
+	if(CONFIG_GET(flag/hub))
+		hub_password = "kMZy3U5jJHSiBQjr"
+	else
+		hub_password = "SORRYNOPASSWORD"
+
 	update_status()
 
 	//Scramble the coords obsfucator
