@@ -52,7 +52,10 @@
 	set desc = "Join our Discord! Meet and talk with other players in the server."
 	set hidden = 1
 
-	src << link("https://discordapp.com/invite/TByu8b5")
+	if(CONFIG_GET(string/discordurl) )
+		src << link(CONFIG_GET(string/discordurl))
+	else
+		to_chat(src, SPAN_DANGER("The Discord URL is not set in the server configuration."))
 	return
 
 /client/verb/submitbug()
