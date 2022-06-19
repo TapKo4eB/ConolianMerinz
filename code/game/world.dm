@@ -15,13 +15,17 @@ var/list/reboot_sfx = file2list("config/reboot_sfx.txt")
 
 /world/New()
 	TgsNew()
-	
+
 	var/debug_server = world.GetConfig("env", "AUXTOOLS_DEBUG_DLL")
 	if (debug_server)
 		call(debug_server, "auxtools_init")()
 		enable_debugging()
 	internal_tick_usage = 0.2 * world.tick_lag
-	hub_password = "kMZy3U5jJHSiBQjr"
+
+	if(CONFIG_GET(flag/hub))
+		hub_password = "kMZy3U5jJHSiBQjr"
+	else
+		hub_password = "SORRYNOPASSWORD"
 
 	//logs
 	var/date_string = time2text(world.realtime, "YYYY/MM-Month/DD-Day")
@@ -271,10 +275,10 @@ var/world_topic_spam_protect_time = world.timeofday
 
 	if(SSmapping?.configs)
 		var/datum/map_config/MG = SSmapping.configs[GROUND_MAP]
-		s += "<br>Map: [MG?.map_name ? "<b>[MG.map_name]</b>" : ""]"
+		s += "<br>Карта: [MG?.map_name ? "<b>[MG.map_name]</b>" : ""]"
 	if(SSticker?.mode)
-		s += "<br>Mode: <b>[SSticker.mode.name]</b>"
-		s += "<br>Round time: <b>[duration2text()]</b>"
+		s += "<br>Режим: <b>[SSticker.mode.name]</b>"
+		s += "<br>Время раунда: <b>[duration2text()]</b>"
 
 	world.status = s
 
