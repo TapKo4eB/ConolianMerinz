@@ -18,7 +18,7 @@ base = the base the marines are staging from. The ship, Whiskey Outpost etc. Non
 	if(!islist(exempt_ztraits))
 		exempt_ztraits = list(exempt_ztraits)
 	var/list/exempt_zlevels = SSmapping.levels_by_any_trait(exempt_ztraits)
-	
+
 	var/base_text = "<b>[uppertext(round_statistics.round_name)]</b>\n\
 						[worldtime2text("hhmm hrs")], [uppertext(time2text(REALTIMEOFDAY, "DD-MMM-[game_year]"))]\n\
 						[SSmapping.configs[GROUND_MAP].map_name]"
@@ -131,12 +131,14 @@ but should see their own spawn message even if the player already dropped as USC
 	if(scroll_down)
 		T.maptext_y = length(linebreaks) * 14
 
+	var/list/actual_targets = list()
 	for(var/mob/M as anything in targets)
 		if(blurb_key)
 			if(!ignore_key && (M.key in GLOB.blurb_witnesses[blurb_key]))
 				continue
 			LAZYDISTINCTADD(GLOB.blurb_witnesses[blurb_key], M.key)
 		M.client?.screen += T
+		actual_targets += M
 
 	for(var/i in 1 to length(message) + 1)
 		if(i in linebreaks)
@@ -146,6 +148,8 @@ but should see their own spawn message even if the player already dropped as USC
 		if(i in html_tags)
 			continue
 		T.maptext = "<span style=\"[style]\">[copytext(message,1,i)]</span>"
+		for(var/mob/M in actual_targets)
+			sound_to(M, pick('sound/effects/typewriter/typewriter1.ogg','sound/effects/typewriter/typewriter2.ogg','sound/effects/typewriter/typewriter3.ogg'))
 		sleep(speed)
 
 	addtimer(CALLBACK(GLOBAL_PROC, /proc/fade_blurb, targets, T), duration)
