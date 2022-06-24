@@ -22,6 +22,7 @@
 	S.frequency = T.frequency
 	S.falloff = T.falloff
 	S.status = T.status
+	S.repeat = T.repeat // how the hell did they managed to forget about this?!
 
 	if(T.x && T.y && T.z)
 		var/turf/owner_turf = get_turf(owner.mob)

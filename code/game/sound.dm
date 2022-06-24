@@ -142,8 +142,8 @@
 	if(!SSticker?.login_music)
 		return FALSE
 	if(prefs && prefs.toggles_sound & SOUND_LOBBY)
-		playsound_client(src, SSticker.login_music, null, 70, 0, VOLUME_LOBBY, SOUND_CHANNEL_LOBBY, SOUND_STREAM)
-
+		var/sound/S = sound(SSticker.login_music, TRUE)
+		playsound_client(src, S, null, 70, 0, VOLUME_LOBBY, SOUND_CHANNEL_LOBBY, SOUND_STREAM)
 
 /proc/playsound_z(z, soundin, volume = 100, vol_cat = VOLUME_SFX) // Play sound for all online mobs on a given Z-level. Good for ambient sounds.
 	var/datum/sound_template/S = new()

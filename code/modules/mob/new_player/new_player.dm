@@ -414,6 +414,7 @@
 			if(ui.allowed_user_stat == -1)
 				ui.close()
 				continue
+	src << sound(null, channel = SOUND_CHANNEL_LOBBY) // couldn't find a better place *shrug
 
 /mob/new_player/proc/has_admin_rights()
 	return client.admin_holder.rights & R_ADMIN
