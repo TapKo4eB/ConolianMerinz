@@ -4,7 +4,21 @@ var/lobby_view_size = 16
 
 var/internal_tick_usage = 0
 
-var/list/reboot_sfx = file2list("config/reboot_sfx.txt")
+/**
+ * underscribed problems in case if you try to do the trick with .txt files
+ * much easier and simpler to just have them in cache
+ */
+var/list/reboot_sfx = list('sound/dyn/roundend/apcdestroyed.ogg',
+							'sound/dyn/roundend/CIAPencils.ogg',
+							'sound/dyn/roundend/Game_Over_Man.ogg',
+							'sound/dyn/roundend/hysterical.ogg',
+							'sound/dyn/roundend/its_only_game.ogg',
+							'sound/dyn/roundend/lets_get_outta_here.ogg',
+							'sound/dyn/roundend/NotBadForAHuman.ogg',
+							'sound/dyn/roundend/radio_landing_end_01.ogg',
+							'sound/dyn/roundend/surrounded_by_assholes.ogg',
+							)
+
 /world
 	mob = /mob/new_player
 	turf = /turf/open/space/basic
