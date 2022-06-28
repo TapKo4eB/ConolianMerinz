@@ -64,16 +64,17 @@ Additional game mode variables.
 	var/pred_leader_max 	= 1 //How many Leader preds are permitted. Currently fixed to 1. May add admin verb to adjust this later.
 
 	//Some gameplay variables.
-	var/round_checkwin 		= 0
+	var/round_win_condition_countdown = 0 // timer until we say that round is over
+	var/round_checkwin      = 0
 	var/round_finished
-	var/round_started  		= 5 //This is a simple timer so we don't accidently check win conditions right in post-game
-	var/list/round_fog = list()				//List of the fog locations.
-	var/list/round_toxic_river = list()		//List of all toxic river locations
-	var/round_time_lobby 		//Base time for the lobby, for fog dispersal.
+	var/round_started       = 5 //This is a simple timer so we don't accidently check win conditions right in post-game
+	var/list/round_fog      = list() //List of the fog locations.
+	var/list/round_toxic_river = list() //List of all toxic river locations
+	var/round_time_lobby //Base time for the lobby, for fog dispersal.
 	var/round_time_river
-	var/monkey_amount		= 0 //How many monkeys do we spawn on this map ?
-	var/list/monkey_types	= list() //What type of monkeys do we spawn
-	var/latejoin_tally		= 0 //How many people latejoined Marines
+	var/monkey_amount       = 0 //How many monkeys do we spawn on this map ?
+	var/list/monkey_types   = list() //What type of monkeys do we spawn
+	var/latejoin_tally      = 0 //How many people latejoined Marines
 	var/latejoin_larva_drop = LATEJOIN_MARINES_PER_LATEJOIN_LARVA //A larva will spawn in once the tally reaches this level. If set to 0, no latejoin larva drop
 
 	//Role Authority set up.

@@ -284,19 +284,34 @@ Can't be in a locker, in space, in the thunderdome, or distress.
 Only checks living mobs with a client attached.
 */
 
+/**
+ * Count existing living xenomorphs mobs. With client or without.
+ * Returns value.
+ */
 /datum/game_mode/proc/count_xenos(list/z_levels = SSmapping.levels_by_any_trait(list(ZTRAIT_GROUND, ZTRAIT_LOWORBIT, ZTRAIT_MARINE_MAIN_SHIP)))
 	var/num_xenos = 0
 	for(var/i in GLOB.living_xeno_list)
 		var/mob/M = i
 		if(M.z && (M.z in z_levels) && !istype(M.loc, /turf/open/space)) //If they have a z var, they are on a turf.
 			num_xenos++
+
+	for(var/obj/vehicle/multitile/V in GLOB.all_multi_vehicles) // think about people who currently in vehicles
+		if(V.z && (V.z in z_levels))
+			var/list/P = V.get_passengers()
+			for(var/mob/living/carbon/Xenomorph/X in P)
+				num_xenos++
+
 	return num_xenos
 
+/**
+ * Count humans and xenos who currently logged in and have a client.
+ * Returns list.
+ */
 /datum/game_mode/proc/count_humans_and_xenos(list/z_levels = SSmapping.levels_by_any_trait(list(ZTRAIT_GROUND, ZTRAIT_LOWORBIT, ZTRAIT_MARINE_MAIN_SHIP)))
 	var/num_humans = 0
 	var/num_xenos = 0
 
-	for(var/mob/M in GLOB.player_list)
+	for(var/mob/M in GLOB.player_list) // iterate all players on regular z levels
 		if(M.z && (M.z in z_levels) && M.stat != DEAD && !istype(M.loc, /turf/open/space)) //If they have a z var, they are on a turf.
 			if(ishuman(M) && !isYautja(M) && !(M.status_flags & XENO_HOST) && !iszombie(M))
 				var/mob/living/carbon/human/H = M
@@ -313,8 +328,32 @@ Only checks living mobs with a client attached.
 						continue
 					num_xenos++
 
+	for(var/obj/vehicle/multitile/V in GLOB.all_multi_vehicles) // think about people who currently in vehicles
+		if(V.z && (V.z in z_levels))
+			var/list/P = V.get_passengers()
+			for(var/mob/M in P)
+				if(M.client)
+					if(ishuman(M) && !isYautja(M) && !(M.status_flags & XENO_HOST) && !iszombie(M))
+						var/mob/living/carbon/human/H = M
+						if(((H.species && H.species.name == "Human") || (H.is_important)) && !H.hivenumber) //only real humans count, or those we have set to also be included
+							num_humans++
+					else
+						var/area/A = get_area(M)
+						if(isXeno(M))
+							if (A.flags_area & AREA_AVOID_BIOSCAN)
+								continue
+							num_xenos++
+						else if(iszombie(M))
+							if (A.flags_area & AREA_AVOID_BIOSCAN)
+								continue
+							num_xenos++
+
 	return list(num_humans,num_xenos)
 
+/**
+ * Count all alive marines and pmcs mobs.
+ * Returns list.
+ */
 /datum/game_mode/proc/count_marines_and_pmcs(list/z_levels = SSmapping.levels_by_any_trait(list(ZTRAIT_GROUND, ZTRAIT_LOWORBIT, ZTRAIT_MARINE_MAIN_SHIP)))
 	var/num_marines = 0
 	var/num_pmcs = 0
@@ -327,8 +366,21 @@ Only checks living mobs with a client attached.
 			else if(M.faction == FACTION_MARINE)
 				num_marines++
 
+	for(var/obj/vehicle/multitile/V in GLOB.all_multi_vehicles) // think about people who currently in vehicles
+		if(V.z && (V.z in z_levels))
+			var/list/P = V.get_passengers()
+			for(var/mob/M in P)
+				if(M.faction in FACTION_LIST_WY)
+					num_pmcs++
+				else if(M.faction == FACTION_MARINE)
+					num_marines++
+
 	return list(num_marines,num_pmcs)
 
+/**
+ * Count all alive marine mobs.
+ * Returns value.
+ */
 /datum/game_mode/proc/count_marines(list/z_levels = SSmapping.levels_by_any_trait(list(ZTRAIT_GROUND, ZTRAIT_LOWORBIT, ZTRAIT_MARINE_MAIN_SHIP)))
 	var/num_marines = 0
 
@@ -337,6 +389,13 @@ Only checks living mobs with a client attached.
 		if(M.z && (M.z in z_levels) && !istype(M.loc, /turf/open/space))
 			if(M.faction == FACTION_MARINE)
 				num_marines++
+
+	for(var/obj/vehicle/multitile/V in GLOB.all_multi_vehicles) // think about people who currently in vehicles
+		if(V.z && (V.z in z_levels))
+			var/list/P = V.get_passengers()
+			for(var/mob/M in P)
+				if(M.faction == FACTION_MARINE && M.stat != DEAD)
+					num_marines++
 
 	return num_marines
 

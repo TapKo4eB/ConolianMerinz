@@ -136,3 +136,18 @@
 
 	show_browser(usr, dat, "Bulk Fetcher Panel", "debug")
 	return
+
+/client/proc/check_mob_counts()
+	set name = "Debug Mob Counts"
+	set category = "Debug"
+
+	var/X = SSticker.mode.count_xenos()
+	var/list/HX = SSticker.mode.count_humans_and_xenos()
+	var/list/MP =SSticker.mode.count_marines_and_pmcs()
+	var/M = SSticker.mode.count_marines()
+
+	to_chat(src, "Xenos: [X]")
+	to_chat(src, "Humans and Xenos \[Clients\]: [HX[1]], [HX[2]]")
+	to_chat(src, "Marines and Pmcs: [MP[1]], [MP[2]]")
+	to_chat(src, "Marines: [M]")
+	return

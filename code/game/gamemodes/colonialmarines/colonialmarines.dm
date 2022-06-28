@@ -204,7 +204,13 @@
 				addtimer(CALLBACK(src, .proc/open_podlocks, "map_lockdown"), 300)
 
 			if(round_should_check_for_win)
-				check_win()
+				var/win_cond = check_win()
+				if(win_cond) // this should return anything but null if round should end
+					if(++round_win_condition_countdown >= 10) // give them SOME time before we pull the plug, maybe all xenos just disconnected i dunno
+						round_finished = win_cond // time's up
+				else
+					round_win_condition_countdown = 0
+
 			round_checkwin = 0
 
 		if(!evolution_ovipositor_threshold && world.time >= SSticker.round_start_time + round_time_evolution_ovipositor)
@@ -237,28 +243,32 @@
 //////////////////////////
 /datum/game_mode/colonialmarines/check_win()
 	if(SSticker.current_state != GAME_STATE_PLAYING)
-		return
+		return FALSE
+
+	var/round_finish_reason = null
 
 	var/living_player_list[] = count_humans_and_xenos(EvacuationAuthority.get_affected_zlevels())
 	var/num_humans = living_player_list[1]
 	var/num_xenos = living_player_list[2]
 
 	if(force_end_at && world.time > force_end_at)
-		round_finished = MODE_INFESTATION_X_MINOR
+		round_finish_reason = MODE_INFESTATION_X_MINOR
 	if(EvacuationAuthority.dest_status == NUKE_EXPLOSION_FINISHED)
-		round_finished = MODE_GENERIC_DRAW_NUKE //Nuke went off, ending the round.
+		round_finish_reason = MODE_GENERIC_DRAW_NUKE //Nuke went off, ending the round.
 	if(EvacuationAuthority.dest_status == NUKE_EXPLOSION_GROUND_FINISHED)
-		round_finished = MODE_INFESTATION_M_MINOR //Nuke went off, ending the round.
+		round_finish_reason = MODE_INFESTATION_M_MINOR //Nuke went off, ending the round.
 	if(EvacuationAuthority.dest_status < NUKE_EXPLOSION_IN_PROGRESS) //If the nuke ISN'T in progress. We do not want to end the round before it detonates.
 		if(!num_humans && num_xenos) //No humans remain alive.
-			round_finished = MODE_INFESTATION_X_MAJOR //Evacuation did not take place. Everyone died.
+			round_finish_reason = MODE_INFESTATION_X_MAJOR //Evacuation did not take place. Everyone died.
 		else if(num_humans && !num_xenos)
 			if(SSticker.mode && SSticker.mode.is_in_endgame)
-				round_finished = MODE_INFESTATION_X_MINOR //Evacuation successfully took place.
+				round_finish_reason = MODE_INFESTATION_X_MINOR //Evacuation successfully took place.
 			else
-				round_finished = MODE_INFESTATION_M_MAJOR //Humans destroyed the xenomorphs.
+				round_finish_reason = MODE_INFESTATION_M_MAJOR //Humans destroyed the xenomorphs.
 		else if(!num_humans && !num_xenos)
-			round_finished = MODE_INFESTATION_DRAW_DEATH //Both were somehow destroyed.
+			round_finish_reason = MODE_INFESTATION_DRAW_DEATH //Both were somehow destroyed.
+
+	return round_finish_reason
 
 /datum/game_mode/colonialmarines/check_queen_status(var/hivenumber)
 	set waitfor = 0
