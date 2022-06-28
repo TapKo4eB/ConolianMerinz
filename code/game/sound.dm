@@ -92,8 +92,6 @@
 	SSsound.queue(S, null, extra_interiors)
 	return S.channel
 
-
-
 //This is the replacement for playsound_local. Use this for sending sounds directly to a client
 /proc/playsound_client(client/C, soundin, atom/origin, vol = 100, random_freq, vol_cat = VOLUME_SFX, channel = 0, status)
 	if(!istype(C) || !C.soundOutput) return FALSE
@@ -119,6 +117,7 @@
 	S.channel = channel
 	S.status = status
 	SSsound.queue(S, list(C))
+	return S.channel
 
 //Self explanatory
 /proc/playsound_area(area/A, soundin, vol = 100, channel, status, vol_cat = VOLUME_SFX)
@@ -137,6 +136,7 @@
 			continue
 		hearers += M.client
 	SSsound.queue(S, hearers)
+	return S.channel
 
 /client/proc/playtitlemusic()
 	if(!SSticker?.login_music)
@@ -156,6 +156,7 @@
 		if (M.z in z && M.client.soundOutput)
 			hearers += M.client
 	SSsound.queue(S, hearers)
+	return S.channel
 
 // The pick() proc has a built-in chance that can be added to any option by adding ,X; to the end of an option, where X is the % chance it will play.
 /proc/get_sfx(S)
