@@ -153,8 +153,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#define FOG_DELAY_INTERVAL		(25 MINUTES)
-#define PODLOCKS_OPEN_WAIT		(45 MINUTES) // CORSAT pod doors drop at 12:45
+#define ROUND_END_HANDICAP      (25 MINUTES) // before this interval if something will go wrong round WONT end the same tick someone leaves the game
+#define FOG_DELAY_INTERVAL      (25 MINUTES)
+#define PODLOCKS_OPEN_WAIT      (45 MINUTES) // CORSAT pod doors drop at 12:45
 
 //This is processed each tick, but check_win is only checked 5 ticks, so we don't go crazy with scanning for mobs.
 /datum/game_mode/colonialmarines/process()
@@ -206,8 +207,11 @@
 			if(round_should_check_for_win)
 				var/win_cond = check_win()
 				if(win_cond) // this should return anything but null if round should end
-					if(++round_win_condition_countdown >= 10) // give them SOME time before we pull the plug, maybe all xenos just disconnected i dunno
-						round_finished = win_cond // time's up
+					if(world.time <= (ROUND_END_HANDICAP + SSticker.round_start_time))
+						if(++round_win_condition_countdown >= 10) // give them SOME time before we pull the plug, maybe all xenos just disconnected i dunno
+							round_finished = win_cond // time's up
+					else
+						round_finished = win_cond
 				else
 					round_win_condition_countdown = 0
 
