@@ -77,7 +77,7 @@
                                                    // MUTUALLY EXCLUSIVE TO TOGGLE_AUTO_EJECT_MAGAZINE_TO_HAND
 #define TOGGLE_AUTO_EJECT_MAGAZINE_TO_HAND	(1<<5) // This toggles whether guns with auto ejectors will cause you to unwield your gun and put the empty magazine in your hand
                                                    // MUTUALLY EXCLUSIVE TO TOGGLE_AUTO_EJECT_MAGAZINE
-#define TOGGLE_EJECT_MAGAZINE_TO_HAND		(1<<6) // This toggles whether manuallyejecting magazines from guns will cause you to unwield your gun
+#define TOGGLE_EJECT_MAGAZINE_TO_HAND		(1<<6) // This toggles whether manually ejecting magazines from guns will cause you to unwield your gun
                                                    // and put the empty magazine in your hand
 #define TOGGLE_AUTOMATIC_PUNCTUATION		(1<<7) // Whether your sentences will automatically be punctuated with a period
 #define TOGGLE_COMBAT_CLICKDRAG_OVERRIDE	(1<<8) // Whether disarm/harm intents cause clicks to trigger immediately when the mouse button is depressed.
