@@ -145,6 +145,22 @@
 		var/sound/S = sound(SSticker.login_music, TRUE)
 		playsound_client(src, S, null, 70, 0, VOLUME_LOBBY, SOUND_CHANNEL_LOBBY, SOUND_STREAM)
 
+/**
+ * cool lobby music fadeout
+ * *please for the love of god revork sound system somewhen so i would had free access to sound manipulation at runtime*
+ */
+/client/proc/fadeouttitlemusic()
+	spawn(0) //thread out please
+		for(var/i=1; i<=100; i++)
+			var/sound/S = sound()
+			S.channel = SOUND_CHANNEL_LOBBY
+			S.volume = (100 - i) * volume_preferences[VOLUME_LOBBY]
+			S.status = SOUND_UPDATE
+			sound_to(src, S)
+			sleep(1)
+
+		playsound_client(src, null, channel = SOUND_CHANNEL_LOBBY)
+
 /proc/playsound_z(z, soundin, volume = 100, vol_cat = VOLUME_SFX) // Play sound for all online mobs on a given Z-level. Good for ambient sounds.
 	var/datum/sound_template/S = new()
 	S.file = soundin
