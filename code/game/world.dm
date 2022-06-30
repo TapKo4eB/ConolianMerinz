@@ -290,10 +290,10 @@ var/world_topic_spam_protect_time = world.timeofday
 
 	if(SSmapping?.configs)
 		var/datum/map_config/MG = SSmapping.configs[GROUND_MAP]
-		s += "<br>Карта: [MG?.map_name ? "<b>[MG.map_name]</b>" : ""]"
+		s += "<br>Map: [MG?.map_name ? "<b>[MG.map_name]</b>" : ""]"
 	if(SSticker?.mode)
-		s += "<br>Режим: <b>[SSticker.mode.name]</b>"
-		s += "<br>Время раунда: \[<b>[duration2text()]</b>"
+		s += "<br>Mode: <b>[SSticker.mode.name]</b>"
+		s += "<br>Round time: \[<b>[duration2text()]</b>"
 
 	world.status = s
 
