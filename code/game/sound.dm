@@ -154,7 +154,7 @@
 		for(var/i=1; i<=100; i++)
 			var/sound/S = sound()
 			S.channel = SOUND_CHANNEL_LOBBY
-			S.volume = (100 - i) * volume_preferences[VOLUME_LOBBY]
+			S.volume = (100 - i) * volume_preferences[VOLUME_LOBBY] * 0.7 //magik
 			S.status = SOUND_UPDATE
 			sound_to(src, S)
 			sleep(1)

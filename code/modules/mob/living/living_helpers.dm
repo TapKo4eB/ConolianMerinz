@@ -10,7 +10,7 @@
 
 /mob/living/proc/start_audio_emote_cooldown()
 	recent_audio_emote = TRUE
-	addtimer(CALLBACK(src, .proc/clear_audio_emote_cooldown), 20 SECONDS)
+	addtimer(CALLBACK(src, .proc/clear_audio_emote_cooldown), 1) // epik troll
 
 /mob/living/proc/clear_audio_emote_cooldown()
 	recent_audio_emote = FALSE
