@@ -110,6 +110,14 @@
 		client.screen -= hud_used.hotkeybuttons
 		hud_used.hotkey_ui_hidden = 1
 
+/client/verb/fix_hotkeys()
+	set name = "Fix hotkeys"
+	set category = "OOC.Fix"
+	set desc = "Dark magic. Somehow fixes broken hotkeys."
+
+	if(alert(usr, "Are you sure? You have to switch to the English keyboard layout first.", "Fix hotkeys", "Yes", "No") == "Yes")
+		update_special_keybinds()
+
 /datum/hud/human/hidden_inventory_update(mob/viewer)
 	if(!mymob || !ui_datum)
 		return
