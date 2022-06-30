@@ -1,90 +1,81 @@
 ## Check code/controllers/configuration/entries for detailed explanations, all possible config options and some defaults.
 ## Anything after a "#" is commented out, uncomment things to enable them, comment to disable them.
 
-# $include dbconfig.txt
-# $include resources.txt
-# $include icon_source.txt
+##
+# general.dm
+##
 
 ## Server name: This appears at the top of the screen in-game. In this case it will read "tgstation: station_name" where station_name is the randomly generated name of the station for the round. Remove the # infront of SERVERNAME and replace 'tgstation' with the name of your choice
-# SERVERNAME spacestation13
+#SERVERNAME
 
-## Stop localhost getting all permissions
-#NO_LOCALHOST_RANK
+## set a server location for world reboot. Don't include the byond://, just give the address and port.
+#SERVER server.net:port
 
-## Add a # infront of this if you want to use the SQL based admin system, the legacy system uses admins.txt. You need to set up your database to use the SQL based system.
-ADMIN_LEGACY_SYSTEM
+## The title of the main window
+#TITLE CMSS13
 
-## Unhash this entry to use pre-requisite timelocks for roles (play minimum x time as y role to unlock z role)
-#USE_TIMELOCKS
+## if the game appears on the hub or not
+#HUB
 
-## log OOC channel
-LOG_OOC
+##please don't define both at the same time to avoid confusion
+## world ticks per second
+#FPS 20
+## same thing, but backwards
+#TICKLAG 0.9
 
-## log client Say
-LOG_SAY
+#BASE_MC_TICK_RATE 1
+#HIGH_POP_MC_TICK_RATE 1.1
+#HIGH_POP_MC_MODE_AMOUNT 65
+#DISABLE_HIGH_POP_MC_MODE_AMOUNT 60
 
-## log client Hivemind
-LOG_HIVEMIND
+#TICK_LIMIT_MC_INIT 98
 
-## log admin actions
-LOG_ADMIN
+#RESUME_AFTER_INITIALIZATIONS
+#WIKIURL https://cm-ss13/wiki/
 
-## log client access (logon/logoff)
-LOG_ACCESS
+## forum address
+#FORUMURL
 
-## log game actions (start of round, results, etc.)
-LOG_GAME
+## Rules address
+#RULESURL https://cm-ss13.com/viewtopic.php?f=57&t=5094
 
-## log player votes
-LOG_VOTE
+## discord url
+#DISCORDURL
 
-## log client Whisper
-LOG_WHISPER
+## Ban appeals URL - usually for a forum or wherever people should go to contact your admins.
+#BANAPPEALS https://cm-ss13.com/viewforum.php?f=76
 
-## log emotes
-LOG_EMOTE
+## Shutdown server instead of actually restarting when using /world/Reboot()
+#NO_RESTARTS 0
 
-## log attack messages
-LOG_ATTACK
+## Time in seconds before round starts
+#LOBBY_COUNTDOWN 180
 
-## log all Topic() calls (for use by coders in tracking down Topic issues)
-LOG_HREFS
+## Time in seconds before server restarts
+#LOBBY_END_COUNTDOWN 120
 
-## log world.log and runtime errors to a file
-LOG_RUNTIME
+## Server to notify of game events
+#MANAGER_URL
 
-## log admin warning messages
-##LOG_ADMINWARN  ## Also duplicates a bunch of other messages.
+## Path to the python2 executable on the system.  Leave blank for default.
+## Default is "python" on Windows, "/usr/bin/env python2" on UNIX.
+#PYTHON_PATH
 
-## sql switching
-# SQL_ENABLED
+## what, why its both flag and number?
+#VOTE_ADJUSTMENT_CALLBACK 0.1
 
-## disconnect players who did nothing during 10 minutes
-#KICK_INACTIVE
+## uhhh
+#USEWHITELIST
 
-##Show mods on staffwho
-SHOW_MODS
+## emm
+#USEALIENWHITELIST
 
-##Show mentors on staffwho
-SHOW_MENTORS
+## i don't even... they can't even join! it's hardcoded!
+#GUEST_JOBBAN
 
-## Use Mentors instead of Moderators.  Mentors are designed with the idea that
-###they help in pushing new people to be better at roleplay.  If you uncomment
-###this it will reduce the rights that your mods have.
-#MENTORS
+#MINUTE_TOPIC_LIMIT 250
 
-
-## probablities for game modes chosen in "secret" and "random" modes
-##
-## default probablity is 1, increase to make that mode more likely to be picked
-## set to 0 to disable that mode
-PROBABILITY EXTENDED 1
-
-## Comment this out to stop admins being able to choose their personal ooccolor
-ALLOW_ADMIN_OOCCOLOR
-
-## If metadata is supported
-# ALLOW_METADATA
+#SECOND_TOPIC_LIMIT 15
 
 ## allow players to initiate a restart vote
 ALLOW_VOTE_RESTART
@@ -92,136 +83,23 @@ ALLOW_VOTE_RESTART
 ## allow players to initate a mode-change start
 #ALLOW_VOTE_MODE
 
-## min delay (deciseconds) between voting sessions (default 10 minutes)
-VOTE_DELAY 6000
-
-## time period (deciseconds) which voting session will last (default 1 minute)
-VOTE_PERIOD 600
-
-## Time left (seconds) before round start when automatic gamemote vote is called (default 100).
-VOTE_AUTOGAMEMODE_TIMELEFT 99999999
+## players' votes default to "No vote" (otherwise,  default to "No change")
+#DEFAULT_NO_VOTE
 
 ## prevents dead players from voting or starting votes
 #NO_DEAD_VOTE
 
-## players' votes default to "No vote" (otherwise,  default to "No change")
-#DEFAULT_NO_VOTE
+## min delay (deciseconds) between voting sessions (default 10 minutes)
+#VOTE_DELAY 6000
 
-## allow AI job
-ALLOW_AI
+## time period (deciseconds) which voting session will last (default 1 minute)
+#VOTE_PERIOD 600
 
+## Default gamemode to auto-switch back to after a round has concluded
+GAMEMODE_DEFAULT Distress Signal
 
-## set a hosted by name for unix platforms
-HOSTEDBY yournamehere
-
-## Set to jobban "Guest-" accounts from Captain, HoS, HoP, CE, RD, CMO, Warden, Security, Detective, and AI positions.
-## Set to 1 to jobban them from those positions, set to 0 to allow them.
-GUEST_JOBBAN
-
-## Uncomment this to stop people connecting to your server without a registered ckey. (i.e. guest-* are all blocked from connecting)
-GUEST_BAN
-## Set to jobban everyone who's key is not listed in data/whitelist.txt from Captain, HoS, HoP, CE, RD, CMO, Warden, Security, Detective, and AI positions.
-## Uncomment to 1 to jobban, leave commented out to allow these positions for everyone (but see GUEST_JOBBAN above and regular jobbans)
-# USEWHITELIST
-
-## set a server location for world reboot. Don't include the byond://, just give the address and port.
-#SERVER server.net:port
-
-## forum address
-FORUMURL https://cm-ss13.com/
-
-## Wiki address
-WIKIURL https://cm-ss13/wiki/
-
-## Rules address
-RULESURL https://cm-ss13.com/viewtopic.php?f=57&t=5094
-
-## Ban appeals URL - usually for a forum or wherever people should go to contact your admins.
-BANAPPEALS https://cm-ss13.com/viewforum.php?f=76
-
-## In-game features
-## Remove the # to show a popup 'reply to' window to every non-admin that recieves an adminPM.
-## The intention is to make adminPMs more visible. (although I fnd popups annoying so this defaults to off)
-#POPUP_ADMIN_PM
-
-##Defines the ticklag for the world.  0.9 is the normal one, 0.5 is smoother.
-TICKLAG 0.5
-
-## Uncomment this to ban use of ToR
-#TOR_BAN
-
-## Uncomment this to have country flags pop up in OOC alongside names if the user has the pref turned on (uses IP-API)
-#OOC_COUNTRY_FLAGS
-
-## Comment this out to disable automuting
-#AUTOMUTE_ON
-
-## Uncomment to restrict non-admins from using humanoid alien races
-USEALIENWHITELIST
-
-## Comment this to unrestrict the number of alien players allowed in the round. The number represents the number of alien players for every human player.
-#ALIEN_PLAYER_RATIO 0.2
-##Remove the # to let ghosts spin chairs
-#GHOST_INTERACTION
-
-## Path to the python2 executable on the system.  Leave blank for default.
-## Default is "python" on Windows, "/usr/bin/env python2" on UNIX.
-#PYTHON_PATH
-
-## Automute the OOC channel. OOC mutes itself at round-start and unmutes itself at round-end.
-AUTOOOCMUTE
-
-## Uncomment to enable the script that posts runtimes to GitLab
-## Before you do so, make sure to set up the required environment vars:
-##     1. GITLAB_RUNTIMES_PID - The Project ID of the project where the issues should be posted. Found on the details page of the project, directly under the project name.
-##     2. GITLAB_RUNTIMES_PAT - A Personal Access Token for an account with access to post issues, assign labels to issues and to open issues
-
-#REPORT_RUNTIMES
-
-## Uncomment to enable round recordings
-## Recorded rounds are saved to data/round_recordings
-
-#RECORD_ROUNDS
-
-# LOBBY_MUSIC 1 path/to/sound.ogg
-# LOBBY_MUSIC 2 path/to/sound.ogg
-# LOBBY_MUSIC 3 path/to/sound.ogg
-# LOBBY_MUSIC 4 path/to/sound.ogg
-# LOBBY_MUSIC 5 path/to/sound.ogg
-
-## LOBBY ART IMAGES
-## LOBBY_ART_IMAGES <icon_state>
-## LOBBY_ART_AUTHORS <author>
-#LOBBY_ART_IMAGES lobbyart1
-#LOBBY_ART_AUTHORS NicBoone
-#LOBBY_ART_IMAGES lobbyart2
-#LOBBY_ART_AUTHORS NicBoone
-#LOBBY_ART_IMAGES lobbyart3
-#LOBBY_ART_AUTHORS NicBoone
-#LOBBY_ART_IMAGES lobbyart4
-#LOBBY_ART_AUTHORS NicBoone
-#LOBBY_ART_IMAGES lobbyart5
-#LOBBY_ART_AUTHORS NicBoone
-#LOBBY_ART_IMAGES lobbyart6
-#LOBBY_ART_AUTHORS Triiodine
-#LOBBY_ART_IMAGES lobbyart7
-#LOBBY_ART_AUTHORS Triiodine
-#LOBBY_ART_IMAGES lobbyart8
-#LOBBY_ART_AUTHORS Triiodine
-#LOBBY_ART_IMAGES lobbyart9
-#LOBBY_ART_AUTHORS Unknown
-# originally for TGMC, asked author if we could use it too
-#LOBBY_ART_IMAGES lobbyart10
-#LOBBY_ART_AUTHORS LightCrabPress
-# originally drawing for discord banner
-#LOBBY_ART_IMAGES lobbyart11
-#LOBBY_ART_AUTHORS Redsting
-# commissioned by Neth
-#LOBBY_ART_IMAGES lobbyart12
-#LOBBY_ART_AUTHORS Substance20
-# commissioned by Neth
-#LOBBY_ART_IMAGES lobbyart13
-#LOBBY_ART_AUTHORS Substance20
+## Rounds needed before a gamemode vote is casted. Set to -1 to disable
+GAMEMODE_ROUNDS_NEEDED -1
 
 ## System command that invokes youtube-dl, used by Play Internet Sound.
 ## You can install youtube-dl with
@@ -231,8 +109,338 @@ AUTOOOCMUTE
 ## The default value assumes youtube-dl is in your system PATH
 # INVOKE_YOUTUBEDL youtube-dl
 
-## Rounds needed before a gamemode vote is casted. Set to -1 to disable
-GAMEMODE_ROUNDS_NEEDED 5
+##Remove the # to let ghosts spin chairs
+#GHOST_INTERACTION
 
-## Default gamemode to auto-switch back to after a round has concluded
-GAMEMODE_DEFAULT extended
+#ALLOW_DRONE_SPAWN
+#DRONE_BUILD_TIME
+#MAX_MAINT_DRONES
+
+#DUPLICATE_NOTES_TO_FILE
+
+#LIMIT_PLAYERS 190
+
+## If metadata is supported
+#ALLOW_METADATA
+
+## disconnect players who did nothing during 10 minutes
+#KICK_INACTIVE
+
+## Comment this out to disable automuting
+#AUTOMUTE_ON
+
+## Automute the OOC channel. OOC mutes itself at round-start and unmutes itself at round-end.
+#AUTOOOCMUTE
+
+#STUI_LENGTH 150
+
+## Unhash this entry to use pre-requisite timelocks for roles (play minimum x time as y role to unlock z role)
+#USE_TIMELOCKS
+
+#DEBUGPARANOID
+
+#RESPAWN
+
+#TORBAN
+
+## Uncomment this to have country flags pop up in OOC alongside names if the user has the pref turned on (uses IP-API)
+#OOC_COUNTRY_FLAGS
+
+## Uncomment to enable the script that posts runtimes to GitLab
+## Before you do so, make sure to set up the required environment vars:
+##     1. GITLAB_RUNTIMES_PID - The Project ID of the project where the issues should be posted. Found on the details page of the project, directly under the project name.
+##     2. GITLAB_RUNTIMES_PAT - A Personal Access Token for an account with access to post issues, assign labels to issues and to open issues
+#REPORT_RUNTIMES
+
+#EPHEMERAL_MAP_MODE
+#EPHEMERAL_GROUND_MAP maps/testing.json
+
+#URGENT_AHELP_COOLDOWN 300
+#URGENT_AHELP_MESSAGE
+#URGENT_AHELP_USER_PROMPT There are no admins currently on. Do not press the button below if your ahelp is a joke, a request or a question. Use it only for cases of obvious grief."
+#URGENT_ADMINHELP_WEBHOOK_URL
+#REGULAR_ADMINHELP_WEBHOOK_URL
+#ADMINHELP_WEBHOOK_PFP
+#ADMINHELP_WEBHOOK_NAME
+#ADMINHELP_AHELP_LINK
+
+#AHELP_MESSAGE
+
+##
+# Something something admin related
+##
+
+## Stop localhost getting all permissions
+#NO_LOCALHOST_RANK
+
+## Add a # infront of this if you want to use the SQL based admin system, the legacy system uses admins.txt. You need to set up your database to use the SQL based system.
+ADMIN_LEGACY_SYSTEM
+
+#DEBUG_ADMIN_HREFS
+
+## Remove the # to show a popup 'reply to' window to every non-admin that recieves an adminPM.
+## The intention is to make adminPMs more visible. (although I fnd popups annoying so this defaults to off)
+#POPUP_ADMIN_PM
+
+## Comment this out to stop admins being able to choose their personal ooccolor
+ALLOW_ADMIN_OOCCOLOR
+
+#MENTOR_TOOLS
+
+##Show mentors on staffwho
+#SHOW_MENTORS
+
+##Show mods on staffwho
+#SHOW_MODS
+
+##
+# combat_config.dm
+##
+
+## You better don't touch this, but if you gonna, please at least test it
+## Mostly controls movement things. Values set to default ones
+#SLOWDOWN_NONE 0
+#SLOWDOWN_LOW 0.10
+#SLOWDOWN_MED 0.25
+#SLOWDOWN_HIGH 0.40
+#RUN_SPEED 1
+#WALK_SPEED 1
+#HUMAN_DELAY 0
+#ROBOT_DELAY 0
+#ANIMAL_DELAY 0
+#XENO_NUMBER_DIVIDER 4
+#SURV_NUMBER_DIVIDER 10
+
+##
+# game_options.dm
+##
+
+## probablities for game modes chosen in "secret" and "random" modes
+##
+## default probablity is 1, increase to make that mode more likely to be picked
+## set to 0 to disable that mode
+PROBABILITY COLONIALMARINES 1
+
+##Uhhh emmmmmm uhhh
+#MAX_POP COLONIALMARINES 1000
+#MIN_POP COLONIALMARINES 10
+
+#ALERT_DELTA Destruction of the station is imminent. All crew are instructed to obey all instructions given by heads of staff. Any violations of these orders can be punished by death. This is not a drill.
+
+#EMOJIS 1
+
+#REVIVAL_BRAIN_LIFE -1
+
+#RUN_DELAY 0
+#WALK_DELAY 0
+
+#ORGAN_HEALTH_MULTIPLIER 1
+#ORGAN_REGENERATION_MULTIPLIER 0.75
+
+#LIMBS_CAN_BREAK 1
+#BONES_CAN_BREAK 1
+
+#REVIVE_GRACE_PERIOD 3000
+
+#ALLOW_SYNTHETIC_GUN_USE
+#REMOVE_GUN_RESTRICTIONS
+
+#JOBS_HAVE_MINIMAL_ACCESS
+#MINIMAL_ACCESS_THRESHOLD 10
+
+#HUMANS_NEED_SURNAMES
+
+#ALLOW_AI
+#ALLOW_AI_MULTICAM
+
+#ERT_ADMIN_CALL_ONLY
+
+#USE_LOYALTY_IMPLANTS
+
+##
+# LOBBY ART SECTION
+##
+
+lobby_art icons/splash.dmi
+
+LOBBY_ART_IMAGES icon_state
+LOBBY_ART_AUTHORS author
+LOBBY_ART_MUSIC sound/music/bar.ogg
+
+### I LOVE LOGGING!!!!
+
+## log admin actions
+LOG_ADMIN
+
+## log adminchat
+#LOG_ADMINCHAT
+
+## log admin warning messages
+#LOG_ADMINWARN  ## Also duplicates a bunch of other messages.
+
+## log all Topic() calls (for use by coders in tracking down Topic issues)
+LOG_HREFS
+
+#LOG_DEBUG
+
+#LOG_ASSET
+
+## log OOC channel
+LOG_OOC
+
+## log client access (logon/logoff)
+LOG_ACCESS
+
+## log client Say
+LOG_SAY
+
+## log client Hivemind
+LOG_HIVEMIND
+
+## log world.log and runtime errors to a file
+LOG_RUNTIME
+
+## log game actions (start of round, results, etc.)
+LOG_GAME
+
+LOG_OVERWATCH
+
+LOG_INTERACT
+
+LOG_IDMOD
+
+## log player votes
+LOG_VOTE
+
+## log client Whisper
+LOG_WHISPER
+
+## log attack messages
+LOG_ATTACK
+
+## log emotes
+LOG_EMOTE
+
+### COLORS !!!
+
+#OOC_COLOR_NORMAL #1c52f5
+#OOC_COLOR_OTHER #2e78d9
+#OOC_COLOR_MODS #ffbf00
+#OOC_COLOR_DEBUG #6bd1b4
+#OOC_COLOR_ADMIN #ff8000
+#OOC_COLOR_DEFAULT #b82e00
+
+###
+# Xeno sprite override section from icon_source_config.dm
+# e.g.
+# something_something path/to/sprite.dmi
+###
+
+#ALIEN_EMBRYO
+#ALIEN_HUNTER_EMBRYO
+#ALIEN_CARRIER
+#ALIEN_CRUSHER
+#ALIEN_LURKER
+#ALIEN_PRAETORIAN
+#ALIEN_PREDALIEN
+#ALIEN_QUEEN_STANDING
+#ALIEN_QUEEN_OVIPOSITOR
+#ALIEN_SENTINEL
+#ALIEN_SPITTER
+#SPECIES_HUNTER
+
+###
+# nightmare sections
+###
+
+#NIGHTMARE_ENABLED
+#NIGHTMARE_DEBUG
+#NIGHTMARE_MAP_PATH maps/
+#NIGHTMARE_CONFIG_PATH maps/Nightmare
+
+###
+# resources section
+###
+
+#EXTERNAL_RSC_URLS
+
+###
+# DOES NOTHING SECTION
+# Everything below defined in configuration but don't have any use in code.
+# Mostly reminants of old age
+###
+
+#RESOURCE_URL
+#HOSTEDBY yournamehere
+#SERVERSQLNAME
+#GITHUBURL
+#DBURL
+#CENTCOM_BAN_DB
+#WEBMAP_HOST https://affectedarc07.co.uk/tgmc.php?m=
+#RESTART_MESSAGE
+#GUEST_BAN
+#ROUNDS_UNTIL_HARD_RESTART -1
+#MINUTE_CLICK_LIMIT 400
+#SECOND_CLICK_LIMIT 15
+#AFK_PERIOD 3000
+#GLIDE_SIZE_MOD 80
+#USE_AGE_RESTRICTION_FOR_JOBS
+#USE_EXP_TRACKING
+#USE_EXP_RESTRICTIONS_ADMIN_BYPASS
+#USE_EXP_RESTRICTIONS_COMMAND
+#USE_EXP_RESTRICTIONS_COMMAND_HOURS
+#USE_EXP_RESTRICTIONS_COMMAND_DEPARTMENT
+#USE_EXP_RESTRICTIONS_OTHER
+#PREVENT_DUPE_NAMES
+#LOOC_ENABLED
+#SEE_OWN_NOTES
+#NOTE_FRESH_DAYS 30
+#NOTE_STALE_DAYS 180
+#USE_ACCOUNT_AGE_FOR_JOBS
+#NOTIFY_NEW_PLAYER_AGE
+#ALLOW_SHUTDOWN
+#TGS3_COMMANDLINE_PATH
+#ERROR_COOLDOWN 600
+#ERROR_LIMIT 50
+#ERROR_SILENCE_TIME 6000
+#ERROR_MSG_DELAY 50
+#PROTECT_LEGACY_ADMINS
+#PROTECT_LEGACY_RANKS
+#LOAD_LEGACY_RANKS_ONLY
+#FUN_ALLOWED
+#MIN_XENOS 5
+#CRASH_LARVAPOINTS_REQUIRED 9
+#DISTRESS_LARVAPOINTS_REQUIRED 8
+#DISRESS_ERT_ALLOWED
+#EVENTS_DISALLOWED
+#AGGRESSIVE_CHANGELOG
+#CONTINOUS_ROUNDS
+#LOG_LOOC
+#LOG_TELECOMMS
+#LOG_PRAYER
+#LOG_WORLD_TOPIC
+#LOG_MANIFEST
+#SOFT_POPCAP 0
+#HARD_POPCAP 0
+#EXTREME_POPCAP 0
+#SOFT_POPCAP_MESSAGE The server is currently serving a high number of users, joining the round may get disabled soon.
+#HARD_POPCAP_MESSAGE The server is currently serving a high number of users, You cannot currently join, but you can observe or wait for the number of living crew to decline.
+#EXTREME_POPCAP_MESSAGE The server is currently serving a high number of users, joining the server has been disabled.
+#BYOND_MEMBER_BYPASS_POPCAP
+#PANIC_BUNKER
+#PANIC_SERVER_NAME
+#PANIC_SERVER_ADDRESS
+#PANIC_BUNKER_MESSAGE Sorry but the server is currently not accepting connections from never before seen players.
+#DEFAULT_VIEW 15x15
+#DEFAULT_VIEW_SQUARE 15x15
+#TOPIC_FILTERING_WHITELIST
+#FF_DAMAGE_THRESHOLD
+#FF_DAMAGE_RESET
+#VOTE_AUTOGAMEMODE_TIMELEFT 99999999
+#VOTE_NO_DEFAULT
+#VOTE_NO_DEAD
+#RECORD_ROUNDS
+#ASSET_SIMPLE_PRELOAD
+#ASSET_TRANSPORT
+#ASSET_CDN_WEBROOT
+#ASSET_CDN_URL
