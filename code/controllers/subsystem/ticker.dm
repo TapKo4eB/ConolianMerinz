@@ -107,7 +107,7 @@ SUBSYSTEM_DEF(ticker)
 				ooc_allowed = TRUE
 				mode.declare_completion(force_ending)
 				flash_clients()
-				if(text2num(SSperf_logging?.round?.id) % CONFIG_GET(number/gamemode_rounds_needed) == 0)
+				if((text2num(SSperf_logging?.round?.id) % CONFIG_GET(number/gamemode_rounds_needed) == 0) && CONFIG_GET(number/gamemode_rounds_needed) > 0)
 					addtimer(CALLBACK(
 						SSvote,
 						/datum/controller/subsystem/vote/proc/initiate_vote,
@@ -116,6 +116,7 @@ SUBSYSTEM_DEF(ticker)
 						CALLBACK(src, .proc/handle_map_reboot)
 					), 3 SECONDS)
 				else
+					sleep(100)
 					handle_map_reboot()
 				Master.SetRunLevel(RUNLEVEL_POSTGAME)
 
