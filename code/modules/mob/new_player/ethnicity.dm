@@ -112,3 +112,8 @@
 	name = "Polynesian"
 	icon_name = "polynesian"
 	ethnic_category = "Oceania"
+
+/datum/ethnicity/madness
+	name = "Madness"
+	icon_name = "madness"
+	ethnic_category = "Nevada"
