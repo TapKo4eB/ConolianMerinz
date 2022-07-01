@@ -402,7 +402,8 @@ GLOBAL_LIST_INIT(whitelisted_client_procs, list(
 	//if(prefs.window_skin & TOGGLE_WINDOW_SKIN)
 	//	set_night_skin()
 
-	winset(src, null, "mainwindow.title='[CONFIG_GET(string/title)] - [SSmapping.configs[SHIP_MAP].map_name]'")
+	if(SSmapping.initialized)
+		winset(src, null, "mainwindow.title='[CONFIG_GET(string/title)] - [SSmapping.configs[SHIP_MAP].map_name]'")
 
 	load_player_data()
 

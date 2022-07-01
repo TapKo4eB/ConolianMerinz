@@ -18,6 +18,7 @@ GLOBAL_LIST_EMPTY_TYPED(transmitters, /obj/structure/transmitter)
 	var/obj/structure/transmitter/caller
 
 	var/next_ring = 0
+	var/last_ring_channel = null
 
 	var/phone_type = /obj/item/phone
 
@@ -223,6 +224,9 @@ GLOBAL_LIST_EMPTY_TYPED(transmitters, /obj/structure/transmitter)
 				to_chat(M, SPAN_PURPLE("[icon2html(src, M)] You have hung up on [T.phone_id]."))
 
 	if(calling)
+		if(last_ring_channel)
+			playsound(calling, null, channel = last_ring_channel)
+			last_ring_channel = null
 		calling.caller = null
 		calling = null
 
@@ -252,7 +256,7 @@ GLOBAL_LIST_EMPTY_TYPED(transmitters, /obj/structure/transmitter)
 
 		if(attached_to.loc == src)
 			if(next_ring < world.time)
-				playsound(loc, 'sound/machines/telephone/telephone_ring.ogg', 75)
+				caller.last_ring_channel = playsound(loc, 'sound/machines/telephone/telephone_ring.ogg', 75)
 				visible_message(SPAN_WARNING("[src] rings vigorously!"))
 				next_ring = world.time + 6.2 SECONDS
 
@@ -265,7 +269,7 @@ GLOBAL_LIST_EMPTY_TYPED(transmitters, /obj/structure/transmitter)
 		var/obj/item/phone/P = T.attached_to
 
 		if(P && attached_to.loc == src && P.loc == T && next_ring < world.time)
-			playsound(get_turf(attached_to), 'sound/machines/telephone/telephone_ring.ogg', 20, FALSE, 14)
+			calling.last_ring_channel = playsound(get_turf(attached_to), 'sound/machines/telephone/telephone_ring.ogg', 20, FALSE, 14)
 			visible_message(SPAN_WARNING("[src] rings vigorously!"))
 			next_ring = world.time + 6.2 SECONDS
 
