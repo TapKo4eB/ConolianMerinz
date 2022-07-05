@@ -20,7 +20,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 /* Pre-pre-startup */
-/datum/game_mode/colonialmarines/can_start()
+/datum/game_mode/colonialmarines/can_start(bypass_checks)
+	if(!bypass_checks)
+		var/list/xeno_players = list()
+		xeno_players += get_players_for_role(JOB_XENOMORPH)
+		xeno_players += get_players_for_role(JOB_XENOMORPH_QUEEN)
+		if(xeno_players.len <= 0)
+			to_chat_spaced(world, type = MESSAGE_TYPE_SYSTEM, html = SPAN_ROUNDHEADER("No xenomorphs declared! Returning to lobby."))
+			return FALSE
+
 	initialize_special_clamps()
 	return TRUE
 
@@ -210,6 +218,8 @@
 					if(world.time <= (ROUND_END_HANDICAP + SSticker.round_start_time))
 						if(++round_win_condition_countdown >= 10) // give them SOME time before we pull the plug, maybe all xenos just disconnected i dunno
 							round_finished = win_cond // time's up
+						if(round_win_condition_countdown == 1)
+							message_staff("Round is about to end too early for some reason! <A HREF='?_src_=admin_holder;[HrefToken(forceGlobal = TRUE)];admincancelearlyroundend=1'>Click to disable round end check.</a>")
 					else
 						round_finished = win_cond
 				else

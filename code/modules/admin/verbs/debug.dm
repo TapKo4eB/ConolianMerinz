@@ -386,12 +386,21 @@ GLOBAL_PROTECT(AdminProcCallSpamPrevention)
 	if(!SSticker.mode)
 		to_chat(usr, "Mode not found?")
 	round_should_check_for_win = !round_should_check_for_win
+	SSticker.mode.round_win_condition_countdown = 0
 	if (round_should_check_for_win)
 		message_staff("[key_name(src)] enabled checking for round-end.")
 	else
 		message_staff("[key_name(src)] disabled checking for round-end.")
 
+/client/proc/cmd_debug_toggle_should_check_for_pregame()
+	set category = "Debug"
+	set name = "Toggle Bypass Roundstart Checks"
 
+	SSticker.bypass_checks = !SSticker.bypass_checks
+	if (SSticker.bypass_checks)
+		message_staff("[key_name(src)] disabled checking for round-start conditions.")
+	else
+		message_staff("[key_name(src)] enabled checking for round-start conditions.")
 
 //TODO: merge the vievars version into this or something maybe mayhaps
 /client/proc/cmd_debug_del_all()

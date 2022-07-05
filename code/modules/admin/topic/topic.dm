@@ -1167,6 +1167,12 @@
 		bracer.exploding = FALSE
 		message_staff("[src.owner] has cancelled the predator self-destruct sequence [victim ? "of [victim] ([victim.key])":""].")
 
+	else if(href_list["admincancelearlyroundend"])
+		if(!check_rights(R_MOD))	return
+		round_should_check_for_win = 0
+		SSticker.mode.round_win_condition_countdown = 0
+		message_staff("[src.owner] disabled round-end check.")
+
 	else if(href_list["adminspawncookie"])
 		if(!check_rights(R_MOD))
 			return
