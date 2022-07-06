@@ -20,6 +20,24 @@
 		sleep(50)
 		world.Reboot()
 
+/datum/admins/proc/shutdown_world()
+	set name = "Shutdown Server"
+	set desc = "Deletes the world"
+	set category = "Server"
+
+	if (!usr.client.admin_holder || !(usr.client.admin_holder.rights & R_HOST))
+		return
+
+	var/confirm = alert("Shutdown the game world?", "Shutdown", "Yes", "Cancel")
+	if(confirm == "Cancel")
+		return
+	if(confirm == "Yes")
+		to_world(SPAN_DANGER("<b>Deleting world!</b> [SPAN_NOTICE("Initiated by [usr.client.admin_holder.fakekey ? "Admin" : usr.key]!")]"))
+		log_admin("[key_name(usr)] initiated a shutdown.")
+
+		sleep(50)
+		world.shutdown_world()
+
 /datum/admins/proc/togglejoin()
 	set name = "Toggle Joining Round"
 	set desc = "Players can still log into the server, but players won't be able to join the game as a new mob."

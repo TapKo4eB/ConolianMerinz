@@ -233,6 +233,16 @@ var/world_topic_spam_protect_time = world.timeofday
 	TgsReboot()
 	..(reason)
 
+/world/proc/shutdown_world()
+	for(var/i in 1 to 10)
+		to_world("[11 - i]")
+		sound_to(world, 'sound/vox/vox_military/!buzwarn.ogg')
+		sleep(10)
+
+	sound_to(world, 'sound/machines/disposalflush.ogg')
+	Master.Shutdown()
+	shutdown()
+
 /world/proc/send_reboot_sound()
 	var/reboot_sound = SAFEPICK(reboot_sfx)
 	if(reboot_sound)
