@@ -84,6 +84,7 @@
 #include "code\__DEFINES\surgery.dm"
 #include "code\__DEFINES\techtree.dm"
 #include "code\__DEFINES\tests.dm"
+#include "code\__DEFINES\tgs.config.dm"
 #include "code\__DEFINES\tgs.dm"
 #include "code\__DEFINES\tgui.dm"
 #include "code\__DEFINES\traits.dm"
