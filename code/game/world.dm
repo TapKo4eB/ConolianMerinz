@@ -28,7 +28,6 @@ var/list/reboot_sfx = list('sound/dyn/roundend/apcdestroyed.ogg',
 	hub = "Exadv1.spacestation13"
 
 /world/New()
-	TgsNew()
 
 	var/debug_server = world.GetConfig("env", "AUXTOOLS_DEBUG_DLL")
 	if (debug_server)
@@ -57,6 +56,9 @@ var/list/reboot_sfx = list('sound/dyn/roundend/apcdestroyed.ogg',
 
 	if(CONFIG_GET(flag/log_runtime))
 		log = file("data/logs/runtime/[time2text(world.realtime,"YYYY-MM-DD-(hh-mm-ss)")]-runtime.log")
+
+	GLOB.revdata = new
+	InitTgs()
 
 	load_admins()
 	jobban_loadbanfile()
@@ -130,7 +132,7 @@ var/list/reboot_sfx = list('sound/dyn/roundend/apcdestroyed.ogg',
 		while(!SSticker.initialized)
 			sleep(10)
 
-		TgsInitializationComplete()
+
 
 		// Start the game ASAP
 		SSticker.request_start()
@@ -138,6 +140,10 @@ var/list/reboot_sfx = list('sound/dyn/roundend/apcdestroyed.ogg',
 
 var/world_topic_spam_protect_ip = "0.0.0.0"
 var/world_topic_spam_protect_time = world.timeofday
+
+/world/proc/InitTgs()
+	TgsNew(new /datum/tgs_event_handler/impl, TGS_SECURITY_TRUSTED)
+	GLOB.revdata.load_tgs_info()
 
 /world/Topic(T, addr, master, key)
 	TGS_TOPIC
@@ -290,6 +296,10 @@ var/world_topic_spam_protect_time = world.timeofday
 
 /world/proc/load_motd()
 	join_motd = file2text("config/motd.txt")
+
+	var/tm_info = GLOB.revdata.GetTestMergeInfo()
+	if(join_motd || tm_info)
+		join_motd = join_motd ? "[join_motd]<br>[tm_info]" : tm_info
 
 /world/proc/update_status()
 	//Note: Hub content is limited to 254 characters, including limited HTML/CSS.
