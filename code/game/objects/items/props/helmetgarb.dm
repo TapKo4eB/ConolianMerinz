@@ -511,6 +511,6 @@
 	icon_state = "ACHKOOOOO"
 
 /obj/item/prop/helmetgarb/camo
-	name = "Steath camo."
+	name = "Stealth camo"
 	desc = "Шлем анонимная дрочка срать в подъезде."
 	icon_state = "camo"
