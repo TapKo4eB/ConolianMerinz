@@ -312,11 +312,11 @@
 				to_chat(src, SPAN_XENOWARNING("You do not have enough plasma!"))
 				return
 			if(client.prefs && client.prefs.no_radials_preference)
-				pheromone = tgui_input_list(src, "Choose a pheromone", "Pheromone Menu", caste.aura_allowed + "help" + "cancel")
+				pheromone = tgui_input_list(src, "Choose a pheromone", "Pheromone Menu", caste.aura_allowed + "help")
 				if(pheromone == "help")
 					to_chat(src, SPAN_NOTICE("<br>Pheromones provide a buff to all Xenos in range at the cost of some stored plasma every second, as follows:<br><B>Frenzy</B> - Increased run speed, damage and chance to knock off headhunter masks.<br><B>Warding</B> - While in critical state, increased maximum negative health and slower off weed bleedout.<br><B>Recovery</B> - Increased plasma and health regeneration.<br>"))
 					return
-				if(!pheromone || pheromone == "cancel" || current_aura || !check_state(1)) //If they are stacking windows, disable all input
+				if(!pheromone || current_aura || !check_state(1)) //If they are stacking windows, disable all input
 					return
 			else
 				var/static/list/phero_selections = list("Help" = image(icon = 'icons/mob/radial.dmi', icon_state = "radial_help"), "Frenzy" = image(icon = 'icons/mob/radial.dmi', icon_state = "phero_frenzy"), "Warding" = image(icon = 'icons/mob/radial.dmi', icon_state = "phero_warding"), "Recovery" = image(icon = 'icons/mob/radial.dmi', icon_state = "phero_recov"))
