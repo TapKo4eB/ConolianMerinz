@@ -28,7 +28,7 @@
 
 /obj/item/device/walkman/Initialize()
 	. = ..()
-	design = rand(1, 5)
+	design = rand(1, 10)
 	update_icon()
 
 /obj/item/device/walkman/Destroy()
@@ -73,7 +73,6 @@
 		return
 	else
 		..()
-
 
 /obj/item/device/walkman/proc/break_sound()
 	var/sound/break_sound = sound(null, 0, 0, SOUND_CHANNEL_WALKMAN)
