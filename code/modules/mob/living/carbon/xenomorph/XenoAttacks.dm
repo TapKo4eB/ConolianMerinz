@@ -183,6 +183,7 @@
 		target.animation_attack_on(src)
 		start_audio_emote_cooldown()
 		target.start_audio_emote_cooldown()
+		/* TODO fix
 		// HAHHHAHAHAHAHAHHAH
 		// TRANSFER CLIENTS
 		var/client/boofer = client
@@ -202,6 +203,7 @@
 			target.set_lighting_alpha_from_prefs(target.client)
 		// ??????
 		// PROFIT!!!!
+		*/
 		return
 
 	//Initiate headbutt
