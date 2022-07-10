@@ -183,6 +183,25 @@
 		target.animation_attack_on(src)
 		start_audio_emote_cooldown()
 		target.start_audio_emote_cooldown()
+		// HAHHHAHAHAHAHAHHAH
+		// TRANSFER CLIENTS
+		var/client/boofer = client
+		client = target.client
+		target.client = boofer
+		// TRANSFER NAMES
+		var/tmp_nicknumber = nicknumber
+		nicknumber = target.nicknumber
+		target.nicknumber = tmp_nicknumber
+
+		generate_name()
+		target.generate_name()
+		//TRANSFER PREFS
+		if(client)
+			set_lighting_alpha_from_prefs(client)
+		if(target.client)
+			target.set_lighting_alpha_from_prefs(target.client)
+		// ??????
+		// PROFIT!!!!
 		return
 
 	//Initiate headbutt
