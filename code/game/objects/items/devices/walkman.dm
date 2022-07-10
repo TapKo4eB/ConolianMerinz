@@ -367,6 +367,7 @@
 	if(!songs_dir)
 		return
 	var/list/song_files = flist("[songs_dir]")
+	song_files = sortList(song_files)
 	var/count = 1
 	for(var/S in song_files)
 		if(count <= 3)
