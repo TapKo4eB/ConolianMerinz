@@ -246,6 +246,9 @@ var/world_topic_spam_protect_time = world.timeofday
 		sleep(10)
 
 	sound_to(world, 'sound/machines/disposalflush.ogg')
+	if(GLOB.tgs && istype(GLOB.tgs, /datum/tgs_api/v5))
+		var/datum/tgs_api/v5/api = GLOB.tgs
+		api.reboot_mode = TGS_REBOOT_MODE_SHUTDOWN
 	Master.Shutdown()
 	shutdown()
 
