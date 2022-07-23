@@ -352,6 +352,7 @@
 		/obj/item/device/cassette_tape/morlok = 10,
 		/obj/item/device/cassette_tape/ftl = 10,
 		/obj/item/device/cassette_tape/elysium = 10,
+		/obj/item/device/cassette_tape/push = 10,
 		// TOO MUCH TO ADD, TOO MUCH TO ASK
 		///obj/item/device/cassette_tape/hiphop = 10,
 		///obj/item/device/cassette_tape/nam = 10,
@@ -374,6 +375,7 @@
 		/obj/item/device/cassette_tape/morlok = 3,
 		/obj/item/device/cassette_tape/ftl = 3,
 		/obj/item/device/cassette_tape/elysium = 3,
+		/obj/item/device/cassette_tape/push = 3,
 		///obj/item/device/cassette_tape/hiphop = 3,
 		///obj/item/device/cassette_tape/nam = 3,
 		///obj/item/device/cassette_tape/ocean = 4,

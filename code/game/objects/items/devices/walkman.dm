@@ -28,7 +28,7 @@
 
 /obj/item/device/walkman/Initialize()
 	. = ..()
-	design = rand(1, 10)
+	design = rand(1, 11)
 	update_icon()
 
 /obj/item/device/walkman/Destroy()
@@ -524,3 +524,11 @@
 	icon_state = "muddy"
 	side1_icon = "muddy"
 	songs_dir = "sound/music/walkman/elysium/"
+
+/obj/item/device/cassette_tape/push
+	name = "striped cassette"
+	id = 22
+	desc = "A striped cassette tape."
+	icon_state = "push"
+	side1_icon = "push"
+	songs_dir = "sound/music/walkman/push/"

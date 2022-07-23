@@ -13,6 +13,7 @@
 		list("relax muzika spokoinaya Cassette", 10, /obj/item/device/cassette_tape/morlok, VENDOR_ITEM_REGULAR),
 		list("Space Blue Cassette", 10, /obj/item/device/cassette_tape/ftl, VENDOR_ITEM_REGULAR),
 		list("Muddy Cassette", 10, /obj/item/device/cassette_tape/elysium, VENDOR_ITEM_REGULAR),
+		list("Striped Cassette", 10, /obj/item/device/cassette_tape/push, VENDOR_ITEM_REGULAR),
 		//list("Blue Stripe Cassette", 10, /obj/item/device/cassette_tape/hiphop, VENDOR_ITEM_REGULAR),
 		//list("Green Cassette", 10, /obj/item/device/cassette_tape/nam, VENDOR_ITEM_REGULAR),
 		//list("Ocean Cassette", 10, /obj/item/device/cassette_tape/ocean, VENDOR_ITEM_REGULAR),
